@@ -223,6 +223,18 @@
         "happy",
         "precedence"
       ]
+    },
+    {
+      "id": "B-016",
+      "statement": "A topic held by more than half the room is excluded from S3, S6 and S7, and the exclusion is reported.",
+      "traces_to": [
+        "AUD-EDGES-GENERIC",
+        "RUBRIC-3"
+      ],
+      "required_case_types": [
+        "negative_control",
+        "boundary"
+      ]
     }
   ]
 }

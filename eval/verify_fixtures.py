@@ -26,12 +26,29 @@ def err(fid, msg):
 def ctx_key(c):
     return (c.get("type"), c.get("value"))
 
-def score(a, b):
+def generic_topics(room, max_share, min_room=4):
+    """Topics held by strictly more than max_share of the room, once the room is big enough.
+
+    The floor matters: in a room of two, any shared topic is held by 100% of the room, so without
+    it the gate would delete every match in a quiet room.
+    """
+    n = len(room)
+    if n < min_room:
+        return set()
+    counts = {}
+    for m in room:
+        for t in set(m.get("topics_professional", [])) | set(m.get("topics_personal", [])):
+            counts[t] = counts.get(t, 0) + 1
+    return {t for t, c in counts.items() if c / n > max_share}
+
+def score(a, b, excluded=frozenset()):
     """Return (score, [signal_ids]) for a -> b, derived only from member records."""
     fired = []
     ia, ib = set(a.get("industries", [])), set(b.get("industries", []))
-    tpa, tpb = set(a.get("topics_professional", [])), set(b.get("topics_professional", []))
-    tsa, tsb = set(a.get("topics_personal", [])), set(b.get("topics_personal", []))
+    tpa = set(a.get("topics_professional", [])) - excluded
+    tpb = set(b.get("topics_professional", [])) - excluded
+    tsa = set(a.get("topics_personal", [])) - excluded
+    tsb = set(b.get("topics_personal", [])) - excluded
     ca = {ctx_key(c) for c in a.get("contexts", [])}
     cb = {ctx_key(c) for c in b.get("contexts", [])}
 
@@ -85,10 +102,10 @@ def check_exclusive(fid, node, where):
     if "S8" in sigs and not (sigs & SUBSTRATE):
         err(fid, f"{where}: S8 fired with no substrate signal (S2/S3/S5/S7)")
 
-def check_derived(fid, a, b, node, where):
+def check_derived(fid, a, b, node, where, excluded=frozenset()):
     global checks
     checks += 1
-    got_score, got_sigs = score(a, b)
+    got_score, got_sigs = score(a, b, excluded)
     if got_sigs != expected_signals(node):
         err(fid, f"{where}: re-derived signals {got_sigs} != fixture {expected_signals(node)}")
     if got_score != node.get("score"):
@@ -137,13 +154,21 @@ def main():
             a = gi.get("arriving_member")
             present = gi.get("present_members", [])
             if a and present and isinstance(present[0], dict):
+                # genericity gate, re-derived from the room including the arriving member
+                excluded = generic_topics([a] + present,
+                                          cfg.get("generic_topic_max_share", 0.5),
+                                          cfg.get("generic_topic_min_room", 4))
+                checks += 1
+                asserted_excl = sorted(e["topic"] for e in res.get("excluded_topics", []))
+                if sorted(excluded) != asserted_excl:
+                    err(fid, f"excluded_topics {asserted_excl} != re-derived {sorted(excluded)}")
                 seen_scores = []
                 for rm in res["ranked_matches"]:
                     b = by_id(fid, present, rm["member_id"])
                     if not b: continue
                     check_weights(fid, rm); check_sum(fid, rm, rm["member_id"])
                     check_exclusive(fid, rm, rm["member_id"])
-                    check_derived(fid, a, b, rm, rm["member_id"])
+                    check_derived(fid, a, b, rm, rm["member_id"], excluded)
                     seen_scores.append(rm["score"])
 
                     # surfacing rule, re-derived

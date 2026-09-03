@@ -6,10 +6,10 @@ Process: product-inception skill. Checkpoints at Phase 2 (audit), Phase 6 (fixtu
 ## State board
 - [x] P1 Understand brief  -> docs/audit/00-AUDIT-BRIEF.md, ids RUBRIC-1..4, AMB-1..5
 - [x] P2 Audit ground truth -> docs/audit/01..05 landed; 06-edges dispatched
-- [ ] P3 Align (AskUserQuestion)
-- [ ] P4 Golden fixtures     -> eval/golden-manifest.json, eval/golden/*.json, eval/verify_fixtures.py
-- [ ] P5 Grill open decisions
-- [ ] P6 Architecture (excalidraw) + UI wireframes (plain HTML)
+- [x] P3 Align -> docs/decisions/DECISIONS.md (DEC-0..DEC-5)
+- [x] P4 Golden fixtures -> 26 fixtures / 16 behaviors; both checks green (190 arithmetic checks)
+- [~] P5 Grill open decisions (deferred to after P6 checkpoint; offered to user)
+- [x] P6 Architecture (docs/architecture.excalidraw, 21/21 edges recoverable) + docs/wireframes.html + docs/ui-states.md
 - [ ] P7 PRD                 -> docs/PRD.md
 - [ ] P8 Design handoff prompt (optional)
 - [ ] P9 spec-review loop    -> eval/verify_claims.py

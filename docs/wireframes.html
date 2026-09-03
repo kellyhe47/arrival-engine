@@ -1,0 +1,160 @@
+<title>Arrival Engine — UI skeleton</title>
+<style>
+ body{font:13px/1.45 system-ui;margin:0;padding:24px;background:#f6f6f4;color:#111}
+ h1{font-size:18px;margin:0 0 4px} h2{font-size:13px;margin:28px 0 8px;font-weight:700}
+ .note{color:#555;max-width:70ch;margin:0 0 18px}
+ .row{display:flex;flex-wrap:wrap;gap:22px;align-items:flex-start}
+ .phone{width:330px;border:1.5px solid #111;background:#fff;padding:0}
+ .cap{font-size:11px;font-weight:700;padding:5px 8px;background:#111;color:#fff}
+ .blk{border-top:1px dashed #999;padding:8px 10px}
+ .lbl{font-size:10px;letter-spacing:.09em;text-transform:uppercase;color:#666;margin-bottom:3px}
+ .box{border:1px solid #bbb;background:#fafafa;padding:6px 8px;margin:4px 0;color:#444}
+ .chip{display:inline-block;border:1px solid #999;padding:1px 5px;font-size:10px;margin:2px 3px 0 0;color:#555}
+ .score{float:right;border:1px solid #ccc;padding:0 5px;font-size:10px;color:#888}
+ .btn{display:inline-block;border:1.5px solid #111;padding:5px 9px;margin:5px 4px 0 0;font-size:11px}
+ .warn{border-left:3px solid #111;padding-left:8px}
+ .meta{font-size:10px;color:#777;padding:6px 10px;border-top:1px dashed #999}
+</style>
+
+<h1>Arrival Engine — UI skeleton (structure only, no visual design)</h1>
+<p class="note">One surface: the host card, on a phone. Every state that <em>differs</em> is drawn as its
+own frame. Body copy is deliberately shown as grey boxes — the words are the narrator's job, the
+structure is the spec's. Card body is 250–350 words in all states.</p>
+
+<div class="row">
+
+ <div class="phone">
+  <div class="cap">A · ARRIVED — happy path</div>
+  <div class="blk"><div class="lbl">Who</div>
+    <div class="box">Name. One borrowed line, attributed.</div>
+    <span class="chip">firstround.com</span></div>
+  <div class="blk"><div class="lbl">Now</div>
+    <div class="box">2–3 sentences on what they are actually doing.</div>
+    <span class="chip">feld.com · 4d ago</span></div>
+  <div class="blk"><div class="lbl">Room</div>
+    <span class="score">11</span>
+    <div class="box">REASON SENTENCE FIRST. Names only signals that fired.</div>
+    <span class="chip">cited them 296×</span><span class="chip">same thesis</span>
+    <span class="score">7</span>
+    <div class="box">Second match, same shape.</div></div>
+  <div class="blk"><div class="lbl">Notice</div>
+    <div class="box">The deep cut. One thing, not four.</div>
+    <span class="chip">feld.com 2013 · self-published</span></div>
+  <div class="blk"><div class="lbl">Say</div>
+    <div class="box warn">The sayable line. Second person, present tense.</div></div>
+  <div class="meta">298 words · gates passed · <a href="#">why this score</a></div>
+ </div>
+
+ <div class="phone">
+  <div class="cap">B · NO STRONG MATCH</div>
+  <div class="blk"><div class="lbl">Who</div><div class="box">…</div></div>
+  <div class="blk"><div class="lbl">Now</div><div class="box">…</div></div>
+  <div class="blk"><div class="lbl">Room</div>
+    <div class="box warn">"Nobody obvious tonight." Highest score shown, greyed, with the reason it
+      did not clear the bar. NOT a recommendation.</div>
+    <span class="chip">top score 5 · needs 6</span></div>
+  <div class="blk"><div class="lbl">Notice</div><div class="box">Deep cut still carries the card.</div></div>
+  <div class="blk"><div class="lbl">Say</div>
+    <div class="box warn">Talk track about THEM. No name-drop.</div></div>
+  <div class="meta">271 words · gates passed</div>
+ </div>
+
+ <div class="phone">
+  <div class="cap">C · COLD TRAIL (stale profile)</div>
+  <div class="blk"><div class="lbl">Who</div><div class="box">…</div></div>
+  <div class="blk"><div class="lbl">Now</div>
+    <div class="box warn">"Nothing published since Nov 2014." Stated plainly. The engine does not
+      dress an old post as current.</div>
+    <span class="chip">last seen 2014 · 4,313 days</span></div>
+  <div class="blk"><div class="lbl">Room</div><div class="box">Matching is unaffected — topics and
+    edges outlive recency.</div></div>
+  <div class="blk"><div class="lbl">Notice</div><div class="box">Deep cut does the work a Now block
+    cannot.</div></div>
+  <div class="blk"><div class="lbl">Say</div><div class="box warn">Ask, don't assert.</div></div>
+  <div class="meta">264 words · gates passed</div>
+ </div>
+
+ <div class="phone">
+  <div class="cap">D · EMPTY ROOM (first through the door)</div>
+  <div class="blk"><div class="lbl">Who</div><div class="box">…</div></div>
+  <div class="blk"><div class="lbl">Now</div><div class="box">…</div></div>
+  <div class="blk"><div class="lbl">Room</div>
+    <div class="box warn">"First one here." Not an error state. Not an empty box.</div></div>
+  <div class="blk"><div class="lbl">Notice</div><div class="box">…</div></div>
+  <div class="blk"><div class="lbl">Say</div><div class="box warn">…</div></div>
+  <div class="meta">255 words · gates passed</div>
+ </div>
+
+</div>
+
+<h2>Secondary + failure states</h2>
+<div class="row">
+
+ <div class="phone">
+  <div class="cap">E · WHY THIS SCORE (tap from Room)</div>
+  <div class="blk"><div class="lbl">Signals fired</div>
+   <div class="box">S1 peer tier + cohort &nbsp;+2</div>
+   <div class="box">S2 same industry &nbsp;+2</div>
+   <div class="box">S5 they cite them &nbsp;+3 &nbsp;<i>directed</i></div>
+   <div class="box">S7 shared thesis &nbsp;+3</div>
+   <div class="box">S8 status gradient &nbsp;+1 &nbsp;<i>capped</i></div>
+   <div class="box warn">= 11 of 16</div></div>
+  <div class="blk"><div class="lbl">Did not fire</div>
+   <div class="box">S3 · same industry, so cross-industry cannot apply</div>
+   <div class="box">S4 S6 · no shared context or interest</div></div>
+  <div class="blk"><div class="lbl">Excluded topics</div>
+   <div class="box">venture-capital-craft — held by 4 of 5 here</div></div>
+  <div class="blk"><div class="lbl">Reverse direction</div>
+   <div class="box">their score for this member: 7</div></div>
+ </div>
+
+ <div class="phone">
+  <div class="cap">F · INGESTING (live re-run on stage)</div>
+  <div class="blk"><div class="lbl">Building profile</div>
+   <div class="box">blog RSS ✓ 41 posts</div>
+   <div class="box">HN Algolia ✓ 276 items</div>
+   <div class="box">SEC EDGAR ✓ 3 filings</div>
+   <div class="box">Wayback ✓ 113 archived</div>
+   <div class="box warn">LinkedIn — unavailable (999)</div>
+   <div class="box warn">Instagram — unavailable (no data served)</div>
+   <div class="box">X follow-graph — skipped (metered)</div></div>
+  <div class="blk"><div class="lbl">Note</div>
+   <div class="box">Blocked adapters are shown, not hidden. This screen is half the argument.</div></div>
+ </div>
+
+ <div class="phone">
+  <div class="cap">G · GATE FAILURE (card withheld)</div>
+  <div class="blk"><div class="lbl">Not shippable</div>
+   <div class="box warn">A fact had no source. The card is withheld rather than shown with a hole.</div>
+   <div class="box">✗ all_facts_sourced</div>
+   <div class="box">✓ word_count · blocks · top_match · sayable close</div>
+   <div class="box">content grade 4/4 — and it still does not ship</div></div>
+  <div class="blk"><div class="lbl">Host sees</div>
+   <div class="box">Name + Who block only. Degrades to a greeting, never to a guess.</div>
+   <span class="btn">Retry</span><span class="btn">Show what failed</span></div>
+ </div>
+
+ <div class="phone">
+  <div class="cap">H · AMBIGUOUS NAME</div>
+  <div class="blk"><div class="lbl">Two candidates</div>
+   <div class="box">Resolver found 2 people matching the webhook name.</div>
+   <div class="box">Candidate 1 — detail, corroborated by 2 sources</div>
+   <div class="box">Candidate 2 — detail, corroborated by 1 source</div>
+   <div class="box warn">Host picks. The engine does not guess an identity.</div>
+   <span class="btn">This one</span><span class="btn">Neither</span></div>
+ </div>
+
+ <div class="phone">
+  <div class="cap">I · ROOM (who is here now)</div>
+  <div class="blk"><div class="lbl">Present · 6</div>
+   <div class="box">Name — arrived 19:04</div>
+   <div class="box">Name — arrived 19:11</div>
+   <div class="box">Name — arrived 19:26</div>
+   <div class="box">…</div></div>
+  <div class="blk"><div class="lbl">Actions</div>
+   <span class="btn">Simulate arrival</span><span class="btn">Mark departed</span>
+   <div class="box">Demo control surface. Arrival detection is assumed solved; this stands in for
+     the webhook.</div></div>
+ </div>
+
+</div>

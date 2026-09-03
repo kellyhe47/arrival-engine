@@ -1,0 +1,58 @@
+{
+  "nodes": [
+    {"id":"webhook","label":"Arrival webhook\n{name, detail}","layer":0,"group":"ingest","accent":true},
+    {"id":"roster","label":"Presence roster\nwho is here now","layer":0,"group":"ingest"},
+
+    {"id":"green","label":"GREEN adapters\nblog RSS / HN / EDGAR\nWikipedia / Wayback\nYouTube / podcasts / books","layer":1,"group":"ingest"},
+    {"id":"metered","label":"METERED adapter\nX follow-graph\n$0.010 per user read","layer":1,"group":"ingest"},
+    {"id":"blocked","label":"BLOCKED adapters\nLinkedIn 999 / IG / FB / TikTok\nspecced, disabled, return empty","layer":1,"group":"ingest"},
+
+    {"id":"resolve","label":"Identity resolver\ncorroboration required\n(kills the @spez trap)","layer":2,"group":"knowledge","accent":true},
+    {"id":"extract","label":"Fact extractor\nevery fact gets\nprovenance_class + source","layer":2,"group":"knowledge"},
+
+    {"id":"cache","label":"Profile cache\ndurable, versioned\n(demo never waits on net)","layer":3,"group":"knowledge","accent":true},
+    {"id":"topics","label":"Topic index\ncontrolled vocabulary","layer":3,"group":"knowledge"},
+    {"id":"edges","label":"Edge store\ndirected citations\n+ confirmed absences","layer":3,"group":"knowledge"},
+
+    {"id":"generic","label":"Genericity gate\ndrop topics >50% of room\n(min room 4)","layer":4,"group":"match","accent":true},
+    {"id":"signals","label":"Signal evaluators\nS1..S8, buckets 1/2/3\ndeterministic","layer":4,"group":"match"},
+    {"id":"ranker","label":"Ranker + surface rule\nscore >= 6 AND S3|S5|S7\ntie-break defined","layer":4,"group":"match"},
+
+    {"id":"select","label":"Fact selector\nno source -> cannot render\ninferred must name inputs","layer":5,"group":"brief","accent":true},
+    {"id":"narrator","label":"Narrator (LLM seam)\ntemperature 0\nprose only, no decisions","layer":5,"group":"brief"},
+
+    {"id":"gates","label":"Gate evaluator\nwords / blocks / provenance\nHARD pass-fail","layer":6,"group":"brief","accent":true},
+    {"id":"grader","label":"Content grader\ndeep cut / sayability\npartial credit","layer":6,"group":"brief"},
+
+    {"id":"card","label":"Host card\nWho / Now / Room / Notice / Say\n250-350 words, mobile","layer":7,"group":"brief","accent":true}
+  ],
+  "edges": [
+    {"from":"webhook","to":"resolve","label":"name + detail"},
+    {"from":"roster","to":"generic","label":"who is present"},
+    {"from":"green","to":"extract","label":"documents"},
+    {"from":"metered","to":"extract","label":"follow edges"},
+    {"from":"blocked","to":"extract","label":"empty + status"},
+    {"from":"resolve","to":"extract","label":"confirmed accounts"},
+    {"from":"extract","to":"cache","label":"facts"},
+    {"from":"extract","to":"topics","label":"topics"},
+    {"from":"extract","to":"edges","label":"citations"},
+    {"from":"cache","to":"signals"},
+    {"from":"topics","to":"generic"},
+    {"from":"edges","to":"signals","label":"S5 directed"},
+    {"from":"generic","to":"signals","label":"surviving topics"},
+    {"from":"signals","to":"ranker","label":"fired signals"},
+    {"from":"ranker","to":"select","label":"surfaced matches"},
+    {"from":"cache","to":"select","label":"candidate facts"},
+    {"from":"select","to":"narrator","label":"renderable facts only"},
+    {"from":"narrator","to":"gates","label":"draft card"},
+    {"from":"gates","to":"grader","label":"if gates pass"},
+    {"from":"gates","to":"card","label":"pass"},
+    {"from":"grader","to":"card","label":"quality score"}
+  ],
+  "groups": [
+    {"id":"ingest","label":"Ingestion - measured, honest about what is blocked"},
+    {"id":"knowledge","label":"Knowledge - facts carry provenance from birth"},
+    {"id":"match","label":"Matching - fully deterministic, no model in this path"},
+    {"id":"brief","label":"Briefing - model writes prose, never decides"}
+  ]
+}

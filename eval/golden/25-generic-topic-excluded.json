@@ -1,0 +1,177 @@
+{
+  "schema_version": 1,
+  "id": "G-025",
+  "name": "generic-topic-excluded",
+  "why": "The edge audit measured venture-capital-craft on five of the ten. A room of four VCs all sharing it must not produce four strong matches; a topic everyone holds is not a reason to introduce anyone.",
+  "covers": [
+    "B-016"
+  ],
+  "case_type": "negative_control",
+  "traces_to": [
+    "AUD-EDGES-GENERIC",
+    "RUBRIC-3"
+  ],
+  "defends_against": "An implementation that scores raw topic-set intersection, recommending every VC to every other VC because they all write about venture capital.",
+  "time_sensitive": false,
+  "given": {
+    "inputs": {
+      "arriving_member": {
+        "id": "m_tavel",
+        "seniority_tier": "principal",
+        "career_start_decade": "1990s",
+        "prominence_tier": 3,
+        "industries": [
+          "venture-capital"
+        ],
+        "topics_professional": [
+          "venture-capital-craft"
+        ],
+        "topics_personal": [],
+        "contexts": [],
+        "declared_links": []
+      },
+      "present_members": [
+        {
+          "id": "m_kopelman",
+          "seniority_tier": "principal",
+          "career_start_decade": "1980s",
+          "prominence_tier": 3,
+          "industries": [
+            "venture-capital"
+          ],
+          "topics_professional": [
+            "venture-capital-craft"
+          ],
+          "topics_personal": [],
+          "contexts": [],
+          "declared_links": []
+        },
+        {
+          "id": "m_walk",
+          "seniority_tier": "principal",
+          "career_start_decade": "1990s",
+          "prominence_tier": 3,
+          "industries": [
+            "venture-capital"
+          ],
+          "topics_professional": [
+            "venture-capital-craft",
+            "seed-stage-financing"
+          ],
+          "topics_personal": [],
+          "contexts": [],
+          "declared_links": []
+        },
+        {
+          "id": "m_wilson",
+          "seniority_tier": "principal",
+          "career_start_decade": "1980s",
+          "prominence_tier": 4,
+          "industries": [
+            "venture-capital"
+          ],
+          "topics_professional": [
+            "venture-capital-craft"
+          ],
+          "topics_personal": [],
+          "contexts": [],
+          "declared_links": []
+        }
+      ]
+    },
+    "preexisting_state": {},
+    "configuration": {
+      "bucket_weights": {
+        "SMALL": 1,
+        "MID": 2,
+        "LARGE": 3
+      },
+      "s8_requires_substrate": true,
+      "surface_min_score": 6,
+      "surface_requires_any_of": [
+        "S3",
+        "S5",
+        "S7"
+      ],
+      "generic_topic_max_share": 0.5,
+      "tie_break": [
+        "large_signal_count_desc",
+        "evidence_recency_desc",
+        "member_id_asc"
+      ],
+      "generic_topic_min_room": 4
+    },
+    "clock": {}
+  },
+  "when": {
+    "operation": "rank_room",
+    "input_refs": [
+      "m_tavel"
+    ]
+  },
+  "expect": {
+    "exact": {
+      "result": {
+        "excluded_topics": [
+          {
+            "topic": "venture-capital-craft",
+            "holders": 4,
+            "room_size": 4,
+            "share": 1.0
+          }
+        ],
+        "ranked_matches": [
+          {
+            "member_id": "m_walk",
+            "rank": 1,
+            "score": 4,
+            "surfaced": false,
+            "fired_signals": [
+              {
+                "signal_id": "S1",
+                "weight": 2
+              },
+              {
+                "signal_id": "S2",
+                "weight": 2
+              }
+            ]
+          },
+          {
+            "member_id": "m_wilson",
+            "rank": 2,
+            "score": 3,
+            "surfaced": false,
+            "fired_signals": [
+              {
+                "signal_id": "S2",
+                "weight": 2
+              },
+              {
+                "signal_id": "S8",
+                "weight": 1
+              }
+            ]
+          },
+          {
+            "member_id": "m_kopelman",
+            "rank": 3,
+            "score": 2,
+            "surfaced": false,
+            "fired_signals": [
+              {
+                "signal_id": "S2",
+                "weight": 2
+              }
+            ]
+          }
+        ],
+        "surfaced_count": 0
+      },
+      "state_changes": [],
+      "emitted_events": [],
+      "external_calls": []
+    },
+    "properties": []
+  }
+}

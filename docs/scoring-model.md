@@ -51,6 +51,24 @@ are the arithmetic most likely to be got wrong:
     the pairing is both complementary AND substantive, and the brief weights that case highest.
   - S6 (personal) never satisfies S3, whose shared-topic test reads professional topics only.
 
+## 3b. Generic-topic exclusion (AUD-EDGES-GENERIC)
+
+The edge audit measured that `venture-capital-craft` is held by **five of the ten**. A topic that
+half the room shares carries no information: it would fire S7 for Kopelman/Tavel (who have no
+discoverable edge at all) exactly as hard as for Wilson/Feld (296 mutual citations).
+
+Rule: **a topic is excluded from S3, S6 and S7 if the room holds at least 4 people (including the
+arriving member) AND strictly more than 50% of them hold that topic.** Excluded topics are reported
+so the exclusion is visible rather than silent.
+
+The minimum room size is load-bearing, not a detail. Genericity is a statistical claim, and in a
+room of two any shared topic is held by 100% of the room. Without the floor the gate deletes every
+match in a quiet room — which is precisely when the host most needs one. At 4 people, "more than
+half" means at least 3 holders, which is a real cluster rather than a coincidence.
+
+This preserves the three-bucket design — a signal still fires at its full weight or not at all.
+The gate is on which topics *count*, never on how much a signal is *worth*.
+
 ## 4. Ranking and ties
 
 Present members are ranked by `score(A -> B)` descending. Ties break by, in order:
