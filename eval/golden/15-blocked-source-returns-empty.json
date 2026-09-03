@@ -1,0 +1,80 @@
+{
+  "schema_version": 1,
+  "id": "G-015",
+  "name": "blocked-source-returns-empty",
+  "why": "The relational layer is specced against sources the audit measured as blocked. Those adapters must record unavailability and return nothing, so the card never carries a fact the system could not actually fetch.",
+  "covers": [
+    "B-010"
+  ],
+  "case_type": "failure",
+  "traces_to": [
+    "DEC-1",
+    "AUD-RED"
+  ],
+  "defends_against": "An implementation that swallows an adapter error and backfills from a search snippet or a language model, producing a confident fact with no real source behind it.",
+  "time_sensitive": false,
+  "given": {
+    "inputs": {
+      "fetch_plan": [
+        {
+          "source_id": "linkedin_profile",
+          "member_id": "m_huffman"
+        },
+        {
+          "source_id": "personal_blog_rss",
+          "member_id": "m_huffman"
+        }
+      ]
+    },
+    "preexisting_state": {},
+    "configuration": {
+      "adapters": {
+        "linkedin_profile": {
+          "measured_status": "blocked",
+          "measured_http": 999,
+          "enabled": false
+        },
+        "personal_blog_rss": {
+          "measured_status": "green",
+          "enabled": true
+        }
+      }
+    },
+    "clock": {}
+  },
+  "when": {
+    "operation": "run_ingestion",
+    "input_refs": [
+      "m_huffman"
+    ]
+  },
+  "expect": {
+    "exact": {
+      "result": {
+        "facts_ingested": 0,
+        "source_status": [
+          {
+            "source_id": "linkedin_profile",
+            "status": "unavailable",
+            "reason": "adapter_disabled_measured_blocked",
+            "facts": 0
+          },
+          {
+            "source_id": "personal_blog_rss",
+            "status": "ok",
+            "facts": 0
+          }
+        ]
+      },
+      "state_changes": [],
+      "emitted_events": [
+        {
+          "type": "source_unavailable",
+          "source_id": "linkedin_profile"
+        }
+      ],
+      "external_calls": []
+    },
+    "properties": []
+  }
+}

@@ -1,0 +1,350 @@
+# 06 — Edges: what actually connects the ten
+
+**Audit date:** 2026-09-03. **Scope:** all 45 unordered pairs among Fred Wilson, Brad Feld,
+Josh Kopelman, Sarah Tavel, Hunter Walk, Steve Huffman, Emmett Shear, Eric Ries, Nabeel Qureshi,
+Melanie Perkins.
+
+**Rule applied throughout:** a search-result snippet is not a source. Every edge below carries a URL
+that was actually fetched and a verbatim quote from the body of that page. Anything I could not open
+and quote is marked **UNVERIFIED** and is not asserted as an edge.
+
+---
+
+## 0. Method and corpora actually searched
+
+| Corpus | How it was searched | Volume actually retrieved |
+|---|---|---|
+| **feld.com** | No usable site search (`/index.json` → **404**, so the Hugo search box is broken). Pulled `https://feld.com/posts-sitemap.xml` → **5,551 post URLs**, then fetched **every one** and grepped. Candidate hits re-fetched and re-tested against the JSON-LD `articleBody` only, to strip sidebar/"recent posts" contamination. | 5,551 posts crawled; 908 candidates re-fetched for body text |
+| **avc.com** | WordPress REST is **wide open**: `https://avc.com/wp-json/wp/v2/posts?search=…` returns full `content.rendered`. Result counts read from the `x-wp-total` header. | full-text search over the whole archive |
+| **hunterwalk.com** | Same — `https://hunterwalk.com/wp-json/wp/v2/posts?search=…` | full-text search over ~1,761 posts |
+| **nabeelqu.substack.com** | `/feed` → 410 KB, **14 items** = his entire Substack, full bodies | 14 posts |
+| **sarahtavel.com** | `/feed` → 215 KB, 20 items = her entire Substack, full bodies | 20 posts |
+| **Hacker News** | Algolia `search_by_date?tags=author_<u>`, paginated to exhaustion, for the six of the ten who have HN accounts: `spez` (83), `emmett` (927), `hunterwalk` (87), `fredwilson` (251), `bfeld` (14), `jkopelman` (276). | **1,638 items**, full comment text |
+| **SEC EDGAR** | Full-text search with a declarative UA. Per-name entity sets, plus an explicit **two-phrase query for all 45 pairs** (`q="A" "B"`). | 2,589 hits scanned across 9 names |
+| **Nabeel Qureshi interview corpus** | Fetched and grepped the Lenny's, Common Reader, Ian Leslie and *Minutes* transcripts | 4 long transcripts |
+
+**Who has no HN account** (checked against the Firebase user API): Eric Ries, Sarah Tavel,
+Nabeel Qureshi, Melanie Perkins. (`nabeel` on HN is **Nabeel Hyatt of Spark Capital** — see the
+false-positive note in §3.)
+
+---
+
+## 1. EDGE TABLE
+
+Strength key — **STRONG**: documented repeatedly, or a formal/financial tie in a filing.
+**MEDIUM**: documented at least once in a primary source. **WEAK**: real but thin, one-directional,
+or inferable rather than stated.
+
+| # | Pair | Type | Date / range | Direction | Strength | Evidence (verbatim + URL fetched) |
+|---|---|---|---|---|---|---|
+| E1 | **Wilson ↔ Feld** | board-together | 2013-10-07 Form D (relationship runs 2001–2019) | symmetric | **STRONG** | Return Path Inc. Form D, Related Persons list, both filed as **Director**: `Fred Wilson … 915 Broadway Suite 1900 New York NY … Director` and `Brad Feld … 304 Park Avenue 7th Floor New York NY … Director`. `https://www.sec.gov/Archives/edgar/data/1108129/000140508613000347/primary_doc.xml` |
+| E2 | **Wilson ↔ Feld** | co-investment | 2007-11 → 2012 (Zynga) | symmetric; Feld took the seat for both firms | **STRONG** | Fred Wilson, in his own words on HN, 2011-11-13: *"i am not on the Zynga board and never have been. when we made our Series A investment in Zynga, my good friend Brad Feld took the Series A board seat representing both our firms on the board."* `https://news.ycombinator.com/item?id=3230594` (retrieved via `hn.algolia.com/api/v1/search_by_date?tags=author_fredwilson`). Corroborated by the Zynga S-1: *"The holders of our Series A preferred stock and Series A-1 preferred stock, voting together as a single class, have designated Brad Feld for election to our board of directors."* and *"Brad Burnham, Fred Wilson, Albert Wenger and John Buttrick are Partners at Union Square Ventures and share voting and dispositive power over the shares held by Union Square Ventures 2004, LP"* — `https://www.sec.gov/Archives/edgar/data/1439404/000119312511180285/ds1.htm` |
+| E3 | **Wilson ↔ Feld** | personal | first met **1997**; ran to **2026** | symmetric | **STRONG** | Feld, 2005-02-10, on how they met: *"I've known Fred since the first day I started working with Mobius (called Softbank at the time). My very first Softbank-related meeting was to do due diligence at a company outside Boston called Yoyodyne and I met Fred, Charley Lax, and Seth Godin … Neither Fred nor I knew each other (nor did we know the other was going to be there), but I remember an immediate first impression about five minutes into the meeting of 'smart dude.'"* — and, later in the same post, *"I worked closely with Fred and Jerry on a handful of companies (eShare – big success, abuzz – solid success, Mainspring – got our money back, Appgenesys – big failure, Return Path – success in progress) and adore both of them."* `https://feld.com/archives/2005/02/fred-wilson-announces-the-launch-of-union-square-ventures/`. Feld, 2012-09-18: *"At our board meeting last week, Matt gave me and Fred Wilson our 12 year anniversary gift – a pair of red Return Path-branded Adidas sneakers. I still vividly remember the phone call Fred and I had where we cut a deal to merge two nascent companies – Veripost and Return Path … I offered up a 50/50 merger and Fred suggested he wanted a little more since Return Path had raised 3x the money Veripost had. I responded with 'how about 55/45' and Fred said 'it's a deal.'"* `https://feld.com/archives/2012/09/return-path-launches-email-intelligence/`. Wilson, 2019-05-02: *"Brad Feld and Greg Sands joined the board a year or two after I did and they are among my closest friends in the venture bu[siness]"* `https://avc.com/2019/05/the-long-game/`. Feld's post the same week is literally titled **"The Long Arc of a CEO-Investor Friendship"** and opens *"My fellow board member Fred Wilson wrote a great history titled The Long Game"* `https://feld.com/archives/2019/05/the-long-arc-of-a-ceo-investor-friendship/`. **Volume:** Feld names Wilson in the body of **296 of his 5,551 posts (2004-05-04 → 2026-06-15)**; Wilson names Feld in **148** avc.com posts (2004-05-10 → 2021-01-12). This is the densest edge in the set by an order of magnitude. |
+| E3b | **Wilson ↔ Feld** | shared-org (policy campaign) | 2006-07 → 2010-02 | symmetric | **MEDIUM** | Feld, 2010-02-19: *"I'm good friends with Brad and his partner Fred Wilson and we've had a number of conversations about this over the past six months, including the creation of an ad-hoc group we are calling 'Abolish Software Patents' (which is similar in structure to the group behind the Startup Visa Movement."* `https://feld.com/archives/2010/02/phenomenal-essay-on-why-software-patents-are-the-problem/`. Earlier, 2006-07-11: *"Fred referenced my post 'Abolish Software Patents' and his subsequent post 'Patently Absurd' as starting points for the discussion."* `https://feld.com/archives/2006/07/more-on-abolishing-software-patents/` |
+| E3c | **Wilson ↔ Feld** | shared-org (Techstars) | 2009-08 | Feld's org; Wilson showed up for it | **MEDIUM** | Feld, 2009-08-19, listing who wrote about the Techstars Boulder 2009 class: *"Mentors / Investors: Fred Wilson, Todd Vernon, Matt Blumberg, Jeffrey Kalmikoff, Don Dodge, Chris DeVore, Mark Solon, Andrew Hyde, Brad Feld"* `https://feld.com/archives/2009/08/techstars-episode-12-the-beginning/`. Two weeks earlier, on Demo Day: *"I've gotten to spent the past 36 hours with a couple of good friends, including Dick Costolo, Fred Wilson, Stewart Alsop, and Mike Marquez who have come to town for the event."* `https://feld.com/archives/2009/08/techstars-investor-demo-day-boulder-2009/`. Also relevant to the *"one thing a host could say out loud"* brief: Feld, 2013-08-16, *"I give a talk for many of the Techstars CEOs called 'How to be a Great CEO' and I focus the conversation around Fred's points."* `https://feld.com/archives/2013/08/being-a-great-ceo/` |
+| E4 | **Wilson → Kopelman** | public-praise-or-citation | 2006-02-07 → 2016-05-16 (**17** posts; nothing since) | **asymmetric** — Wilson names Kopelman constantly; no reciprocal blog corpus found (see §4) | **STRONG** | 17 avc.com posts. 2016-05-16: *"a video from Disrupt featuring my partner Andy, Josh Kopelman (one of my favorite VCs), and one of Josh's limited partners Chris Douvos."* `https://avc.com/2016/05/from-the-investors-perspective/`. 2006-11-01: *"Josh Kopelman, a well known early stage investor who we have co-invested with successfully, has a good post up on CRV Quickstart."* `https://avc.com/2006/11/more_on_crv_qui/` — note this asserts co-investment but **names no company**; the company-level co-investment is **UNVERIFIED**. 2006-12-28: *"My partner Brad and I were at lunch with Josh Kopelman a month or so ago and we got to talking … Josh blurted out 'web 2.0 is the explicit web and web 3.0 is the implicit web'."* `https://avc.com/2006/12/2007_the_implic/` |
+| E5 | **Feld → Kopelman** | public-praise-or-citation | 2006-04-09 → 2018-07-02 | asymmetric (Feld names Kopelman) | **MEDIUM** | 18 feld.com posts. 2006-04-09: *"Josh Kopelman has a thoughtful post on why he prefers preferred equity instead of convertible debt in seed-stage investments. I agree with everything he says."* `https://feld.com/archives/2006/04/kopelman-prefers-preferred-equity/`. 2006-08-31: *"my post 'The First 25,000 Users Are Irrelevant' that built off of Josh Kopelman's superb post titled '53,651'"* `https://feld.com/archives/2006/08/the-80-19-1-rule/` |
+| E5b | **Feld ↔ Kopelman** | co-appearance (panel) | 2009-05 (announced 2009-03-31) | symmetric | **MEDIUM** | Feld: *"This year Scott Kirsner invited me to be on a panel and I happily accepted … I'm on a panel on Friday afternoon titled 'How is the Venture World Changing' with Josh Kopelman (First Round Capital), Jo Tango (Kepha), and Paul Ciriello (Fairhaven). Dan Primack, the creator of peHUB Wire will be moderating."* — the Nantucket Conference. `https://feld.com/archives/2009/03/nantucket-conference-10/` |
+| E6 | **Kopelman → Wilson / Feld / Walk** | public-praise-or-citation | 2011-05-18, 2013-09-01, 2013-06-29 | asymmetric, and *much* thinner than the reverse | **WEAK** | Kopelman's only retrievable first-person corpus is his HN account `jkopelman` (276 items). He **submitted** each of their posts to HN without commentary: `http://www.avc.com/a_vc/2011/05/sizing-option-pools-in-connection-with-financings.html` (2011-05-18, id 2560048); `http://www.feld.com/wp/archives/2013/09/the-toxicity-of-arrogance.html` (2013-09-01, id 6311501); `http://hunterwalk.com/2013/06/28/waving-goodbuy-facebooks-big-whiff-on-traffic-of-commercial-intent/` (2013-06-29, id 5961563). A submission is an endorsement, but it is not prose — hence WEAK. |
+| E7 | **Walk → Wilson** | public-praise-or-citation | 2007-04-22 → 2019-02-05 | asymmetric (Walk cites Wilson far more than the reverse) | **STRONG** | **20 posts** on hunterwalk.com contain the exact string "Fred Wilson" (2007-04-22 → 2019-02-05). 2018-04-20: *"Like many in the venture community, especially us newer investors, I enjoy Fred Wilson's 'process' posts, where he shares a POV on the practice of our profession."* `https://hunterwalk.com/2018/04/20/and-when-my-time-is-up-have-i-done-enough-fred-wilsons-post-on-time-money/`. 2010-09-26, in a post title: *"Parallel Entrepreneurism: I'm as smart as Fred Wilson was in 2006"*. 2013-12-24: *"I believe that was my introduction to people like Fred Wilso[n]"* `https://hunterwalk.com/2013/12/24/why-nyc-tech-scene-excites-me-deep-roots/` |
+| E8 | **Wilson → Walk** | public-praise-or-citation | 2012-06-06 → 2013-09-29 (**3** posts) | asymmetric, and **stale** (nothing after 2013) | **MEDIUM** | 3 avc.com posts. 2012-06-06: *"Hunter Walk has a post up suggesting that 'social proof' is not as helpful of an indicator of startup quality as it once was."* `https://avc.com/2012/06/social-proof-is-dangerous/`. 2013-09-29: *"USV is a lead investor. Benchmark is a lead investor. Gotham Gal is a lead investor. I suspect Hunter's Homebrew is a lead investor."* `https://avc.com/2013/09/leading-vs-following/` |
+| E9 | **Feld ↔ Walk** | co-investment (LP) | 2014-05-27, states a relationship in place since ~2013 | Feld's firm is money **into** Walk's firm | **STRONG** | Feld, in his own words: *"A few weeks ago Hunter Walk and Satya Patel of Homebrew, a one year old seed-stage VC firm that my partners and I are investors in, came and spent the day in Boulder."* `https://feld.com/archives/2014/05/spending-day-another-vc-firm/` |
+| E10 | **Walk → Feld** | public-praise-or-citation | 2012-03-04 → 2024-08-17 | asymmetric (Walk is the admirer) | **STRONG** | **16 posts** on hunterwalk.com contain the exact string "Brad Feld" (2012-03-04 → 2024-08-17). 2017-06-16: *"Brad Feld, one of my VC 'true norths,' posted about VC Fund Differentiation the other day."* `https://hunterwalk.com/2017/06/16/vc-fund-differentiation-should-matter/`. 2013-10-26: *"Brad Feld of Foundry Group, a firm and team who have been especially helpful"* `https://hunterwalk.com/2013/10/26/vcs-be-a-partnership-not-a-collection-of-partners/`. 2015-04-06: *"my desire to not be Fred Wilson 2.0, Brad Feld 2.0 or Marc Andreessen 2.0"* `https://hunterwalk.com/2015/04/06/five-questions-charlie-odonnell-asked-me-to-answer/` |
+| E10b | **Walk → Kopelman** | public-praise-or-citation | 2014-04-10 → 2023-06-26; the substantive one is **2019-12-16** | asymmetric (Walk names Kopelman) | **MEDIUM** | 3 posts on hunterwalk.com contain "Josh Kopelman". The load-bearing one is Walk's post *"The Five Most Influential VCs of the 2010s"*, where Kopelman is one of the five: *"Josh Kopelman — Over the course of the 2010s, seed investing went from a clubby handful of individuals and 'micro VCs' to an outpouring of capital and multi GP firms. The institutionalizing of seed financing was driven by the aptly-named First Round Capital which Josh co-founded and for a long while, was clearly the visible frontman of the group."* `https://hunterwalk.com/2019/12/16/the-five-most-influential-vcs-of-the-2010s/`. **Notable:** Fred Wilson and Brad Feld are **not** on that list of five — checked by string search of the fetched body. Walk cites them far more often but ranked Kopelman, not them, as decade-defining. |
+| E11 | **Feld ↔ Ries** | personal + public-praise + shared-org | 2007 → **2026-04-29** | close to symmetric; Feld does the naming, Ries reciprocated with a book foreword | **STRONG** | **28 feld.com posts, 2009-07-24 → 2026-04-20.** Feld, 2020-07-28: *"Some of the inspiration for The Startup Community Way came from Eric Ries. I met Eric in 2007 or so and he's another example, like Tim Ferriss, of a 'good friend and colleague' from a distance. We've only physically been in the same space a few times, but I've learned an enormous amount from Eric, feel emotionally close to him, and have a deep respect for the work he doe[s]."* `https://feld.com/archives/2020/07/eric-ries-foreword-to-the-startup-community-way/`. Feld, 2018-10-31: *"I'm a big fan and long-time friend of Eric's."* `https://feld.com/archives/2018/10/innovation-and-venture-capital-in-new-jersey/`. **Live in 2026:** *"On April 29 at 10am PT, Eric Ries and I are doing a free fireside chat for startup communities. We're going to talk about the lessons we've learned as founders, investors, and advisors - and the books we've each just put into the world."* `https://feld.com/archives/2026/04/give-first-build-right-with-eric-ries/` |
+| E12 | **Feld ↔ Ries** | shared-org (Startup Visa Movement) | 2009-09 → 2016-08 | symmetric — they campaigned together | **STRONG** | Feld, 2009-09-29: *"Thanks to the efforts of Dave McClure and Eric Ries, we shifted the name to the StartupVisa, figured out that the EB-5 visa was the most logical one to try to 'modify', and got a web site up about it."* `https://feld.com/archives/2009/09/startupvisa-momentum/`. Feld, 2010-04-30: *"In March, I went to DC with Dave McClure, Eric Ries, Shervin Pishevar, and a bunch of Geeks on a Plane to discuss, advocate, and support the Startup Visa initiative."* `https://feld.com/archives/2010/04/startup-visa-videos-from-our-dc-trip/` |
+| E12b | **Feld ↔ Ries** | shared-org (Techstars) | 2009-07-24 → 2015-03-16 | Feld pulled Ries into his org's orbit | **MEDIUM** | Feld, on how it started: *"I gave a talk at the fbFund Rev program about a month ago on the same day that Eric gave a talk. Since I was hanging around for the day, I listened to Eric's talk, which was great. I mentioned it to David Cohen at TechStars who told me that he had been emailing with Eric about having Eric come to Boulder to do his thing. Eric has decided to come to Boulder on 8/19 and 8/20."* `https://feld.com/archives/2009/07/eric-ries-is-coming-to-boulder/`. Six years later, Feld personally backed a Ries Kickstarter reward tier: *"One of the award levels is a day in Boulder with me, time with Techstars, several of my portfolio companies, a night at the St. Julien Hotel, and dinner with me at Kasa Sushi."* `https://feld.com/archives/2015/03/three-startup-books-buy-today/` |
+| E13 | **Walk ↔ Ries** | shared-org (co-edited a book) | 2012-01 (announced 2012-03-04) | symmetric — they co-curated it | **MEDIUM** | Hunter Walk, in his own words: *"In January Eric Ries and I curated an ebook called Uncensored to benefit the Electronic Frontier Foundation, a nonprofit organization which defends digital rights. The book features blog posts from notable technologists such as Fred Wilson, Brad Feld, danah boyd, Marc Andreessen and dozens of other big thinking folks."* `https://hunterwalk.com/2012/03/04/uncensoredbook-now-free-to-all-eff-supporters/` — **note this single sentence also establishes Walk→Wilson and Walk→Feld as contributors to the same volume.** |
+| E14 | **Walk ↔ Feld ↔ Ries** | co-appearance (co-signatories) | 2016-07-14 | symmetric, three-way | **MEDIUM** | All three appear on the same open letter against a Trump presidency, which Walk posted in full: *"Brad Feld, Managing Director, Foundry Group; Co-Founder, Techstars"*, *"Eric Ries, Entrepreneur & Author, The Lean Startup"*, *"Hunter Walk, Partner, Homebrew VC; Former Director of Product Management, Google"*. `https://hunterwalk.com/2016/07/14/trump-would-hurt-innovation-im-with-her/` — Fred Wilson, Kopelman, Tavel, Huffman, Shear and Perkins are **not** on this list (checked by string search of the fetched body). |
+| E15 | **Wilson → Ries** | public-praise-or-citation | 2011-02-12 → 2015-03-16 (**4** posts) | asymmetric, and **stale** (nothing after 2015) | **MEDIUM** | 4 avc.com posts. 2015-03-16: *"My friend Eric Ries, author of The Lean Startup, is writing a new book called The Leader's Guide. He's crowdfunding the research, writing, and production of this new book on Kickstarter and the campaign was launched today. I've already backed this project and you can too."* `https://avc.com/2015/03/the-leaders-guide/`. 2011-05-13: *"One that I have my eye on is Startup Lessons Learned from Eric Ries and his Lean Startup gang."* `https://avc.com/2011/05/startup-lessons-learned/` |
+| E16 | **Wilson ↔ Feld ↔ Walk** | shared-org (joint philanthropy) | 2017-06-09 | Walk is the connector; Wilson and Feld put up the money | **MEDIUM** | Feld: *"Our month match for June is The Human Utility. Fred Wilson, Joanne Wilson, Amy Batchelor, and I are matching up to $20,000 of contributions via our #GiveWater campaign. Hunter Walk introduced us to The Human Utility at the beginning of the year."* `https://feld.com/archives/2017/06/monthly-match-human-utility-givewater/` — this is the only artifact in the whole audit where three of the ten act together on a non-commercial project. |
+| E17 | **Qureshi → Shear** | public-praise-or-citation | 2024-01-20 | **strongly asymmetric** — Qureshi links Shear; nothing found in the reverse direction | **MEDIUM** | Qureshi, in "The Serendipity Machine": *"Bookmark tweets that are especially wise, so you can find them again later. I love Karpathy's best tweets, for example. Michael Nielsen on spaced repetition. Emmett Shear on burnout."* — the link target is `https://twitter.com/eshear/status/1561120325584109574`. `https://nabeelqu.substack.com/p/the-serendipity-machine` (retrieved via the full-text Substack feed). **This is the only edge Nabeel Qureshi has to anyone in the set.** |
+| E18 | **Shear → Huffman** | public-praise-or-citation (factual, not warm) | 2011-06-17 | asymmetric — Shear names Huffman; `spez`'s 83 HN items name no one in the set | **MEDIUM** | Shear on HN: *"Jedberg was not on the founding team of Reddit. The founding team of reddit was Steve Huffman (spez) and Alexis Ohanian (kn0thing). Jedberg was their first hire after acquisition, though they'd acquired two other team members via merger (Chris Slowe and Aaron Swartz) prior to that."* `https://news.ycombinator.com/item?id=2666830` (retrieved via `hn.algolia.com/api/v1/search_by_date?tags=author_emmett`). He corrects the record about Huffman's company from memory — that is familiarity, but it is not warmth and it is not a relationship claim. |
+| E20 | **Perkins → Ries** | public-praise-or-citation (impersonal) | 2025-11-02 | one-way; she names his book, not him | **WEAK** | Melanie Perkins' *Lenny's Podcast* episode page lists, under the show's standard guest-recommendation segment: *"Recommended books: • Creativity, Inc. … • **The Lean Startup: How Today's Entrepreneurs Use Continuous Innovation to Create Radically Successful Businesses** … • The Power of Moments … • Designing the Obvious…"* `https://www.lennysnewsletter.com/p/the-making-of-canva`. **Caveat:** the page does not explicitly attribute the list to her. It is corroborated as hers because *Designing the Obvious* also appears in her 2016 20VC show notes as *"Melanie's Fave Book: Designing The Obvious"*. This is a book citation, not contact — do not upgrade it. |
+| E21 | **Kopelman ~ Perkins** | institutional co-presence, **not** a person edge | 2021-11-18, 2025-08-20, 2026-01-13 | Kopelman's firm's publication covers Perkins' company; Kopelman himself never appears | **WEAK — flag, do not score as a relationship** | First Round Review (First Round Capital's own publication) has three posts naming her, e.g. *"Cameron Adams barely knew Melanie Perkins and Cliff Obrecht before the three decided to build Canva together."* `https://review.firstround.com/canvas-path-to-product-market-fit/`. All **982** First Round Review posts were paginated via its Ghost content API: exactly 3 contain "Melanie Perkins", **Kopelman's name appears in 0 of them**, and Perkins is never a guest or author. |
+| E19 | **Shear → Wilson** | co-presence only | 2008-10-28, 2011-09-25 | one-way, and it is not really about Wilson | **WEAK — do not score this as an edge** | Two of Shear's HN comments sit on threads whose *story titles* are "Fred Wilson's Survival Matrix" and "Moneyball for startups? PG, Fred Wilson, Chris Dixon discuss". Shear comments on the substance and **never names Wilson**. Recorded here only so a future crawler does not mistake the story title for a mention. |
+
+---
+
+## 2. NO DISCOVERABLE EDGE
+
+These are **confirmed absences**, not gaps I skipped. For each I name the corpus I searched and what
+came back. A confirmed absence should make the scoring engine fall back to topical affinity (§5) and
+must never be dressed up as a connection.
+
+**Master negative results that kill many pairs at once:**
+
+- **Canva's investor list contains none of the ten's firms.** Assembled from pages actually fetched:
+  seed (TechCrunch 2013-08-26) — *"Matrix Partners, InterWest Partners, 500 Startups, and various
+  angels"*; 2019 (TechCrunch 2019-10-16) — *"Investors in the company include Bond, General Catalyst,
+  Bessemer Venture Partners, Blackbird and Sequoia China"*; Perkins herself on 20VC 2016-06-10 —
+  *"have funding from our friends at Shasta, Felicis and upcoming guests Blackbird Ventures and
+  Airtree in Australia."* **USV, Foundry Group, First Round Capital, Benchmark and Homebrew appear in
+  zero Canva investor list.** Canva is also **absent from Y Combinator's full company directory**
+  (6,200 companies via `https://yc-oss.github.io/api/companies/all.json`; the only match is a
+  different company called "Canvas") and absent from the Techstars portfolio search. So there is no
+  co-investment edge and no shared-accelerator edge to Perkins, at all.
+- **Podcast co-appearance sweep, Perkins vs. the nine: zero.** 89 podcast feeds were resolved via the
+  iTunes Search API and each RSS grepped in full — 20VC (1,504 items), This Week in Startups (1,470),
+  How I Built This (865), Masters of Scale (734), Invest Like the Best (595), Lenny's (359), Guy
+  Kawasaki (367), Acquired (216), First Round's *In Depth* (185). **No episode anywhere co-features
+  Perkins with any of the nine.** She shares *shows* with Wilson, Feld, Kopelman, Tavel, Walk,
+  Huffman, Shear, Ries and Qureshi — never an *episode*. Same-show-different-episode is not an edge.
+- **Open Library `search/inside`, "Melanie Perkins" + each of the nine names: 0 hits for all nine.**
+- **Wikipedia's Melanie Perkins article names none of the nine.** The only investors/collaborators it
+  names are Blackbird Ventures, Lars Rasmussen, Cliff Obrecht and Cameron Adams.
+
+- **feld.com, all 5,551 posts, body text only:** **zero** occurrences of "Tavel", "Huffman",
+  "Emmett", "Shear", "Nabeel", "Qureshi", "Melanie Perkins". Brad Feld — the single most
+  name-dropping writer in this set — has never once written any of those five names.
+- **avc.com, WordPress REST full-text search** (`x-wp-total` header): `Tavel` → **0**,
+  `Huffman` → **0**, `Qureshi` → **0**, `Melanie Perkins` → **0**. `Emmett` → 1 (unrelated).
+  `Twitch` → 3, all about the company or the word "twitch", none naming Shear.
+- **sarahtavel.com, all 20 Substack posts:** **zero** occurrences of any of the other nine names.
+- **SEC EDGAR pairwise full-text search, all 45 pairs** (`q="Name A" "Name B"`): only
+  **Wilson+Feld** returned real hits (Return Path Form Ds, Zynga S-1/424B4). Wilson+Huffman returned
+  316 hits, **all of which are N-PX proxy-voting tables** from unrelated mutual funds where the two
+  names appear in different rows — noise, not an edge. Every other pair: **0**.
+
+| Pair | What was searched | Result |
+|---|---|---|
+| Wilson ~ Tavel | avc.com full-text; tavel Substack; EDGAR pair query | **NO EDGE** |
+| Wilson ~ Huffman | avc.com (`Huffman`→0, `Reddit`→49 posts none naming him); `spez` HN corpus; EDGAR pair query (N-PX noise only) | **NO EDGE** |
+| Wilson ~ Shear | avc.com; `emmett` HN corpus (co-presence only, E19) | **NO EDGE** |
+| Wilson ~ Qureshi | avc.com (`Nabeel`→6 hits, **all Nabeel Hyatt of Spark Capital**); Qureshi's 14 Substack posts | **NO EDGE** |
+| Wilson ~ Perkins | avc.com (`Melanie Perkins`→0; `Canva`→25 hits, all "canvas"/"CanvasPop"/Chris Poole's *Canvas*); Canva investor lists; Open Library; 89 podcast feeds | **NO EDGE** |
+| Feld ~ Tavel | 5,551-post crawl | **NO EDGE** |
+| Feld ~ Huffman | 5,551-post crawl; `bfeld` HN corpus | **NO EDGE** |
+| Feld ~ Shear | 5,551-post crawl | **NO EDGE** |
+| Feld ~ Qureshi | 5,551-post crawl; Qureshi Substack | **NO EDGE** |
+| Feld ~ Perkins | 5,551-post crawl; EDGAR; Canva investor lists; Techstars portfolio (Canva absent); Open Library; 89 podcast feeds | **NO EDGE** |
+| Kopelman ~ Tavel | `jkopelman` HN corpus (276 items); Tavel Substack; EDGAR | **NO EDGE** |
+| Kopelman ~ Huffman | `jkopelman` + `spez` HN corpora; EDGAR | **NO EDGE** |
+| Kopelman ~ Shear | `jkopelman` + `emmett` HN corpora | **NO EDGE** |
+| Kopelman ~ Ries | `jkopelman` HN corpus; feld/avc cross-refs | **NO EDGE** (see §4 — his own blog archive is the gap) |
+| Kopelman ~ Qureshi | `jkopelman` HN corpus; Qureshi Substack | **NO EDGE** |
+| Kopelman ~ Perkins | `jkopelman` HN corpus; EDGAR; all 982 First Round Review posts via its Ghost API; Canva investor lists | **NO EDGE** as a person edge — see E21 for the institutional near-miss |
+| Tavel ~ Huffman | Tavel Substack; `spez` HN corpus; EDGAR | **NO EDGE** |
+| Tavel ~ Shear | Tavel Substack; `emmett` HN corpus | **NO EDGE** |
+| Tavel ~ Ries | Tavel Substack | **NO EDGE** |
+| Tavel ~ Qureshi | Tavel Substack; Qureshi Substack | **NO EDGE** |
+| Tavel ~ Perkins | Tavel Substack; EDGAR; Canva investor lists; 89 podcast feeds (both 20VC and Lenny's guests, never same episode) | **NO EDGE** |
+| Walk ~ Huffman | hunterwalk.com WP search (`Reddit`→7 posts, none naming Huffman); `spez` HN corpus | **NO EDGE** |
+| Walk ~ Shear | hunterwalk.com (`Twitch`→7 posts, none naming Shear — most are the word "twitchy"); `emmett` HN corpus | **NO EDGE** |
+| Walk ~ Qureshi | hunterwalk.com WP search; Qureshi Substack | **NO EDGE** |
+| Walk ~ Perkins | hunterwalk.com (`Perkins`→5 hits, **all a different Perkins**; `Canva`→3 hits: two are "canvass"/"canvas", the third is a 2025-04-17 Q&A in which the *interviewee* Joe Hyrkin — not Walk — says *"For Issuu, Canva was a natural potential acquirer."* The post names no Canva executive and never mentions Perkins.) | **NO EDGE** |
+| Huffman ~ Ries | `spez` HN corpus; Reddit SEC filings | **NO EDGE** |
+| Huffman ~ Qureshi | `spez` HN corpus; Qureshi Substack | **NO EDGE** |
+| Huffman ~ Perkins | `spez` HN corpus; EDGAR; 89 podcast feeds (both on How I Built This and Masters of Scale, never the same episode) | **NO EDGE** |
+| Shear ~ Ries | `emmett` HN corpus (927 items, `lean startup` → 0 in his own text) | **NO EDGE** |
+| Shear ~ Perkins | `emmett` HN corpus; EDGAR; 89 podcast feeds | **NO EDGE** |
+| Ries ~ Qureshi | Qureshi Substack (`lean startup` appears **once**, 2024-10-15, as a *contrast* — *"doing the opposite of the 'lean startup' thing"* about Palantir, `https://nabeelqu.substack.com/p/reflections-on-palantir` — he critiques the doctrine without naming Ries) | **NO EDGE** (see §3, near-miss) |
+| Ries ~ Perkins | startuplessonslearned.com search: `?q=Canva` → *"No posts matching the query"*, `?q=Perkins` → only the 1933 radio serial *Ma Perkins*; Open Library 0 | **WEAK one-way only — see E20** |
+| Qureshi ~ Perkins | Qureshi Substack archive (neither "Canva" nor "Perkins" appears); Qureshi interview transcripts; 89 podcast feeds | **NO EDGE** |
+
+---
+
+## 3. False positives and near-misses a naive crawler will get wrong
+
+These are the traps. Each one looks like an edge in a search-result snippet and is not one.
+
+1. **"Nabeel" on avc.com is Nabeel *Hyatt*, not Nabeel Qureshi.** Six avc.com posts (2008–2016) name a
+   "Nabeel" — he is the Spark Capital venture partner and co-host of the *Hallway Chat* podcast.
+   Verbatim, 2016-03-04: *"Yesterday I hung out (virtually) with Bijan and Nabeel at Spark Capital and
+   joined them in their podcast they call Hallway Chat."* `https://avc.com/2016/03/hallway-chat/`.
+   The HN account `nabeel` is the same person — its bio reads *"entrepreneur. spark capital."*
+   **Any name-matching on the first token produces a phantom Wilson↔Qureshi edge.**
+2. **"Canva" on avc.com is not Canva.** 25 avc.com posts match `Canva`; the actual strings are
+   *canvas*, *CanvasPop*, and Chris Poole's startup *Canvas* — e.g. 2011-06-13, HN, Wilson commenting
+   on a story titled "Union Square Ventures Leads $3 Million Round in Moot's Startup, Canvas".
+   Substring matching on company names manufactures a Wilson↔Perkins edge that does not exist.
+3. **"Twitch" is usually the verb.** On hunterwalk.com, 5 of the 7 `Twitch` hits are *"twitchy"*,
+   *"my lizard brain still twi[tches]"*, *"an anxious twitch in the cheek"* (that last one is
+   avc.com, 2005). None name Emmett Shear.
+4. **"Homebrew" is usually the 1970s computer club.** 3 of the 5 avc.com `Homebrew` hits are the
+   Homebrew Computer Club and one is a Kickstarter project called "homebrew Tesla Powerwall clone".
+   Only one — 2013-09-29 — is Hunter Walk's firm.
+5. **EDGAR N-PX filings are a co-occurrence factory.** `"Fred Wilson" "Steven Huffman"` returns
+   **316** EDGAR hits. Every one is a mutual-fund proxy-voting record where a "Fred Wilson" appears
+   as a director nominee at one company and Reddit's "Steven Huffman" at another, hundreds of rows
+   apart in the same table. **Filter `N-PX` and `N-PORT` out of any EDGAR co-occurrence signal.**
+6. **Near-miss, worth knowing but not an edge: Qureshi versus the Lean Startup.** He argues against
+   the doctrine Ries is famous for, without naming him: *"Palantir floundered for years, barely
+   getting any real traction in the gov space, and doing the opposite of the 'lean startup' thing"*
+   (`https://nabeelqu.substack.com/p/reflections-on-palantir`, 2024-10-15). If you wanted a
+   conversational hook between two people with no relationship, this is it — but it is a
+   `shared-declared-interest` collision, not a `public-disagreement` between them.
+7. **`eshear` vs `emmett` on Hacker News.** Emmett Shear's real HN account is **`emmett`** (927
+   items, karma 4,858, bio names Softmax and Twitch). `eshear` also exists but has **1 item and
+   karma 14**. Crawl the wrong one and you get nothing.
+8. **Open Library `search/inside` co-occurrence is far too noisy to use as an edge signal.** Querying
+   `"A" "B"` returns books containing both names *anywhere*, which for this crowd means every VC
+   directory and every startup-history book. Measured, keyless, today:
+   `"Fred Wilson" "Brad Feld"` → **52** books; `"Fred Wilson" "Steve Huffman"` → **18**;
+   `"Fred Wilson" "Emmett Shear"` → **7**; `"Brad Feld" "Sarah Tavel"` → **2** (*Startup Mixology*,
+   *The Business of Venture Capital*). Those last three pairs have **no edge whatsoever** in any
+   first-person corpus. The hits are directory entries and third-party narration, e.g.
+   *"Two University of Virginia graduates, {{Steve Huffman}} and Alexis Ohanian, created Reddit"*
+   next to *"{{Emmett [Shear}}, chief technology officer]"* — two unrelated sentences in
+   *The Social Media Bible*. **Use `search/inside` only for acknowledgement-section hits you open
+   and read; never as a co-occurrence score.** (Genuine negatives it does give cleanly:
+   `"Nabeel Qureshi"` co-occurs with **zero** of the other nine in any scanned book, and
+   `"Hunter Walk"` co-occurs with none of Huffman, Shear, Qureshi or Tavel.)
+9. **No `public-disagreement` edge was found anywhere in the 45 pairs.** Nobody in this set has
+   publicly argued with anybody else in this set, in any corpus searched. That edge type is empty.
+
+---
+
+## 4. Known gaps — where an edge could exist and I could not test for it
+
+Be honest with the scoring engine about these; they are the places where "no edge" means
+"not measurable", not "not there".
+
+| Gap | Why it matters | Status |
+|---|---|---|
+| **Josh Kopelman has no retrievable first-person archive.** His blog *Redeye VC* is not resolvable from this egress; his only searchable corpus is 276 HN items, most of which are bare link submissions. | Kopelman is the one VC in the set whose *outbound* naming cannot be measured. Wilson names him 17 times and Feld 18 times; the reverse direction is a black hole. Every Kopelman edge in §1 is therefore under-strength, not absent. | **Corpus gap** |
+| **Sarah Tavel's 2006–2015 blog *Adventurista*** exists only in the Wayback Machine and was not enumerated here. | Nine years of her writing predate her 20-post Substack. Any Tavel edge to Wilson/Kopelman/Walk from the 2008–2014 NYC/Pinterest era would live there. | **Corpus gap** |
+| **X/Twitter is unreadable.** Half the citations in this set are Twitter links — including the *only* artifact of the Qureshi→Shear edge (a tweet). | Several documented edges are Twitter-shaped (Wilson↔Walk's 2012 #Discover exchange; Feld quoting Walk's tweets). Those are permanently unverifiable at the source. | **Blocked** (see 04-source-retrievability §B1) |
+| **Firm-level co-investment could not be enumerated.** usv.com/companies, foundry.vc/portfolio, firstround.com/companies and homebrew.co are all JS-rendered; name extraction from the HTML was unreliable. EDGAR Form D does **not** list co-investors, so the Form-D pair query returning 0 for every firm pair is a **null method, not evidence of absence**. | If USV and First Round share a portfolio company, I did not detect it. | **Method gap** |
+| **Open Library `search/inside`** for acknowledgement-section co-mentions was not run to exhaustion. | Feld and Ries both wrote books with long acknowledgements; a name in an acknowledgement is a real, dateable edge. | **Not exhausted** |
+| **Podcast co-appearances** beyond those named in §1 were not swept exhaustively across all 45 pairs. | E14 and E11 both surfaced from blog posts, not from podcast feeds — the feed sweep is the more systematic method and it is incomplete. | **Not exhausted** |
+
+---
+
+## 5. SHARED TOPICS
+
+Controlled vocabulary. The same tag string is used for every person, so overlaps are computable by
+string equality. Each topic is backed by a URL that was fetched and a verbatim line from it.
+
+### Fred Wilson
+His blog carries **his own** category taxonomy, which is the cleanest topic evidence in the set.
+Counts are from `https://avc.com/wp-json/wp/v2/categories`.
+
+| Tag | Corpus evidence | Representative URL + verbatim |
+|---|---|---|
+| `venture-capital-craft` | category **"VC & Technology" = 3,859 posts**; series "MBA Mondays" = 196 | `https://avc.com/2019/08/employee-equity-how-much-2/` — *"I wrote a blog post about this topic in November 2010 that has become one of the most searched on and referenced AVC posts of all time."* |
+| `crypto-web3` | categories **crypto = 254, blockchain = 254** | `https://avc.com/2024/05/ive-moved-onchain/` — *"Over the last few years, I've moved my internet life from web2 to web3 and rarely use any web2 services anymore."* |
+| `music` | category **"My Music" = 898 posts** | `https://avc.com/2023/12/my-year-end-playlist-2/` — *"Every year I put together a playlist at the end of the year with some of the new music I found and got into. Most of these songs are under the radar which is my favorite kind of music."* |
+| `education-access` | category **"hacking education" = 205 posts** | `https://avc.com/2023/04/the-annual-computer-science-fair-2/` — *"Ten years ago, a small group of folks in the K12 Computer Science Education community in NYC decided to put on a 'mock job fair' for high school students."* |
+| `crowdfunding` | category **crowdfunding = 212 posts** | `https://avc.com/2023/05/funding-friday-crowdfunding-restaurants-via-blackbird/` — *"We have funded a lot of bars, restaurants, coffee shops, and bakeries here over the years."* |
+| `climate` | category **"climate crisis" = 59 posts** | `https://avc.com/2023/07/flooding/` — *"I got an email yesterday with photos of the flooding at West Point."* |
+
+### Brad Feld
+Tag evidence from `https://feld.com/tags/` (2,978 tags), corroborated by the 5,551-post body crawl.
+
+| Tag | Corpus evidence | Representative URL + verbatim |
+|---|---|---|
+| `startup-communities` | tags `startup-communities`, `startup-community-way`, `boulder-startup-community`; two books on the subject | `https://feld.com/archives/2020/07/eric-ries-foreword-to-the-startup-community-way/` — *"Some of the inspiration for The Startup Community Way came from Eric Ries."* |
+| `venture-capital-craft` | tags `venture-capital`, `venture-deals`, `entrepreneurial-finance`, `startup-boards`, `board-of-directors` | `https://feld.com/archives/2013/01/the-best-approach-to-a-board-package/` — *"I've been describing this as a part of a 'continuous board engagement'."* |
+| `mental-health` | tags `mental-health`, `depression`, `#depressionhero`, `mental-fitness`, `brain` | `https://feld.com/tags/depression/` (tag index, 200) |
+| `endurance-running` | tags `running`, `marathon`, `marathons`, `ultramarathon`, `ultrarunning`, `trail-running`, `barkley-marathons`, `western-states-endurance-run`, `double-long-run` | `https://feld.com/tags/running/` (tag index, 200) |
+| `tech-policy-immigration` | tags `startup-visa`, `international-entrepreneur-rule`, `visa` | `https://feld.com/archives/2016/08/startup-visa-international-entrepreneurs-rule-form-941/` — *"This journey started for me about seven years ago on 9/10/2009 when I wrote the blog post The Founders Visa Movement."* |
+| `software-patents` | tags `software-patents`, `patent-trolls`, `abolish-software-patents`, `innovators-patent-agreement`, `functional-claiming` | Feld: *"I'm good friends with Brad and his partner Fred Wilson and we've had a number of conversations about this over the past six months, including the creation of an ad-hoc group we are calling 'Abolish Software Patents'."* (feld.com body crawl) |
+| `reading-and-books` | tags `books`, `book`, `book-club`, `book-tour`, `audiobook`; `https://feld.com/books/` | `https://feld.com/archives/2011/11/books-on-entrepreneurship/` — *"I gobbled down some entrepreneurship books in the last week."* |
+
+### Josh Kopelman
+**Thinnest topic evidence in the set** — see §4. What follows is what his own words support.
+
+| Tag | Representative URL + verbatim |
+|---|---|
+| `seed-stage-financing` | Feld quoting him, 2006-04-09: *"Josh Kopelman has a thoughtful post on why he prefers preferred equity instead of convertible debt in seed-stage investments."* `https://feld.com/archives/2006/04/kopelman-prefers-preferred-equity/` |
+| `freemium-and-pricing` | Wilson quoting him, 2007-03-12: *"Josh Kopelman explains the reasons for this in his post, The Penny Gap. The biggest gap in any venture is that between a service that is free and one that costs a penny."* `https://avc.com/2007/03/in_defense_of_f/` |
+| `startup-metrics` | His own HN submission, 2008-01-24: *"I just changed the link -- you can now download the spreadsheet at http://www.kopelman.com/Cohort.xls"* (cohort analysis), `https://news.ycombinator.com/item?id=103771` |
+| `venture-capital-craft` | Wilson, 2015-03-11: *"As I was reading Josh Kopelman's excellent post on the seed boom and Series A bust…"* `https://avc.com/2015/03/numbers-can-ruin-a-good-story/` |
+| ⚠️ | Every one of these is **someone else quoting him**. Treat Kopelman's topic vector as second-hand until his own archive is recovered. |
+
+### Sarah Tavel
+
+| Tag | Representative URL + verbatim |
+|---|---|
+| `ai-and-work` | `https://www.sarahtavel.com/p/ai-startups-sell-work-not-software` — *"any work for which a human is a critical input into the work product is vulnerable to substitution with a software product built leveraging large language models (LLMs)"* |
+| `ai-coding-agents` | `https://www.sarahtavel.com/p/the-benefits-of-writing-code-two` — *"You want to conserve complexity, not let accidental complexity bubble up. But it's going to be really hard to distinguish accidental complexity from actual complexity when you are 100k lines of alien code deep."* |
+| `consumer-network-effects` | `https://www.sarahtavel.com/p/will-ai-be-as-big-of-a-catalyst-for` — *"One of the questions I hear a lot is 'will AI be as big of a catalyst for a consumer AI wave as mobile?'"* |
+| `escaping-competition` | `https://www.sarahtavel.com/p/how-to-escape-competition-building` — *"so you don't fall into the trap of providing a service that gets all the margin squeezed away"* |
+| `startup-org-design` | `https://www.sarahtavel.com/p/the-mitochondria-in-startups` — *"they start from the perspective of their own optimization, are rational actors, and the value they add to the company, while valuable, scales linearly"* |
+| `venture-capital-craft` | `https://www.sarahtavel.com/p/theyre-the-ones-who-reached-out-to` — *"You've got to take control of your process and figure out who you want to partner with. Right now, by relying on inbound…"* |
+
+### Hunter Walk
+
+| Tag | Representative URL + verbatim |
+|---|---|
+| `seed-stage-financing` | `https://hunterwalk.com/2023/09/15/venture-capitalists-will-overpay-for-seed-rounds-but-for-reasons-you-likely-havent-considered/` — *"So when I tell you what I'm seeing in venture financing these [days]…"* |
+| `venture-capital-craft` | `https://hunterwalk.com/2018/02/25/venture-funds-as-products-what-we-changed-for-homebrews-third-fund/` — *"Larger, longer fund gives us a better shot to hit our recycling goals"* |
+| `startup-boards` | `https://hunterwalk.com/2022/05/11/most-startups-add-independent-board-members-too-late-to-make-a-real-difference-heres-why/` — *"Think Of Your First Non-Investor Board Member As a Senior Hire, And Not Your IPO Board"* |
+| `employee-equity` | `https://hunterwalk.com/2024/05/11/are-startup-stock-options-like-lottery-tickets-a-ceo-and-former-employee-discuss-and-my-pov/` — *"I shared a post by Ben Werdmuller where he details that a company he used to work for had a recent repricing/restructuring of their stock"* |
+| `product-management` | `https://hunterwalk.com/2013/02/11/what-is-product-management/` — *"What is Product Management? General Assembly asked me to answer that question, so i took my best stab on their blog."* |
+| `tech-philanthropy` | `https://hunterwalk.com/2021/11/07/a-tech-millionaires-guide-to-philanthropy/` — *"I still insist that we don't talk enough about money in our community. I mean really talk — publicly, openly, emotionally."* |
+
+### Steve Huffman
+
+| Tag | Representative URL + verbatim |
+|---|---|
+| `online-community-and-moderation` | Q1-2026 earnings release, SEC-filed: *"Reddit is a one-of-one business powered by deeply engaged communities and authentic human conversation."* `https://www.sec.gov/Archives/edgar/data/1713445/000171344526000067/earningspressreleaseq126.htm` |
+| `human-authenticity-vs-ai` | Q2-2026 earnings release, SEC-filed: *"In an increasingly automated web, the value of real human perspective has never been higher."* `https://www.sec.gov/Archives/edgar/data/1713445/000171344526000098/earningspressreleaseq226.htm` |
+| `infrastructure-and-rewrites` | u/spez, 2026-08-05, "Modernizing Reddit's infrastructure with you": *"I love Old Reddit. It's the platform I largely built—as a kid, 21 years ago… If we replace every line of code but the output is the same, is it still old Reddit?"* |
+| `bots-and-identity` | u/spez post title, 2026-03-25: *"Humans welcome, bots must wear name tags"* |
+| `teaching-programming` | `https://www.udacity.com/blog/2012/05/steve-huffman-has-something-to-teach.html` (200) — he taught Udacity's web-development course |
+
+### Emmett Shear
+
+| Tag | Representative URL + verbatim |
+|---|---|
+| `ai-alignment` | His own HN "Who is hiring" post, 2026-03-02: *"THE MOST IMPORTANT UNSOLVED PROBLEM IN AI IS THE MOST POWERFUL OF ALL CAPABILITIES: ALIGNMENT… I believe the question of how AI systems learn to understand themselves and others is one of the most consequential technical problem[s]"* `https://news.ycombinator.com/item?id=47219766` |
+| `burnout-and-founder-psychology` | Independently corroborated from outside: Nabeel Qureshi links *"Emmett Shear on burnout"* as one of three tweets worth bookmarking (`https://nabeelqu.substack.com/p/the-serendipity-machine`) |
+| `livestreaming-and-creator-economy` | HN bio: *"founder and CEO of Twitch"*; 2011-03-20, recruiting: *"I'm going to be shamlessly self-promotional and suggest http://www.justin.tv/jobs/apply … we are a startup-y startup."* |
+| `economic-history` | HN submissions: *"Global GDP since 1820: a small china is an aberration"* (2009-10-06), *"Why did the Industrial Revolution begin in northwestern Europe?"* (2008-07-02) |
+| `programming-languages` | HN submissions: *"MISC: A homoiconic language based on maps"*, *"Don't use Pound for load balancing"* (2008-03-03) |
+| `science-fiction` | HN, 2009-12-22: *"Greg Egan is my favorite sci-fi writer. Read [Axiomatic] and have your mind blown."* |
+
+### Eric Ries
+
+| Tag | Representative URL + verbatim |
+|---|---|
+| `lean-startup-methodology` | Feld, 2011-06-22: *"It was with this backdrop that I read The Lean Startup by Eric Ries over the weekend. If you don't know Eric, he's the pioneer of the Lean Startup Movement."* `https://feld.com/archives/2011/06/the-science-of-tech-startups-especially-lean-ones/` |
+| `continuous-deployment` | Wilson, 2011-02-12: *"Here's an Eric Ries post on continuous deployment if you want to get a longer description of what it is and how it works."* `https://avc.com/2011/02/continuous-deployment/` |
+| `startup-communities` | Feld, 2020-07-28: he wrote the foreword to *The Startup Community Way*. `https://feld.com/archives/2020/07/eric-ries-foreword-to-the-startup-community-way/` |
+| `tech-policy-immigration` | Feld, 2010-03-22: *"Eric Ries, who is part of the Startup Visa Initiative core team (and the creator of the Lean Startup Methodology), has a great essay up on The Huffington Post."* `https://feld.com/archives/2010/03/monday-morning-startup-visa-articles/` |
+| `long-term-capitalism` | LTSE — his own exchange, SEC-registered. EDGAR full-text search for `"Eric Ries"` returns 64 hits, top entities **Long-Term Stock Exchange, Inc. (CIK 0001680712)**, LTSE Services, LTSE Group, LTSE Holdings. |
+| `tech-policy-elections` | Co-signatory, 2016-07-14: *"Eric Ries, Entrepreneur & Author, The Lean Startup"* on the anti-Trump innovation letter. `https://hunterwalk.com/2016/07/14/trump-would-hurt-innovation-im-with-her/` |
+
+### Nabeel Qureshi
+
+| Tag | Representative URL + verbatim |
+|---|---|
+| `attention-and-serendipity` | `https://nabeelqu.substack.com/p/the-serendipity-machine` (2024-01-20) — *"Twitter is of great (and underrated) societal importance."* |
+| `enterprise-software-and-palantir` | `https://nabeelqu.substack.com/p/reflections-on-palantir` (2024-10-15) — *"Palantir floundered for years, barely getting any real traction in the gov space, and doing the opposite of the 'lean startup' thing"* |
+| `taste-and-aesthetics` | `https://nabeelqu.substack.com/p/what-makes-art-great` (2026-05-03) — *"Shakespeare is excellent, whereas AI writing…"* |
+| `learning-and-practice` | `https://nabeelqu.substack.com/p/notes-on-puzzles` (2023-07-11) — *"I mostly don't play chess anymore — it's too addicti[ve]"* |
+| `advice-and-principles` | `https://nabeelqu.substack.com/p/advice` (2022-07-04) — *"The most valuable feedback usually hurts a lot. If you want to think originally and differently, seek uncorrelated inputs. Read minor works, older things, obscure journals."* |
+| `reading-and-books` | Same post, plus his book notes: *"A fun but light read, ending felt forced… Very 'young adult', will appeal to people who like that kind of thing."* |
+
+### Melanie Perkins
+Her corpus is the hardest to reach: `canva.com` **403s every automated client**, so the primary source
+is the Wayback capture of her own 21-Questions memoir.
+
+| Tag | Representative URL + verbatim |
+|---|---|
+| `design-democratization` | `http://web.archive.org/web/20250729222616/https://www.canva.com/newsroom/news/melanie-perkins-21-questions-part-1/` — *"I found that the design tools I was teaching were really clunky and difficult to use."* |
+| `fundraising-and-rejection` | Same source — the Fusion Books / Cameron Adams rejection-email material |
+| `investor-access-and-networking` | Same source: *"I was also learning to kitesurf, as I knew Bill ran a conference called MaiTai which was a gathering of entrepreneurs and kitesurfers. Kitesurfing scares the hell out of me… But I wanted to get Canva off the ground, so it was just a small inconvenience."* |
+| `founder-origin-story` | SmartCompany, 2013-03-19: *"I met Bill Tai at a conference in Perth a few years back. We kept in contact and kept him informed about what we were doing."* `https://www.smartcompany.com.au/startupsmart/design-start-up-canva-raises-3-million-after-kitesurfing-in-hawaii/` |
+| `community-and-comfort-zones` | Same SmartCompany piece: *"Everyone is learning to kitesurf, so it's about getting people out of their comfort zone. It helps people to bond in a way you can't do in a boardroom."* |
+
+### Computable topic overlaps
+
+Only tags shared by two or more people, using the vocabulary above:
+
+| Tag | Held by |
+|---|---|
+| `venture-capital-craft` | Wilson, Feld, Kopelman, Tavel, Walk |
+| `startup-communities` | Feld, Ries |
+| `tech-policy-immigration` | Feld, Ries |
+| `seed-stage-financing` | Kopelman, Walk |
+| `startup-boards` | Walk, Feld (as `venture-capital-craft` sub-tag) |
+| `reading-and-books` | Feld, Qureshi |
+| `human-authenticity-vs-ai` / `ai-and-work` / `ai-alignment` | Huffman, Tavel, Shear — **three different people, three different tags, no shared tag.** They are all writing about AI and none of them is writing about the same thing. Do not collapse these. |
+
+**The single most useful finding for a scoring engine:** `venture-capital-craft` is held by five of
+the ten, which means topical affinity alone will happily recommend Kopelman↔Tavel (no edge) as
+strongly as Wilson↔Feld (the strongest edge in the set). Topic overlap and relationship evidence must
+be scored separately, and the engine must be able to say *"you have never mentioned each other."*

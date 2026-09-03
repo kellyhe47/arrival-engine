@@ -1,0 +1,199 @@
+{
+  "schema_version": 1,
+  "id": "G-022",
+  "name": "full-digest-happy-path",
+  "why": "The whole product in one case: a name arrives, the room is scored, one match is surfaced with a reason built only from fired signals, a sourced deep cut is chosen, and the card closes on a line the host can say.",
+  "covers": [
+    "B-006",
+    "B-012",
+    "B-015"
+  ],
+  "case_type": "happy",
+  "traces_to": [
+    "AUD-FORMAT-PDB",
+    "AUD-FORMAT-SBAR",
+    "BRIEF-DIGEST",
+    "BRIEF-REASONING-EXPOSED",
+    "DEC-5",
+    "RUBRIC-3",
+    "RUBRIC-4"
+  ],
+  "defends_against": "An implementation that passes every unit fixture but never assembles them, so no complete card is ever proven to be shippable.",
+  "time_sensitive": true,
+  "given": {
+    "inputs": {
+      "arrival": {
+        "member_id": "m_feld",
+        "identifying_detail": "Foundry Group, Boulder",
+        "roster_id": "r_friday_1900"
+      },
+      "present_members": [
+        "m_wilson",
+        "m_perkins"
+      ],
+      "narration": {
+        "blocks": [
+          {
+            "order": 1,
+            "label": "Who",
+            "kind": "identity"
+          },
+          {
+            "order": 2,
+            "label": "Now",
+            "kind": "recency"
+          },
+          {
+            "order": 3,
+            "label": "Room",
+            "kind": "match",
+            "cited_signal_ids": [
+              "S1",
+              "S2",
+              "S5",
+              "S7",
+              "S8"
+            ]
+          },
+          {
+            "order": 4,
+            "label": "Notice",
+            "kind": "deep_cut",
+            "fact_id": "f_random_day"
+          },
+          {
+            "order": 5,
+            "label": "Say",
+            "kind": "sayable"
+          }
+        ],
+        "word_count": 298
+      },
+      "facts": [
+        {
+          "fact_id": "f_random_day",
+          "provenance_class": "self_published",
+          "source_url": "https://feld.com/archives/2013/11/random-day.html",
+          "source_date": "2013-11-01",
+          "search_first_page": false
+        }
+      ]
+    },
+    "preexisting_state": {
+      "profile_cache_version": "pc_2026_09_03_a"
+    },
+    "configuration": {
+      "word_band": [
+        250,
+        350
+      ],
+      "required_blocks": [
+        "Who",
+        "Now",
+        "Room",
+        "Notice",
+        "Say"
+      ],
+      "surface_min_score": 6,
+      "surface_requires_any_of": [
+        "S3",
+        "S5",
+        "S7"
+      ],
+      "narrator_temperature": 0,
+      "rollup": "gate_then_grade"
+    },
+    "clock": {
+      "as_of": "2026-09-03T19:00:00Z"
+    }
+  },
+  "when": {
+    "operation": "generate_digest",
+    "input_refs": [
+      "m_feld"
+    ]
+  },
+  "expect": {
+    "exact": {
+      "result": {
+        "card": {
+          "blocks": [
+            {
+              "order": 1,
+              "label": "Who"
+            },
+            {
+              "order": 2,
+              "label": "Now"
+            },
+            {
+              "order": 3,
+              "label": "Room"
+            },
+            {
+              "order": 4,
+              "label": "Notice"
+            },
+            {
+              "order": 5,
+              "label": "Say"
+            }
+          ],
+          "word_count": 298,
+          "closing_block_kind": "sayable"
+        },
+        "ranked_matches": [
+          {
+            "member_id": "m_wilson",
+            "rank": 1,
+            "score": 11,
+            "surfaced": true,
+            "fired_signals": [
+              {
+                "signal_id": "S1",
+                "weight": 2
+              },
+              {
+                "signal_id": "S2",
+                "weight": 2
+              },
+              {
+                "signal_id": "S5",
+                "weight": 3
+              },
+              {
+                "signal_id": "S7",
+                "weight": 3
+              },
+              {
+                "signal_id": "S8",
+                "weight": 1
+              }
+            ]
+          },
+          {
+            "member_id": "m_perkins",
+            "rank": 2,
+            "score": 0,
+            "surfaced": false,
+            "fired_signals": []
+          }
+        ],
+        "surfaced_count": 1,
+        "deep_cut_fact_id": "f_random_day",
+        "verdict": "pass",
+        "gates_passed": true,
+        "gate_failures": [],
+        "content_grade": {
+          "scored": 4,
+          "possible": 4,
+          "ratio": 1.0
+        }
+      },
+      "state_changes": [],
+      "emitted_events": [],
+      "external_calls": []
+    },
+    "properties": []
+  }
+}

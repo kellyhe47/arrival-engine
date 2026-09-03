@@ -1,0 +1,149 @@
+{
+  "schema_version": 1,
+  "id": "G-005",
+  "name": "substrate-outranks-fame",
+  "why": "The host must be pointed at the person the member can actually talk to, not the most famous person standing nearby. A peer sharing a working thesis must outrank a celebrity sharing only a hobby.",
+  "covers": [
+    "B-003",
+    "B-011"
+  ],
+  "case_type": "boundary",
+  "traces_to": [
+    "AUD-LINE-16",
+    "DEC-5",
+    "RUBRIC-3",
+    "RUBRIC-4"
+  ],
+  "defends_against": "An implementation that ranks by prominence with affinity as a tiebreak, producing a room where everyone is sent to the same famous person.",
+  "time_sensitive": false,
+  "given": {
+    "inputs": {
+      "arriving_member": {
+        "id": "m_tavel",
+        "seniority_tier": "principal",
+        "career_start_decade": "1990s",
+        "prominence_tier": 3,
+        "industries": [
+          "venture-capital"
+        ],
+        "topics_professional": [
+          "marketplace-dynamics"
+        ],
+        "topics_personal": [
+          "rugby"
+        ],
+        "contexts": [],
+        "declared_links": []
+      },
+      "present_members": [
+        {
+          "id": "m_perkins",
+          "seniority_tier": "chief-executive",
+          "career_start_decade": "2000s",
+          "prominence_tier": 4,
+          "industries": [
+            "design-software"
+          ],
+          "topics_professional": [
+            "product-led-growth"
+          ],
+          "topics_personal": [
+            "rugby"
+          ],
+          "contexts": [],
+          "declared_links": []
+        },
+        {
+          "id": "m_walk",
+          "seniority_tier": "principal",
+          "career_start_decade": "1990s",
+          "prominence_tier": 3,
+          "industries": [
+            "venture-capital"
+          ],
+          "topics_professional": [
+            "marketplace-dynamics"
+          ],
+          "topics_personal": [],
+          "contexts": [],
+          "declared_links": []
+        }
+      ]
+    },
+    "preexisting_state": {},
+    "configuration": {
+      "bucket_weights": {
+        "SMALL": 1,
+        "MID": 2,
+        "LARGE": 3
+      },
+      "s8_requires_substrate": true,
+      "surface_min_score": 6,
+      "surface_requires_any_of": [
+        "S3",
+        "S5",
+        "S7"
+      ]
+    },
+    "clock": {}
+  },
+  "when": {
+    "operation": "rank_room",
+    "input_refs": [
+      "m_tavel"
+    ]
+  },
+  "expect": {
+    "exact": {
+      "result": {
+        "ranked_matches": [
+          {
+            "member_id": "m_walk",
+            "rank": 1,
+            "score": 7,
+            "surfaced": true,
+            "fired_signals": [
+              {
+                "signal_id": "S1",
+                "weight": 2
+              },
+              {
+                "signal_id": "S2",
+                "weight": 2
+              },
+              {
+                "signal_id": "S7",
+                "weight": 3
+              }
+            ]
+          },
+          {
+            "member_id": "m_perkins",
+            "rank": 2,
+            "score": 1,
+            "surfaced": false,
+            "fired_signals": [
+              {
+                "signal_id": "S6",
+                "weight": 1
+              }
+            ]
+          }
+        ],
+        "surfaced_count": 1
+      },
+      "state_changes": [],
+      "emitted_events": [],
+      "external_calls": []
+    },
+    "properties": [
+      {
+        "name": "peer-with-thesis-beats-celebrity-with-hobby",
+        "operator": "gt",
+        "left": "result.ranked_matches.0.score",
+        "right": "result.ranked_matches.1.score",
+        "reason": "AUD-LINE-16: output must feed service, not selection."
+      }
+    ]
+  }
+}

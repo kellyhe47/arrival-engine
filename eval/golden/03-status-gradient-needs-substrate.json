@@ -1,0 +1,59 @@
+{
+  "schema_version": 1,
+  "id": "G-003",
+  "name": "status-gradient-needs-substrate",
+  "why": "Prominence alone must never produce a match. Without this gate the engine degenerates into introducing everyone to the most famous person present, which is selection rather than service.",
+  "covers": ["B-003"],
+  "case_type": "negative_control",
+  "traces_to": ["AUD-LINE-16", "RUBRIC-4"],
+  "defends_against": "An implementation that adds the status-gradient point unconditionally whenever B outranks A.",
+  "time_sensitive": false,
+  "given": {
+    "inputs": {
+      "member_a": {
+        "id": "m_qureshi",
+        "seniority_tier": "individual",
+        "career_start_decade": "2010s",
+        "prominence_tier": 2,
+        "industries": ["writing-research"],
+        "topics_professional": ["essay-craft"],
+        "topics_personal": [],
+        "contexts": [],
+        "declared_links": []
+      },
+      "member_b": {
+        "id": "m_huffman",
+        "seniority_tier": "chief-executive",
+        "career_start_decade": "2000s",
+        "prominence_tier": 4,
+        "industries": ["consumer-internet"],
+        "topics_professional": ["content-moderation"],
+        "topics_personal": [],
+        "contexts": [],
+        "declared_links": []
+      }
+    },
+    "preexisting_state": {},
+    "configuration": {
+      "bucket_weights": {"SMALL": 1, "MID": 2, "LARGE": 3},
+      "s8_requires_substrate": true
+    },
+    "clock": {}
+  },
+  "when": {
+    "operation": "score_directed_pair",
+    "input_refs": ["m_qureshi", "m_huffman"]
+  },
+  "expect": {
+    "exact": {
+      "result": {
+        "score": 0,
+        "fired_signals": []
+      },
+      "state_changes": [],
+      "emitted_events": [],
+      "external_calls": []
+    },
+    "properties": []
+  }
+}

@@ -1,0 +1,75 @@
+{
+  "schema_version": 1,
+  "id": "G-024",
+  "name": "sourced-facts-render-with-chips",
+  "why": "The widest sourcing policy is only defensible because every rendered fact shows where it came from. This is the positive case that proves the chip is produced, not merely that the unsourced case is rejected.",
+  "covers": [
+    "B-007"
+  ],
+  "case_type": "happy",
+  "traces_to": [
+    "DEC-4",
+    "AUD-LINE-3"
+  ],
+  "defends_against": "An implementation that satisfies the rejection fixture by dropping every fact, so nothing unsourced renders because nothing renders at all.",
+  "time_sensitive": false,
+  "given": {
+    "inputs": {
+      "candidate_facts": [
+        {
+          "fact_id": "f_watermelon",
+          "text": "Lists a second-place ribbon from the 2011 Nantucket watermelon eating competition on his own firm bio.",
+          "provenance_class": "self_published",
+          "source_url": "https://firstround.com/team/investing/josh-kopelman",
+          "source_date": "2026-09-03"
+        },
+        {
+          "fact_id": "f_encyclopedia",
+          "text": "His family foundation paid to digitise the 1901-1906 Jewish Encyclopedia, still credited online.",
+          "provenance_class": "third_party",
+          "source_url": "https://www.jewishencyclopedia.com/",
+          "source_date": "2026-09-03"
+        }
+      ]
+    },
+    "preexisting_state": {},
+    "configuration": {
+      "require_provenance": true
+    },
+    "clock": {}
+  },
+  "when": {
+    "operation": "select_renderable_facts",
+    "input_refs": [
+      "f_watermelon",
+      "f_encyclopedia"
+    ]
+  },
+  "expect": {
+    "exact": {
+      "result": {
+        "renderable_fact_ids": [
+          "f_encyclopedia",
+          "f_watermelon"
+        ],
+        "rejected": [],
+        "provenance_chips": [
+          {
+            "fact_id": "f_encyclopedia",
+            "source_host": "jewishencyclopedia.com",
+            "provenance_class": "third_party"
+          },
+          {
+            "fact_id": "f_watermelon",
+            "source_host": "firstround.com",
+            "provenance_class": "self_published"
+          }
+        ]
+      },
+      "state_changes": [],
+      "emitted_events": [],
+      "external_calls": []
+    },
+    "properties": []
+  }
+}

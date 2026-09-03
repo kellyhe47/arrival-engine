@@ -1,0 +1,95 @@
+{
+  "schema_version": 1,
+  "id": "G-021",
+  "name": "gate-failure-outranks-content-grade",
+  "why": "This is the precedence the whole evaluation rests on. A card can find a superb deep cut, name the right person and read beautifully, and still be unshippable because it carries a fact with no source. Structure gates; content only grades.",
+  "covers": [
+    "B-015"
+  ],
+  "case_type": "precedence",
+  "traces_to": [
+    "DEC-5",
+    "DEC-4",
+    "AUD-LINE-3"
+  ],
+  "defends_against": "An implementation that averages gates and grades into one number, letting a card that leaks an unsourced fact pass at ninety percent.",
+  "time_sensitive": false,
+  "given": {
+    "inputs": {
+      "evaluation": {
+        "gates": {
+          "word_count_in_band": true,
+          "blocks_complete": true,
+          "all_facts_sourced": false,
+          "inferred_facts_name_inputs": true,
+          "top_match_correct": true,
+          "closes_on_sayable_line": true
+        },
+        "grades": {
+          "deep_cut_found": 1,
+          "deep_cut_non_obvious": 1,
+          "reason_cites_resolvable_source": 1,
+          "talk_track_sayable": 1
+        }
+      }
+    },
+    "preexisting_state": {},
+    "configuration": {
+      "word_band": [
+        250,
+        350
+      ],
+      "required_blocks": [
+        "Who",
+        "Now",
+        "Room",
+        "Notice",
+        "Say"
+      ],
+      "surface_min_score": 6,
+      "surface_requires_any_of": [
+        "S3",
+        "S5",
+        "S7"
+      ],
+      "rollup": "gate_then_grade"
+    },
+    "clock": {}
+  },
+  "when": {
+    "operation": "evaluate_digest",
+    "input_refs": [
+      "m_feld"
+    ]
+  },
+  "expect": {
+    "exact": {
+      "result": {
+        "verdict": "fail",
+        "gates_passed": false,
+        "gate_failures": [
+          {
+            "gate": "all_facts_sourced"
+          }
+        ],
+        "content_grade": {
+          "scored": 4,
+          "possible": 4,
+          "ratio": 1.0
+        }
+      },
+      "state_changes": [],
+      "emitted_events": [],
+      "external_calls": []
+    },
+    "properties": [
+      {
+        "name": "perfect-content-cannot-rescue-a-failed-gate",
+        "operator": "eq",
+        "left": "result.verdict",
+        "reason": "DEC-5: gates are hard pass/fail and are evaluated before any content grading.",
+        "expected": "fail"
+      }
+    ]
+  }
+}

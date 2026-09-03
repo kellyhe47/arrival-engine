@@ -1,0 +1,161 @@
+{
+  "schema_version": 1,
+  "id": "G-017",
+  "name": "tie-break-is-deterministic",
+  "why": "Two members can tie on score for genuinely different reasons. The host gets one name first, so the order must be defined by rule rather than by dictionary order.",
+  "covers": [
+    "B-011"
+  ],
+  "case_type": "boundary",
+  "traces_to": [
+    "DEC-5"
+  ],
+  "defends_against": "An implementation that returns ties in hash or insertion order, so the same arrival recommends a different person on each run.",
+  "time_sensitive": false,
+  "given": {
+    "inputs": {
+      "arriving_member": {
+        "id": "m_ries",
+        "seniority_tier": "founder",
+        "career_start_decade": "2000s",
+        "prominence_tier": 3,
+        "industries": [
+          "capital-markets"
+        ],
+        "topics_professional": [
+          "long-term-governance"
+        ],
+        "topics_personal": [
+          "board-games"
+        ],
+        "contexts": [],
+        "declared_links": [
+          {
+            "to": "m_shear",
+            "kind": "cited_in_own_writing",
+            "evidence_fact_id": "f_ries_cites_shear"
+          }
+        ]
+      },
+      "present_members": [
+        {
+          "id": "m_shear",
+          "seniority_tier": "founder",
+          "career_start_decade": "2000s",
+          "prominence_tier": 3,
+          "industries": [
+            "ai-research"
+          ],
+          "topics_professional": [
+            "ai-alignment"
+          ],
+          "topics_personal": [
+            "board-games"
+          ],
+          "contexts": [],
+          "declared_links": []
+        },
+        {
+          "id": "m_wilson",
+          "seniority_tier": "principal",
+          "career_start_decade": "1980s",
+          "prominence_tier": 3,
+          "industries": [
+            "venture-capital"
+          ],
+          "topics_professional": [
+            "long-term-governance"
+          ],
+          "topics_personal": [],
+          "contexts": [],
+          "declared_links": []
+        }
+      ]
+    },
+    "preexisting_state": {},
+    "configuration": {
+      "bucket_weights": {
+        "SMALL": 1,
+        "MID": 2,
+        "LARGE": 3
+      },
+      "s8_requires_substrate": true,
+      "surface_min_score": 6,
+      "surface_requires_any_of": [
+        "S3",
+        "S5",
+        "S7"
+      ],
+      "tie_break": [
+        "large_signal_count_desc",
+        "evidence_recency_desc",
+        "member_id_asc"
+      ]
+    },
+    "clock": {}
+  },
+  "when": {
+    "operation": "rank_room",
+    "input_refs": [
+      "m_ries"
+    ]
+  },
+  "expect": {
+    "exact": {
+      "result": {
+        "ranked_matches": [
+          {
+            "member_id": "m_wilson",
+            "rank": 1,
+            "score": 6,
+            "surfaced": true,
+            "fired_signals": [
+              {
+                "signal_id": "S3",
+                "weight": 3
+              },
+              {
+                "signal_id": "S7",
+                "weight": 3
+              }
+            ]
+          },
+          {
+            "member_id": "m_shear",
+            "rank": 2,
+            "score": 6,
+            "surfaced": true,
+            "fired_signals": [
+              {
+                "signal_id": "S1",
+                "weight": 2
+              },
+              {
+                "signal_id": "S5",
+                "weight": 3
+              },
+              {
+                "signal_id": "S6",
+                "weight": 1
+              }
+            ]
+          }
+        ],
+        "surfaced_count": 2,
+        "tie_broken_by": "large_signal_count_desc"
+      },
+      "state_changes": [],
+      "emitted_events": [],
+      "external_calls": []
+    },
+    "properties": [
+      {
+        "name": "tie-resolved-by-large-signal-count",
+        "operator": "eq",
+        "left": "result.ranked_matches.0.member_id",
+        "reason": "DEC-5: equal scores rank by count of LARGE signals before any other consideration.",
+        "expected": "m_wilson"
+      }
+    ]
+  }
+}

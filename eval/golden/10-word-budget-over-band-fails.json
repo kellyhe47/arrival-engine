@@ -1,0 +1,105 @@
+{
+  "schema_version": 1,
+  "id": "G-010",
+  "name": "word-budget-over-band-fails",
+  "why": "Three hundred and fifty words is the ceiling, taken from the slow end of adult silent reading because the host is standing and watching a door. One word over is a gate failure, not a warning.",
+  "covers": [
+    "B-005"
+  ],
+  "case_type": "boundary",
+  "traces_to": [
+    "AUD-FORMAT-PDB",
+    "AUD-FORMAT-BRYSBAERT",
+    "RUBRIC-3"
+  ],
+  "defends_against": "An implementation that treats the word budget as advisory and ships a four-hundred-word card that reads fine at a desk and fails in a lobby.",
+  "time_sensitive": false,
+  "given": {
+    "inputs": {
+      "narration": {
+        "blocks": [
+          {
+            "order": 1,
+            "label": "Who",
+            "text": "...",
+            "kind": "identity"
+          },
+          {
+            "order": 2,
+            "label": "Now",
+            "text": "...",
+            "kind": "recency"
+          },
+          {
+            "order": 3,
+            "label": "Room",
+            "text": "...",
+            "kind": "match"
+          },
+          {
+            "order": 4,
+            "label": "Notice",
+            "text": "...",
+            "kind": "deep_cut"
+          },
+          {
+            "order": 5,
+            "label": "Say",
+            "text": "...",
+            "kind": "sayable"
+          }
+        ],
+        "word_count": 351
+      }
+    },
+    "preexisting_state": {},
+    "configuration": {
+      "word_band": [
+        250,
+        350
+      ],
+      "required_blocks": [
+        "Who",
+        "Now",
+        "Room",
+        "Notice",
+        "Say"
+      ],
+      "surface_min_score": 6,
+      "surface_requires_any_of": [
+        "S3",
+        "S5",
+        "S7"
+      ]
+    },
+    "clock": {}
+  },
+  "when": {
+    "operation": "render_card",
+    "input_refs": [
+      "m_feld"
+    ]
+  },
+  "expect": {
+    "exact": {
+      "result": {
+        "card": null,
+        "gate_failures": [
+          {
+            "gate": "word_count_in_band",
+            "observed": 351,
+            "allowed": [
+              250,
+              350
+            ]
+          }
+        ],
+        "gates_passed": false
+      },
+      "state_changes": [],
+      "emitted_events": [],
+      "external_calls": []
+    },
+    "properties": []
+  }
+}

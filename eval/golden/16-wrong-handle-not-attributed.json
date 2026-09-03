@@ -1,0 +1,68 @@
+{
+  "schema_version": 1,
+  "id": "G-016",
+  "name": "wrong-handle-not-attributed",
+  "why": "The handle spez on X belongs to an unrelated account with 103 followers and no posts. An identity resolver that matches on handle string alone will attribute a stranger's words to a member and read them aloud in a lobby.",
+  "covers": [
+    "B-010"
+  ],
+  "case_type": "negative_control",
+  "traces_to": [
+    "AUD-HANDLE-COLLISION",
+    "AUD-RED",
+    "DEC-1",
+    "RUBRIC-2"
+  ],
+  "defends_against": "An implementation that resolves identity by handle equality across platforms without requiring a corroborating signal.",
+  "time_sensitive": false,
+  "given": {
+    "inputs": {
+      "candidate_accounts": [
+        {
+          "account_id": "a_1",
+          "platform": "reddit",
+          "handle": "spez",
+          "corroboration": [
+            "named_in_sec_filing"
+          ]
+        },
+        {
+          "account_id": "a_2",
+          "platform": "x",
+          "handle": "spez",
+          "corroboration": []
+        }
+      ]
+    },
+    "preexisting_state": {},
+    "configuration": {
+      "require_corroboration": true
+    },
+    "clock": {}
+  },
+  "when": {
+    "operation": "resolve_identity",
+    "input_refs": [
+      "m_huffman"
+    ]
+  },
+  "expect": {
+    "exact": {
+      "result": {
+        "accepted_account_ids": [
+          "a_1"
+        ],
+        "rejected": [
+          {
+            "account_id": "a_2",
+            "reason": "handle_match_without_corroboration"
+          }
+        ]
+      },
+      "state_changes": [],
+      "emitted_events": [],
+      "external_calls": []
+    },
+    "properties": []
+  }
+}

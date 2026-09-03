@@ -1,0 +1,88 @@
+{
+  "schema_version": 1,
+  "id": "G-014",
+  "name": "rerun-is-not-recent-activity",
+  "why": "A republished recording carries a fresh publication date and a stale recording date. Reading it aloud as this month's news is the specific way this pipeline embarrasses a host.",
+  "covers": [
+    "B-009"
+  ],
+  "case_type": "failure",
+  "traces_to": [
+    "AUD-STALE-KOPELMAN",
+    "AUD-STALE-TAVEL",
+    "RUBRIC-2"
+  ],
+  "defends_against": "An implementation that ranks recency on publication date alone and reports a sixteen-month-old conversation as current.",
+  "time_sensitive": true,
+  "given": {
+    "inputs": {
+      "items": [
+        {
+          "item_id": "i_1",
+          "kind": "podcast_episode",
+          "published_at": "2026-08-05",
+          "recorded_at": "2025-04-22",
+          "is_rerun": true
+        },
+        {
+          "item_id": "i_2",
+          "kind": "blog_post",
+          "published_at": "2025-09-03",
+          "recorded_at": "2025-09-03",
+          "is_rerun": false
+        }
+      ]
+    },
+    "preexisting_state": {},
+    "configuration": {
+      "word_band": [
+        250,
+        350
+      ],
+      "required_blocks": [
+        "Who",
+        "Now",
+        "Room",
+        "Notice",
+        "Say"
+      ],
+      "surface_min_score": 6,
+      "surface_requires_any_of": [
+        "S3",
+        "S5",
+        "S7"
+      ],
+      "recency_window_days": 180,
+      "stale_after_days": 365
+    },
+    "clock": {
+      "as_of": "2026-09-03T18:00:00Z"
+    }
+  },
+  "when": {
+    "operation": "build_now_block",
+    "input_refs": [
+      "m_tavel"
+    ]
+  },
+  "expect": {
+    "exact": {
+      "result": {
+        "recency_state": "cold",
+        "days_since_latest": 365,
+        "claims_recent_activity": false,
+        "block_kind": "honest_absence",
+        "excluded_items": [
+          {
+            "item_id": "i_1",
+            "reason": "rerun_dated_by_recording"
+          }
+        ]
+      },
+      "state_changes": [],
+      "emitted_events": [],
+      "external_calls": []
+    },
+    "properties": []
+  }
+}

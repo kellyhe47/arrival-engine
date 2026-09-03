@@ -1,0 +1,113 @@
+{
+  "schema_version": 1,
+  "id": "G-019",
+  "name": "empty-room-produces-honest-card",
+  "why": "The first member through the door has nobody to meet. That is a normal Friday, not an error, and the card must still be worth reading.",
+  "covers": [
+    "B-013"
+  ],
+  "case_type": "degenerate",
+  "traces_to": [
+    "RUBRIC-4"
+  ],
+  "defends_against": "An implementation that errors, renders an empty Room block, or reaches outside the present roster to recommend someone who is not in the building.",
+  "time_sensitive": false,
+  "given": {
+    "inputs": {
+      "arriving_member": {
+        "id": "m_feld",
+        "seniority_tier": "principal",
+        "career_start_decade": "1980s",
+        "prominence_tier": 3,
+        "industries": [
+          "venture-capital"
+        ],
+        "topics_professional": [
+          "startup-communities"
+        ],
+        "topics_personal": [],
+        "contexts": [],
+        "declared_links": []
+      },
+      "present_members": []
+    },
+    "preexisting_state": {},
+    "configuration": {
+      "word_band": [
+        250,
+        350
+      ],
+      "required_blocks": [
+        "Who",
+        "Now",
+        "Room",
+        "Notice",
+        "Say"
+      ],
+      "surface_min_score": 6,
+      "surface_requires_any_of": [
+        "S3",
+        "S5",
+        "S7"
+      ],
+      "bucket_weights": {
+        "SMALL": 1,
+        "MID": 2,
+        "LARGE": 3
+      },
+      "s8_requires_substrate": true,
+      "tie_break": [
+        "large_signal_count_desc",
+        "evidence_recency_desc",
+        "member_id_asc"
+      ]
+    },
+    "clock": {}
+  },
+  "when": {
+    "operation": "generate_digest",
+    "input_refs": [
+      "m_feld"
+    ]
+  },
+  "expect": {
+    "exact": {
+      "result": {
+        "card": {
+          "blocks": [
+            {
+              "order": 1,
+              "label": "Who"
+            },
+            {
+              "order": 2,
+              "label": "Now"
+            },
+            {
+              "order": 3,
+              "label": "Room"
+            },
+            {
+              "order": 4,
+              "label": "Notice"
+            },
+            {
+              "order": 5,
+              "label": "Say"
+            }
+          ],
+          "closing_block_kind": "sayable"
+        },
+        "ranked_matches": [],
+        "surfaced_count": 0,
+        "room_block_kind": "honest_absence",
+        "gate_failures": [],
+        "gates_passed": true
+      },
+      "state_changes": [],
+      "emitted_events": [],
+      "external_calls": []
+    },
+    "properties": []
+  }
+}

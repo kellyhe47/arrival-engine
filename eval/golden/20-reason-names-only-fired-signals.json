@@ -1,0 +1,94 @@
+{
+  "schema_version": 1,
+  "id": "G-020",
+  "name": "reason-names-only-fired-signals",
+  "why": "The brief requires the reasoning to be exposed. A reason that cites a connection the engine did not actually find is worse than no reason, because the host will say it out loud to the member.",
+  "covers": [
+    "B-012"
+  ],
+  "case_type": "negative_control",
+  "traces_to": [
+    "BRIEF-REASONING-EXPOSED",
+    "RUBRIC-3"
+  ],
+  "defends_against": "An implementation that renders a fixed reason template mentioning every signal category, or that lets the narrator invent a plausible-sounding shared interest.",
+  "time_sensitive": false,
+  "given": {
+    "inputs": {
+      "scored_pair": {
+        "from": "m_qureshi",
+        "to": "m_shear",
+        "score": 7,
+        "fired_signals": [
+          {
+            "signal_id": "S3",
+            "weight": 3
+          },
+          {
+            "signal_id": "S7",
+            "weight": 3
+          },
+          {
+            "signal_id": "S8",
+            "weight": 1
+          }
+        ]
+      },
+      "narration": {
+        "cited_signal_ids": [
+          "S3",
+          "S7",
+          "S8",
+          "S4"
+        ]
+      }
+    },
+    "preexisting_state": {},
+    "configuration": {
+      "word_band": [
+        250,
+        350
+      ],
+      "required_blocks": [
+        "Who",
+        "Now",
+        "Room",
+        "Notice",
+        "Say"
+      ],
+      "surface_min_score": 6,
+      "surface_requires_any_of": [
+        "S3",
+        "S5",
+        "S7"
+      ]
+    },
+    "clock": {}
+  },
+  "when": {
+    "operation": "validate_reason",
+    "input_refs": [
+      "m_qureshi",
+      "m_shear"
+    ]
+  },
+  "expect": {
+    "exact": {
+      "result": {
+        "valid": false,
+        "gate_failures": [
+          {
+            "gate": "reason_cites_only_fired_signals",
+            "unfired_cited": [
+              "S4"
+            ]
+          }
+        ]
+      },
+      "state_changes": [],
+      "emitted_events": [],
+      "external_calls": []
+    },
+    "properties": []
+  }
+}

@@ -1,0 +1,74 @@
+{
+  "schema_version": 1,
+  "id": "G-006",
+  "name": "surface-threshold-exact-minimum",
+  "why": "Six is the lowest score that may be surfaced. The boundary must be inclusive, or every genuine minimum-viable match is silently dropped.",
+  "covers": ["B-004"],
+  "case_type": "boundary",
+  "traces_to": ["RUBRIC-3", "RUBRIC-4"],
+  "defends_against": "An implementation using a strict greater-than comparison, so a score of exactly 6 never surfaces.",
+  "time_sensitive": false,
+  "given": {
+    "inputs": {
+      "arriving_member": {
+        "id": "m_ries",
+        "seniority_tier": "founder",
+        "career_start_decade": "2000s",
+        "prominence_tier": 3,
+        "industries": ["capital-markets"],
+        "topics_professional": ["long-term-governance"],
+        "topics_personal": [],
+        "contexts": [],
+        "declared_links": []
+      },
+      "present_members": [
+        {
+          "id": "m_kopelman",
+          "seniority_tier": "principal",
+          "career_start_decade": "1990s",
+          "prominence_tier": 3,
+          "industries": ["venture-capital"],
+          "topics_professional": ["long-term-governance"],
+          "topics_personal": [],
+          "contexts": [],
+          "declared_links": []
+        }
+      ]
+    },
+    "preexisting_state": {},
+    "configuration": {
+      "bucket_weights": {"SMALL": 1, "MID": 2, "LARGE": 3},
+      "s8_requires_substrate": true,
+      "surface_min_score": 6,
+      "surface_requires_any_of": ["S3", "S5", "S7"]
+    },
+    "clock": {}
+  },
+  "when": {
+    "operation": "rank_room",
+    "input_refs": ["m_ries"]
+  },
+  "expect": {
+    "exact": {
+      "result": {
+        "ranked_matches": [
+          {
+            "member_id": "m_kopelman",
+            "rank": 1,
+            "score": 6,
+            "surfaced": true,
+            "fired_signals": [
+              {"signal_id": "S3", "weight": 3},
+              {"signal_id": "S7", "weight": 3}
+            ]
+          }
+        ],
+        "surfaced_count": 1
+      },
+      "state_changes": [],
+      "emitted_events": [],
+      "external_calls": []
+    },
+    "properties": []
+  }
+}

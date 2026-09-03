@@ -1,0 +1,228 @@
+{
+  "schema_version": 1,
+  "comparison": "deep_equal_after_canonicalization",
+  "canonicalization": [
+    {
+      "path": "result.ranked_matches",
+      "sort_by": [
+        "rank"
+      ]
+    },
+    {
+      "path": "result.card.blocks",
+      "sort_by": [
+        "order"
+      ]
+    },
+    {
+      "path": "result.fired_signals",
+      "sort_by": [
+        "signal_id"
+      ]
+    },
+    {
+      "path": "result.a_to_b.fired_signals",
+      "sort_by": [
+        "signal_id"
+      ]
+    },
+    {
+      "path": "result.b_to_a.fired_signals",
+      "sort_by": [
+        "signal_id"
+      ]
+    },
+    {
+      "path": "result.source_status",
+      "sort_by": [
+        "source_id"
+      ]
+    },
+    {
+      "path": "result.gate_failures",
+      "sort_by": [
+        "gate"
+      ]
+    },
+    {
+      "path": "emitted_events",
+      "sort_by": [
+        "type"
+      ]
+    }
+  ],
+  "behaviors": [
+    {
+      "id": "B-001",
+      "statement": "Relationship scoring is asymmetric: a directed signal changes score(A->B) without changing score(B->A).",
+      "traces_to": [
+        "BRIEF-SCORE-ASYM",
+        "DEC-USER-ASYM"
+      ],
+      "required_case_types": [
+        "happy",
+        "negative_control"
+      ]
+    },
+    {
+      "id": "B-002",
+      "statement": "Every signal contributes exactly its bucket weight (1, 2 or 3) or zero. No partial firings, no learned weights.",
+      "traces_to": [
+        "DEC-USER-BUCKETS"
+      ],
+      "required_case_types": [
+        "happy",
+        "boundary"
+      ]
+    },
+    {
+      "id": "B-003",
+      "statement": "The status-gradient signal S8 cannot fire unless a substrate signal (S2, S3, S5 or S7) has already fired; prominence breaks ties but never creates a match.",
+      "traces_to": [
+        "AUD-LINE-16",
+        "RUBRIC-4"
+      ],
+      "required_case_types": [
+        "happy",
+        "negative_control",
+        "boundary"
+      ]
+    },
+    {
+      "id": "B-004",
+      "statement": "A match is surfaced only at score >= 6 with at least one of S3/S5/S7 fired; otherwise the Room block reports no strong match rather than forcing one.",
+      "traces_to": [
+        "RUBRIC-3",
+        "RUBRIC-4"
+      ],
+      "required_case_types": [
+        "boundary",
+        "negative_control"
+      ]
+    },
+    {
+      "id": "B-005",
+      "statement": "The rendered card body is 250-350 words. Outside the band is a hard gate failure.",
+      "traces_to": [
+        "AUD-FORMAT-PDB",
+        "AUD-FORMAT-BRYSBAERT",
+        "RUBRIC-3"
+      ],
+      "required_case_types": [
+        "boundary"
+      ]
+    },
+    {
+      "id": "B-006",
+      "statement": "The card has exactly five ordered bare-noun blocks: Who, Now, Room, Notice, Say. The last block is a sayable line, not a fact.",
+      "traces_to": [
+        "AUD-FORMAT-PDB",
+        "AUD-FORMAT-SBAR"
+      ],
+      "required_case_types": [
+        "happy"
+      ]
+    },
+    {
+      "id": "B-007",
+      "statement": "Every fact rendered on the card carries resolvable provenance. A fact with no source cannot render.",
+      "traces_to": [
+        "DEC-4",
+        "AUD-LINE-3"
+      ],
+      "required_case_types": [
+        "happy",
+        "negative_control"
+      ]
+    },
+    {
+      "id": "B-008",
+      "statement": "An inferred fact must name the facts it was composed from, or it cannot render.",
+      "traces_to": [
+        "AUD-LINE-5",
+        "DEC-4"
+      ],
+      "required_case_types": [
+        "negative_control"
+      ]
+    },
+    {
+      "id": "B-009",
+      "statement": "A stale profile degrades honestly: the Now block states the trail is cold rather than presenting old material as current or fabricating recency.",
+      "traces_to": [
+        "AUD-STALE-KOPELMAN",
+        "AUD-STALE-TAVEL"
+      ],
+      "required_case_types": [
+        "degenerate",
+        "failure"
+      ]
+    },
+    {
+      "id": "B-010",
+      "statement": "A source measured as blocked returns empty and is recorded as unavailable; it is never fabricated or silently substituted.",
+      "traces_to": [
+        "DEC-1",
+        "AUD-RED"
+      ],
+      "required_case_types": [
+        "failure",
+        "negative_control"
+      ]
+    },
+    {
+      "id": "B-011",
+      "statement": "Ranking is deterministic: ties break by LARGE-signal count, then evidence recency, then member id.",
+      "traces_to": [
+        "DEC-5"
+      ],
+      "required_case_types": [
+        "boundary",
+        "idempotency"
+      ]
+    },
+    {
+      "id": "B-012",
+      "statement": "The reason sentence names only signals that actually fired.",
+      "traces_to": [
+        "BRIEF-REASONING-EXPOSED",
+        "RUBRIC-3"
+      ],
+      "required_case_types": [
+        "happy",
+        "negative_control"
+      ]
+    },
+    {
+      "id": "B-013",
+      "statement": "An empty room produces a valid card with an honest Room block, not an error and not a fabricated match.",
+      "traces_to": [
+        "RUBRIC-4"
+      ],
+      "required_case_types": [
+        "degenerate"
+      ]
+    },
+    {
+      "id": "B-014",
+      "statement": "Digest generation is idempotent: the same arrival against the same roster and cache yields the same card.",
+      "traces_to": [
+        "DEC-3"
+      ],
+      "required_case_types": [
+        "idempotency"
+      ]
+    },
+    {
+      "id": "B-015",
+      "statement": "Evaluation gates on structure and grades on content: gate failures fail the digest outright; content quality is scored with partial credit.",
+      "traces_to": [
+        "DEC-5"
+      ],
+      "required_case_types": [
+        "happy",
+        "precedence"
+      ]
+    }
+  ]
+}

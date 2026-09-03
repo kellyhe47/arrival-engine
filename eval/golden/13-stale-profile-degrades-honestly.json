@@ -1,0 +1,74 @@
+{
+  "schema_version": 1,
+  "id": "G-013",
+  "name": "stale-profile-degrades-honestly",
+  "why": "Several of the ten have no recent first-person output at all. The Now block must say the trail is cold rather than dressing a 2014 post as current activity.",
+  "covers": [
+    "B-009"
+  ],
+  "case_type": "degenerate",
+  "traces_to": [
+    "AUD-STALE-KOPELMAN",
+    "AUD-STALE-TAVEL",
+    "RUBRIC-4"
+  ],
+  "defends_against": "An implementation that always fills the Now block with the newest item it has, presenting a twelve-year-old blog post as what the member is up to.",
+  "time_sensitive": true,
+  "given": {
+    "inputs": {
+      "profile": {
+        "member_id": "m_kopelman",
+        "latest_first_person_item": {
+          "source": "redeyevc.com",
+          "published_at": "2014-11-12"
+        },
+        "items_in_window": 0
+      }
+    },
+    "preexisting_state": {},
+    "configuration": {
+      "word_band": [
+        250,
+        350
+      ],
+      "required_blocks": [
+        "Who",
+        "Now",
+        "Room",
+        "Notice",
+        "Say"
+      ],
+      "surface_min_score": 6,
+      "surface_requires_any_of": [
+        "S3",
+        "S5",
+        "S7"
+      ],
+      "recency_window_days": 180,
+      "stale_after_days": 365
+    },
+    "clock": {
+      "as_of": "2026-09-03T18:00:00Z"
+    }
+  },
+  "when": {
+    "operation": "build_now_block",
+    "input_refs": [
+      "m_kopelman"
+    ]
+  },
+  "expect": {
+    "exact": {
+      "result": {
+        "recency_state": "cold",
+        "days_since_latest": 4313,
+        "claims_recent_activity": false,
+        "block_kind": "honest_absence"
+      },
+      "state_changes": [],
+      "emitted_events": [],
+      "external_calls": []
+    },
+    "properties": []
+  }
+}
