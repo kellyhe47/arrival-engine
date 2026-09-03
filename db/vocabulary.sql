@@ -75,20 +75,43 @@ INSERT INTO topic_alias (alias, canonical) VALUES
   ('ultrarunning',         'endurance-running');      -- used 3x; audit uses endurance-running
 
 -- ── prominence_tier: the derivation, so it is measured rather than asserted ────
--- P0-6 flagged this as having zero audit backing. It is derived from ONE citable quantity:
---   tier 4 : >= 250,000 followers on any single platform, OR a Wikipedia article exists
+-- P0-6 flagged this as having zero audit backing. REVISED 2026-09-03 (K-7): the original rule read
+--   "tier 4: >= 250,000 followers on any single platform, OR a Wikipedia article exists"
+-- The `OR Wikipedia` clause was withdrawn. It stapled a boolean onto a follower ladder and the
+-- boolean swallowed the top band: it put 7 of 10 in tier 4, four of them with NO follower figure
+-- measured at all, so S8 could not fire between any pair of them. It was also WRONG in both
+-- directions once the counts were measured — Kopelman and Shear were sitting at 4 on an
+-- encyclopedia article with ~150k and ~123k followers, while Walk sat at 2 on a Bluesky floor of
+-- 5,371 when his X account has 246,611. Wikipedia is a biography source, not a rung on a ladder.
+--
+-- THE RULE. One scale, one quantity: the HIGHEST MEASURED single-platform follower count.
+--   tier 4 : >= 250,000
 --   tier 3 : 25,000 - 249,999
 --   tier 2 : 1,000 - 24,999
 --   tier 1 : < 1,000
--- Measured values on record (audit 01/03/07):
---   Wilson  X 640,800 followers            -> 4
---   Perkins LinkedIn 370,639 followers     -> 4
---   Ries    X 301,419 followers            -> 4   ** fixtures currently say 3 — see note **
---   Shear   Wikipedia article exists       -> 4
---   Tavel, Walk: NO Wikipedia article (both measured 404) -> tier from follower count, unmeasured
---   Qureshi: no large following measured    -> 2
+--   NULL   : never measured. S8 cannot fire in either direction. Absence is not tier 1.
 --
--- NOTE, and it is a real one: applying this rule moves Ries from 3 to 4, which changes whether S8
--- fires in G-006 and G-017. That is P0-8 (contradictory member attributes) surfacing again. The
--- canonical cast must be DERIVED from this table, not hand-written into fixtures. Do not paper over
--- it by editing the expectations.
+-- The measuring instrument is free, keyless and unauthenticated: `api.fxtwitter.com/<handle>`
+-- returns name, follower/following counts, bio and website (AUD-04 Tier B1 narrow exception).
+-- It is the ONLY sanctioned use of an X mirror — counts and profile fields, never content.
+--
+-- Measured 2026-09-03, every figure re-pulled in one pass so they are mutually comparable:
+--   Wilson    X  640,845  -> 4
+--   Feld      X  388,685  -> 4
+--   Perkins   LI 370,639  -> 4   (X is 56,591; see the cross-platform caveat below)
+--   Ries      X  301,423  -> 4
+--   Walk      X  246,611  -> 3   ** was 2 on a Bluesky floor. 45x wrong. **
+--   Kopelman  X  150,180  -> 3   ** was 4 on the Wikipedia clause **
+--   Shear     X  123,007  -> 3   ** was 4 on the Wikipedia clause **
+--   Tavel     X   52,896  -> 3
+--   Qureshi   X   37,922  -> 3
+--   Huffman   ---------- -> NULL. He has NO usable X account: x.com/spez is a stranger (G-016),
+--             @stevehuffman has 38 followers and @shuffman has 4 (AUD-02 §3.3). Reddit is closed
+--             to logged-out reads. His figure is obtainable from SESSION LinkedIn (/in/shuffman),
+--             the same source that produced Perkins' 370,639. Until then: unmeasured, S8 silent.
+--
+-- CAVEAT, recorded rather than hidden (K-9): "highest measured single-platform" mixes platforms.
+-- Perkins reaches tier 4 on a LinkedIn figure while everyone else is ranked on X, so her tier rests
+-- on a SESSION source the deployed runtime cannot reach. Tiers are computed once at ingest and
+-- frozen into the file, so this is sound at runtime — but a follower on LinkedIn is not the same
+-- unit as a follower on X, and the ranking is only as even as the platforms actually measured.

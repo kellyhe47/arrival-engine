@@ -6,9 +6,21 @@ Where they disagree, fixtures win — except the four fixtures named defective i
 `[source]` brief / rubric / measured audit · `[decided]` user's call (`docs/decisions/DECISIONS.md`)
 · `[proposal]` mine. Review the `[proposal]` lines.
 
-Companions: `scoring-model.md` (oracle) · `knowledge-graph.md` + `db/schema.sql` (storage) ·
-`wireframes.html` + `ui-states.md` (surfaces) · `architecture.excalidraw` · `audit/01–07` (ground
-truth, every claim URL-backed) · `spec-review-01.md` (adversarial review).
+### Companion documents — what an implementing agent must read, and for what
+
+| file | authority over | read it before |
+|---|---|---|
+| `eval/golden/*.json` | **the acceptance contract.** 31 fixtures, 24 behaviours | anything |
+| `docs/scoring-model.md` | the scoring oracle: signals, buckets, gates, threshold, ties | scoring, ranking, Room |
+| **`docs/ingest-spec.md`** | **the fetch contract: who may be collected, from where, how identity is confirmed, what a run must write** | **any scraper, adapter or ingest prompt** |
+| **`db/roster.sql`** | **the canonical cast — the ten, their allow-listed sources, the measured deny-list, supplied-vs-current labels** | **any ingest or resolution work** |
+| `db/schema.sql` | storage, and the gates enforced as views (`v_renderable_fact`, `v_recency_state`, `v_collectable_source`) | any persistence work |
+| `db/vocabulary.sql` | controlled vocabulary; the measured `discriminating` flag | scoring, topic work |
+| `docs/knowledge-graph.md` | node and edge types, which signal each feeds | edge and traversal work |
+| `docs/wireframes.html` + `docs/ui-states.md` | every screen state | any surface work |
+| `docs/audit/01–07` | ground truth. Every claim URL-backed and quoted | when you need the evidence behind a number |
+| `docs/spec-review-01.md` | the adversarial review (8 P0 / 15 P1 / 11 P2). **Its `R-0xx` citations predate the §-renumbering of this PRD — trust its arguments, not its numbers** | triage |
+| `docs/architecture.excalidraw` | the compute pipeline as drawn | orientation only; P1-14 lists what it omits |
 
 ---
 
@@ -31,7 +43,9 @@ shipped a book. Every gate below exists to enforce it.
 ## 2. Sourcing
 
 **R-005** `[source]` Sources are tiered by **measured** access. Audit 04 tested logged-out; audit 07
-tested a logged-in session.
+tested a logged-in session. The per-source fetch contract — user-agent, keys, rate limits, the
+measured retrieval traps, and what every run must write — is `docs/ingest-spec.md`; it is normative
+for ingest and this table is its summary.
 
 | Tier | Sources | Runs |
 |---|---|---|
@@ -52,7 +66,8 @@ interface, so posting, liking or following is unreachable by bug, retry or injec
 
 **R-009** `[decided, DEC-7]` Personalized strings are stripped at the adapter boundary against a
 **whitelist**. "Followed by Sam Altman", "3rd degree", "5 others you know" are facts about the
-*operator*. *(G-029)*
+*operator*. The whitelist is enumerated per platform in `ingest-spec.md` §6.3 — MAY-extract and
+MUST-NOT-extract, both lists closed. *(G-029)*
 
 **R-010** `[proposal]` **Source precedence on contradiction:** the member's own words > their
 organisation's > the follow graph > press. A lower tier never overrides a higher one. *(from the
@@ -66,6 +81,9 @@ partial**. *(G-015, G-027)*
 
 **R-012** `[source]` Resolution requires **corroboration**; a handle match is not identity.
 `spez` on Reddit is Huffman; `@spez` on X is a stranger with 103 followers. *(G-016)*
+Corroboration kinds, their strengths and the acceptance rule (**≥1 STRONG, or ≥2 WEAK from
+different sources; never `handle_matches` alone**) are seeded in `corroboration_kind` and stated in
+`ingest-spec.md` §3.3. *(closes P1-11)*
 
 **R-013** `[proposal]` More than one candidate → **`ambiguous`: show the chooser, emit no brief.**
 Zero → `not_found`. A candidate marked **deceased is never auto-resolved** — "Nabeel Qureshi"
@@ -74,7 +92,9 @@ available failure.
 
 **R-014** `[source]` **The supplied label is a hint to verify, never a fact to echo.** The brief's
 own roster is stale for several of the ten: Shear runs **Softmax**, not Twitch. A host who opens
-with *"so, Twitch…"* has damaged the relationship before the handshake.
+with *"so, Twitch…"* has damaged the relationship before the handshake. Supplied and measured labels
+for all ten are in `member_label` (`db/roster.sql`); Shear is the one row flagged `stale`. Keying on
+"Twitch" also loses his strongest edge — the YC S2005 tie is Kiko↔Reddit, not Twitch↔Reddit.
 
 **R-015** `[proposal]` The brief emits `label_correction {supplied, current, stale}`. When stale,
 the card shows it explicitly — *"the door said Twitch; it's Softmax now"* — because the host may
@@ -255,14 +275,16 @@ registry**; G-015 is defence-in-depth, not the mechanism. *(fixes P0-4)*
 
 ## 10. Risks and open defects
 
-`spec-review-01.md` holds the full review (8 P0 / 15 P1 / 11 P2). **P0-1, P0-2, P0-3, P0-4 and P0-6
-are resolved above.** Three remain, all fixture defects:
+`spec-review-01.md` holds the full review (8 P0 / 15 P1 / 11 P2). **P0-1, P0-2, P0-3, P0-4, P0-6
+and P0-8 are resolved above and in `db/`.** P1-11 (rules an implementer would have had to invent)
+is closed for identity by `corroboration_kind`. Two remain:
 
 | id | defect | fix |
 |---|---|---|
 | P0-5 | "never member-visible" has no enforcement: no auth + public URL + ten real named people | unguessable URL + `noindex`; accepted risk, stated |
 | P0-7 | `word_count` is handed to fixtures, not derived (circular) | fixtures supply block text; the runner counts |
-| P0-8 | fixtures assign contradictory attributes to one member id (`m_ries` 3 vs 4) | derive the cast from `db/vocabulary.sql`; do not edit expectations |
+| P0-9 | **G-017 carries `m_shear` as `founder`; the canonical cast says `chief-executive`** (measured: `x.com/eshear` og:description, "CEO of Softmax"). Correcting it kills S1 and drops him 6→4, destroying the tie the fixture exists to test | re-ground after the first ingest run, against the real edges in AUD-06 (E13b Walk/Ries co-curated *Uncensored* 2012; E10b Walk→Kopelman). A search over all ten members × all pairs found **no** equal-score tie in the real attribute space, because `context` and `edge` are not seeded yet. Also depends on `board-games` (K-8) |
+| ~~P0-8~~ | ~~fixtures assign contradictory attributes to one member id (`m_ries` 3 vs 4)~~ | **Resolved: `db/roster.sql` is the canonical cast, derived by the `db/vocabulary.sql` prominence rule. It says `m_ries` is tier 4. Re-baseline G-006 and G-017 against the table; never edit the table to match a fixture.** |
 
 | # | risk | standing |
 |---|---|---|
@@ -272,9 +294,40 @@ are resolved above.** Three remain, all fixture defects:
 | K-4 | Provenance is structural (R-025); **the family half is a prompt instruction, not a mechanism** | accepted by decision (DEC-9) |
 | K-5 | AUD-EDGES incomplete — Kopelman has no retrievable first-person archive; feld.com's search index is unqueryable | never assert `no_edge_confirmed` where the corpus was not searched |
 | K-6 | **None of the ten are in Texas.** The brief's "same city" is false as written | harmless for scoring; noted so it is not mistaken for a modelling assumption |
+| ~~K-7~~ | ~~the prominence rule's `OR a Wikipedia article exists` clause puts 7 of 10 in tier 4~~ | **Resolved 2026-09-03: the clause is withdrawn.** One scale — highest measured single-platform follower count, every figure re-pulled in one pass via `api.fxtwitter.com`. Four tiers moved: Kopelman 4→3 (150,180), Shear 4→3 (123,007), Walk 2→3 (246,611 — the old figure was a Bluesky floor and was 45× low), Huffman 4→**NULL**. Now 4 at tier 4, 5 at tier 3, 1 unmeasured |
+| K-9 | **Prominence mixes platforms.** Perkins reaches tier 4 on a LinkedIn figure (370,639) while the other nine are ranked on X; her X is 56,591, which alone is tier 3 | tiers are computed once at ingest and frozen into the file, so this is sound at runtime — but a LinkedIn follower is not the same unit as an X follower, and the ranking is only as even as the platforms actually measured |
+| K-10 | **Huffman has no measurable prominence on any GREEN source.** `x.com/spez` is a stranger, `@stevehuffman` has 38 followers, `@shuffman` has 4; Reddit is closed to logged-out reads | tier is NULL, so S8 is silent in both directions for him — correct, not a gap to paper over. Obtainable from SESSION LinkedIn `/in/shuffman`, the same source that produced Perkins' figure |
+| K-8 | `board-games` is a G-017 placeholder with **no audit backing**, so `db/roster.sql` assigns it to nobody | source it or delete it and re-baseline G-017 |
 
-## 11. Index
+## 11. Implementation contract
+
+New requirements, appended rather than renumbered so existing citations stay valid.
+
+**R-055** `[decided]` **The cast is closed and it is a table.** The ten are seeded in
+`db/roster.sql`; `person.is_member = 1` is the complete membership. There is no discovery step that
+adds an eleventh member. People reached by traversal enter as `is_member = 0`, exist only so their
+edges are traversable, and are never scored and never surfaced.
+
+**R-056** `[proposal]` **Collection is allow-listed, and refusal is by table.** An adapter may fetch
+a `(person, source)` pair only if `person_identity` holds a row for it, and must refuse any URL,
+handle or domain matching `person_identity_negative` — 19 rows, each a fetch that actually reached
+the wrong person. Matching is by value across all ten, because the failure being prevented is
+cross-attribution. **A 200 is not identity confirmation:** `eshear.com` returns 200 on every path it
+is asked for, `wikipedia.org/wiki/Nabeel_Qureshi` is a man who died in 2017, and
+`youtube.com/feeds/videos.xml?user=canva` returns valid XML from an unrelated channel.
+
+**R-057** `[proposal]` **The inner-circle walk is exactly one hop**, and is an ingest-time walk that
+writes facts back onto the member. There is no hop 2. Unbounded, a follow-graph walk from Wilson's
+1,345 follows collects strangers indefinitely — a privacy failure before it is a compute one.
+Per-member crawl budget, stop conditions and the deep-cut-is-search rule: `ingest-spec.md` §9.
+
+**R-058** `[proposal]` **Every attempt is recorded, not every success.** `source_status` takes a row
+per `(person, source, run)` — `ok` / `unavailable` / `skipped`, with `http_code` and `fact_count`.
+It is the only thing that distinguishes `quiet` from `unknown` (R-040). A 200 with zero items is not
+silence: `feeds.feedburner.com/redeyevc` is a live feed with no items since 2019.
+
+## 12. Index
 
 Thesis R-001–004 · Sourcing R-005–011 · Identity R-012–015 · Scoring R-016–023 ·
 Disclosure R-024–032 · Card R-033–042 · Surfaces R-043–047 · Architecture R-048–051 ·
-Demo R-052–054 · Risks R-055 n/a.
+Demo R-052–054 · **Implementation R-055–058 (§11)**. Risks are K-1–K-8, not R-numbered.

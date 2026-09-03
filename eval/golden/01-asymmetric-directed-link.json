@@ -2,10 +2,17 @@
   "schema_version": 1,
   "id": "G-001",
   "name": "asymmetric-directed-link",
-  "why": "The brief's central scoring requirement is that A's interest in B is not B's interest in A. A directed citation plus a prominence gradient must move one direction only.",
-  "covers": ["B-001", "B-002"],
+  "why": "The brief's central scoring requirement is that A's interest in B is not B's interest in A. A directed citation must move one direction only. RE-BASELINED 2026-09-03: Wilson and Feld are both prominence tier 4 under the measured rule (640,845 and 388,685 followers), so S8 no longer fires and the asymmetry now rests on S5 alone — which is a stricter test of the requirement, not a weaker one. The prominence-gradient case is covered by G-005, G-007 and G-025.",
+  "covers": [
+    "B-001",
+    "B-002"
+  ],
   "case_type": "happy",
-  "traces_to": ["BRIEF-SCORE-ASYM", "DEC-USER-ASYM", "DEC-USER-BUCKETS"],
+  "traces_to": [
+    "BRIEF-SCORE-ASYM",
+    "DEC-USER-ASYM",
+    "DEC-USER-BUCKETS"
+  ],
   "defends_against": "An implementation that computes one symmetric affinity number and reports it for both directions.",
   "time_sensitive": false,
   "given": {
@@ -14,13 +21,28 @@
         "id": "m_feld",
         "seniority_tier": "principal",
         "career_start_decade": "1980s",
-        "prominence_tier": 3,
-        "industries": ["venture-capital"],
-        "topics_professional": ["startup-communities"],
-        "topics_personal": ["ultrarunning"],
-        "contexts": [{"type": "place", "value": "boulder-co"}],
+        "prominence_tier": 4,
+        "industries": [
+          "venture-capital"
+        ],
+        "topics_professional": [
+          "startup-communities"
+        ],
+        "topics_personal": [
+          "ultrarunning"
+        ],
+        "contexts": [
+          {
+            "type": "place",
+            "value": "boulder-co"
+          }
+        ],
         "declared_links": [
-          {"to": "m_wilson", "kind": "cited_in_own_writing", "evidence_fact_id": "f_feld_cites_wilson"}
+          {
+            "to": "m_wilson",
+            "kind": "cited_in_own_writing",
+            "evidence_fact_id": "f_feld_cites_wilson"
+          }
         ]
       },
       "member_b": {
@@ -28,43 +50,81 @@
         "seniority_tier": "principal",
         "career_start_decade": "1980s",
         "prominence_tier": 4,
-        "industries": ["venture-capital"],
-        "topics_professional": ["startup-communities"],
-        "topics_personal": ["music-collecting"],
-        "contexts": [{"type": "place", "value": "new-york-ny"}],
+        "industries": [
+          "venture-capital"
+        ],
+        "topics_professional": [
+          "startup-communities"
+        ],
+        "topics_personal": [
+          "music-collecting"
+        ],
+        "contexts": [
+          {
+            "type": "place",
+            "value": "new-york-ny"
+          }
+        ],
         "declared_links": []
       }
     },
     "preexisting_state": {},
     "configuration": {
-      "bucket_weights": {"SMALL": 1, "MID": 2, "LARGE": 3},
+      "bucket_weights": {
+        "SMALL": 1,
+        "MID": 2,
+        "LARGE": 3
+      },
       "s8_requires_substrate": true
     },
     "clock": {}
   },
   "when": {
     "operation": "score_pair_both_directions",
-    "input_refs": ["m_feld", "m_wilson"]
+    "input_refs": [
+      "m_feld",
+      "m_wilson"
+    ]
   },
   "expect": {
     "exact": {
       "result": {
         "a_to_b": {
-          "score": 11,
+          "score": 10,
           "fired_signals": [
-            {"signal_id": "S1", "weight": 2},
-            {"signal_id": "S2", "weight": 2},
-            {"signal_id": "S5", "weight": 3},
-            {"signal_id": "S7", "weight": 3},
-            {"signal_id": "S8", "weight": 1}
+            {
+              "signal_id": "S1",
+              "weight": 2
+            },
+            {
+              "signal_id": "S2",
+              "weight": 2
+            },
+            {
+              "signal_id": "S5",
+              "weight": 3
+            },
+            {
+              "signal_id": "S7",
+              "weight": 3
+            }
           ]
         },
         "b_to_a": {
           "score": 7,
           "fired_signals": [
-            {"signal_id": "S1", "weight": 2},
-            {"signal_id": "S2", "weight": 2},
-            {"signal_id": "S7", "weight": 3}
+            {
+              "signal_id": "S1",
+              "weight": 2
+            },
+            {
+              "signal_id": "S2",
+              "weight": 2
+            },
+            {
+              "signal_id": "S7",
+              "weight": 3
+            }
           ]
         }
       },
@@ -78,7 +138,7 @@
         "operator": "gt",
         "left": "result.a_to_b.score",
         "right": "result.b_to_a.score",
-        "reason": "BRIEF-SCORE-ASYM: A cites B and B outranks A, so A's pull toward B must exceed B's toward A."
+        "reason": "BRIEF-SCORE-ASYM: A cites B, so A's pull toward B must exceed B's toward A. The two are equally prominent, so nothing but the directed link can produce the gap."
       }
     ]
   }

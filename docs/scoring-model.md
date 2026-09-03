@@ -2,6 +2,11 @@
 
 This is the oracle the golden fixtures assert against. Prose here is normative, not explanatory.
 
+Precedence: `eval/golden/*.json` > `docs/PRD.md` > this file. Where this file and the PRD have
+disagreed, the PRD was right and this file has been corrected — see §3 and §3b.
+Inputs come from `db/roster.sql` (the cast) and `db/vocabulary.sql` (the controlled vocabulary);
+neither is a fixture-time invention.
+
 ## 1. Direction
 
 `score(A -> B)` reads "how much A should want to meet B". A is the ARRIVING member; B is a member
@@ -31,7 +36,10 @@ Max attainable = S1 2 + S3 3 + S4 3 + S5 3 + S6 1 + S7 3 + S8 1 = **16**. Score 
 
 ## 3. The status-gradient rule (the taste constraint)
 
-**S8 fires only if at least one of S2, S3, S5, S7 has already fired.**
+**S8 fires only if at least one of S2, S3, S5, S7 has already fired**, and, independently,
+**the surfacing threshold in §5 is evaluated on the score EXCLUDING S8.** Two rules, both required
+[PRD R-018, fixes P0-2]: the first stops prominence contributing at all without substrate; the
+second stops it carrying a borderline pair over the line. S8 affects display and ranking only.
 
 Rationale: prominence may break a tie; it may never create a match. Without this gate the engine
 degenerates into "introduce everyone to the most famous person in the room", which is
@@ -51,23 +59,32 @@ are the arithmetic most likely to be got wrong:
     the pairing is both complementary AND substantive, and the brief weights that case highest.
   - S6 (personal) never satisfies S3, whose shared-topic test reads professional topics only.
 
-## 3b. Generic-topic exclusion (AUD-EDGES-GENERIC)
+## 3b. Generic-topic exclusion [P0-1 FIX — supersedes the room-statistic rule]
 
-The edge audit measured that `venture-capital-craft` is held by **five of the ten**. A topic that
-half the room shares carries no information: it would fire S7 for Kopelman/Tavel (who have no
-discoverable edge at all) exactly as hard as for Wilson/Feld (296 mutual citations).
+Genericity is a property of the **vocabulary**, not of the room.
 
-Rule: **a topic is excluded from S3, S6 and S7 if the room holds at least 4 people (including the
-arriving member) AND strictly more than 50% of them hold that topic.** Excluded topics are reported
-so the exclusion is visible rather than silent.
+Rule: **a topic is excluded from S3, S6 and S7 when `holder_count / base_size >= 0.40`**, measured
+once over the member base at ingest and stored in `topic.discriminating`. It is room-independent.
+`base_size` is stored alongside so the flag can be recomputed and audited rather than trusted.
+Mechanism: `db/vocabulary.sql`. Excluded topics are reported, so the exclusion is visible rather
+than silent (G-025 returns the topic, its holder count and its denominator).
 
-The minimum room size is load-bearing, not a detail. Genericity is a statistical claim, and in a
-room of two any shared topic is held by 100% of the room. Without the floor the gate deletes every
-match in a quiet room — which is precisely when the host most needs one. At 4 people, "more than
-half" means at least 3 holders, which is a real cluster rather than a coincidence.
+Measured: `venture-capital-craft` is held by **5 of the 10** — Wilson, Feld, Kopelman, Tavel, Walk
+(AUD-EDGES 06 §5, "the least discriminating tag in the set"). 5/10 = 0.50, excluded.
 
-This preserves the three-bucket design — a signal still fires at its full weight or not at all.
-The gate is on which topics *count*, never on how much a signal is *worth*.
+**Why the previous room-statistic version was withdrawn.** It read: exclude when the room holds >= 4
+people and strictly more than 50% of them hold the topic. That rule was non-monotonic (a fifth guest
+sharing your thesis could delete the match), room-size-inverted, and — decisively — **failed on the
+only case ever measured**, because 5 of 10 is exactly 50% and the predicate was *strictly* greater
+than 50%. The gate never fired on the case that justified it.
+
+This preserves the three-bucket design: a signal still fires at its full weight or not at all. The
+gate is on which topics *count*, never on how much a signal is *worth*.
+
+Related trap, from the same audit section: **do not merge adjacent topics.** Tavel writes about
+AI-and-work, Shear about AI-alignment, Huffman about content moderation — three people, three tags,
+no shared tag. Collapsing them into one `AI` bucket manufactures a fake affinity between Huffman and
+Tavel.
 
 ## 4. Ranking and ties
 
@@ -78,8 +95,10 @@ Present members are ranked by `score(A -> B)` descending. Ties break by, in orde
 
 ## 5. Threshold for surfacing
 
-A match is surfaced on the card only if `score >= 6` AND at least one of S3, S5, S7 fired.
+A match is surfaced on the card only if `score_excluding_S8 >= 6` AND at least one of S3, S5, S7
+fired. The displayed score still includes S8; only the threshold test excludes it (§3).
 Below that the "Room" block reports honestly that there is no strong match right now.
+The floor is absolute: below it **nobody is named** — not as primary, not as backup [R-020].
 
 Rationale: a host who name-drops on a weak match burns credibility that a strong match later
 needs. Forcing a recommendation is the failure the brief's TASTE criterion punishes. A card that

@@ -199,3 +199,73 @@ CREATE TABLE card (
 -- contexts, edges, source attempts and flags all go. Explicitly the opposite of OpenTable's
 -- "no way for a restaurant to permanently delete a guest", where hidden profiles auto-reinstate
 -- with notes intact.
+
+-- ═══════════════════════════════════════════════════════════════════════════════
+-- IDENTITY — the targeting layer (closes P0-8 and P1-11)
+--
+-- The engine's core invariant is "never assert what you merely failed to observe".
+-- Its ingest-side twin is "never collect from a source you have not confirmed is the subject".
+-- These four tables are that mechanism. Seeded by db/roster.sql; contract in docs/ingest-spec.md.
+-- ═══════════════════════════════════════════════════════════════════════════════
+
+-- What counts as corroboration (R-012). G-016 passes an opaque list; this enumerates it.
+-- STRONG: the source itself names the subject, or a filing/registry binds handle to legal person.
+-- WEAK:   consistent-but-forgeable signal (a bio backlink, a matching display name).
+-- Rule (R-056): accept an account on >=1 STRONG, or >=2 WEAK from DIFFERENT sources. Never on
+-- handle equality alone — `spez` on Reddit is Huffman, `@spez` on X is a stranger (G-016).
+CREATE TABLE corroboration_kind (
+  slug     TEXT PRIMARY KEY,
+  strength TEXT NOT NULL CHECK (strength IN ('STRONG','WEAK')),
+  label    TEXT NOT NULL,
+  basis    TEXT NOT NULL
+);
+
+-- The allow-list. An adapter may fetch a (person, source) pair ONLY if a row exists here.
+-- There is no discovery-by-guessing path: `eshear.com` returns 200 on every path it is asked for,
+-- so "the URL resolved" is not evidence of anything (AUD-03-1.5).
+CREATE TABLE person_identity (
+  person_id     TEXT NOT NULL REFERENCES person(id) ON DELETE CASCADE,
+  source_id     TEXT NOT NULL,          -- matches source_status.source_id
+  url           TEXT NOT NULL,
+  handle        TEXT,
+  role          TEXT NOT NULL CHECK (role IN
+                  ('canonical','feed','api','archive','dead','firm','negative_probe')),
+  tier          TEXT NOT NULL CHECK (tier IN ('GREEN','METERED','SESSION')),
+  corroboration TEXT NOT NULL,          -- JSON array of corroboration_kind.slug
+  http_status   INTEGER,
+  measured_at   TEXT NOT NULL,
+  notes         TEXT,
+  PRIMARY KEY (person_id, source_id, url)
+);
+
+-- The deny-list, and the more important of the two. Every row is a MEASURED collision: a URL or
+-- handle that a naive name- or handle-based lookup will reach, that is not the member.
+-- An adapter that is about to fetch a URL matching one of these must refuse, not down-weight.
+CREATE TABLE person_identity_negative (
+  person_id  TEXT REFERENCES person(id) ON DELETE CASCADE,  -- who it would be mis-attributed TO
+  value      TEXT NOT NULL,             -- the URL, handle or domain that collides
+  kind       TEXT NOT NULL CHECK (kind IN ('url','handle','domain','wikipedia_title')),
+  belongs_to TEXT,                      -- who it actually is, where measured. NULL = unknown, still refuse.
+  basis      TEXT NOT NULL,             -- the audit line that measured it
+  measured_at TEXT NOT NULL,
+  PRIMARY KEY (value, kind)
+);
+
+-- R-014 / R-015. The webhook's label is a hint to verify, never a fact to echo.
+-- `supplied` is what the door says; `current` is what was measured. stale = they differ.
+CREATE TABLE member_label (
+  person_id      TEXT PRIMARY KEY REFERENCES person(id) ON DELETE CASCADE,
+  supplied_label TEXT NOT NULL,
+  current_label  TEXT NOT NULL,
+  stale          INTEGER NOT NULL CHECK (stale IN (0,1)),
+  basis          TEXT NOT NULL,
+  measured_at    TEXT NOT NULL
+);
+
+-- An account is only collectable if it is allow-listed AND not deny-listed. Belt and braces:
+-- the deny-list is checked by value across ALL members, because the failure mode is cross-attribution.
+CREATE VIEW v_collectable_source AS
+  SELECT i.* FROM person_identity i
+   WHERE i.role <> 'negative_probe'
+     AND NOT EXISTS (SELECT 1 FROM person_identity_negative n
+                      WHERE n.value = i.url OR n.value = i.handle);

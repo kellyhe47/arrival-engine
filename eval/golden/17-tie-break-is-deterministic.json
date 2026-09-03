@@ -2,7 +2,7 @@
   "schema_version": 1,
   "id": "G-017",
   "name": "tie-break-is-deterministic",
-  "why": "Two members can tie on score for genuinely different reasons. The host gets one name first, so the order must be defined by rule rather than by dictionary order.",
+  "why": "Two members can tie on score for genuinely different reasons. The host gets one name first, so the order must be defined by rule rather than by dictionary order. *** KNOWN-DEFECTIVE FIXTURE — see PRD §10 P0-9. *** It carries m_shear as `founder`; the canonical cast (db/roster.sql) says `chief-executive`, measured from x.com/eshear og:description \"CEO of Softmax\". Correcting it kills S1 and drops him 6 -> 4, destroying the tie this fixture exists to test. No tie at equal score exists anywhere in the real attribute space: a search over all 10 members x all pairs found zero, because `context` and `edge` are not seeded yet. Re-ground it after the first ingest run against the real edges in AUD-06 (E13b Walk/Ries co-curated *Uncensored* 2012; E10b Walk->Kopelman). It also depends on `board-games`, the unbacked placeholder in K-8. Do not paper over either by editing expectations.",
   "covers": [
     "B-011"
   ],
@@ -18,7 +18,7 @@
         "id": "m_ries",
         "seniority_tier": "founder",
         "career_start_decade": "2000s",
-        "prominence_tier": 3,
+        "prominence_tier": 4,
         "industries": [
           "capital-markets"
         ],
@@ -59,7 +59,7 @@
           "id": "m_wilson",
           "seniority_tier": "principal",
           "career_start_decade": "1980s",
-          "prominence_tier": 3,
+          "prominence_tier": 4,
           "industries": [
             "venture-capital"
           ],
