@@ -104,7 +104,7 @@ INSERT INTO member_label (person_id, supplied_label, current_label, stale, basis
   ('m_perkins','Canva, Sydney','Canva — Co-founder and CEO',0,
    'x.com/MelanieCanva profile card verbatim: "Co-founder and CEO of @Canva ... Sydney, Australia" (AUD-03 §1.3)','2026-09-03');
 
--- ── What corroboration means (R-012 / R-056; closes P1-11) ────────────────────
+-- ── What corroboration means (R-012; closes P1-11) ────────────────────────────
 INSERT INTO corroboration_kind (slug, strength, label, basis) VALUES
   ('named_in_sec_filing','STRONG','Named as a person in an SEC filing',
    'data.sec.gov/submissions/CIK0001827011.json = "Huffman Steve Ladd". Note CIK 0001690226 "Huffman Steve" is a DIFFERENT person — a filing binds a handle to a legal person only when the CIK does (AUD-02 §3.1)'),
@@ -148,7 +148,7 @@ INSERT INTO person_identity (person_id, source_id, url, handle, role, tier, corr
   ('m_kopelman','firm_bio','https://firstround.com/team/investing/josh-kopelman',NULL,'canonical','GREEN','["linked_from_own_canonical"]',200,'2026-09-03','Richest single Kopelman artifact. lastmod 2026-01-16'),
   ('m_kopelman','wikipedia','https://en.wikipedia.org/wiki/Josh_Kopelman',NULL,'canonical','GREEN','["display_name_matches"]',200,'2026-09-03','15,628 B wikitext — the best structured biography available for him'),
   ('m_kopelman','linkedin_session','https://www.linkedin.com/in/jkopelman','jkopelman','canonical','SESSION','["linked_from_own_canonical"]',999,'2026-09-03','CANONICAL slug is jkopelman, linked from his own firm bio. /in/joshkopelman is a different, weaker surface — do not use it'),
-  ('m_kopelman','x_session','https://x.com/joshk','joshk','canonical','SESSION','["display_name_matches"]',200,'2026-09-03','Title renders "Josh Kopelman (@joshk) / X". Fred Wilson follows him (AUD-31); the reverse was not found in two DOM passes — the G-002 asymmetry'),
+  ('m_kopelman','x_session','https://x.com/joshk','joshk','canonical','SESSION','["display_name_matches"]',200,'2026-09-03','Title renders "Josh Kopelman (@joshk) / X". Fred Wilson follows him (AUD-31); the reverse was not found in two DOM passes — directed-link asymmetry is B-001 / G-001'),
 
   -- Sarah Tavel
   ('m_tavel','blog_rss','https://www.sarahtavel.com/feed','sarahtavel','feed','GREEN','["subject_self_identifies"]',200,'2026-09-03','20 items 2023-04-24 -> 2025-09-03. sarahtavel.substack.com 301s to this custom domain'),

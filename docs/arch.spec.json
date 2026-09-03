@@ -66,7 +66,7 @@
     },
     {
       "id": "generic",
-      "label": "Genericity gate\ndrop topics >50% of room\n(min room 4)",
+      "label": "Genericity gate\ndrop topics >=40% of member base\n(room-independent)",
       "layer": 4,
       "group": "match",
       "accent": true

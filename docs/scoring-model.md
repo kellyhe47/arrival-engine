@@ -111,6 +111,12 @@ Every surfaced match renders:
   - the SCORE, small and de-emphasised [DEC-2]
   - a PROVENANCE chip per fact used in the reason: source + date [DEC-4]
 
+The chip's source is the `source_url`'s hostname **with a leading `www.` removed, and nothing
+else stripped**. The chip is read by a standing host, so it shows the registrable name rather than
+the literal netloc. A real subdomain is never stripped: `blog.emmettshear.com` is not
+`emmettshear.com`, which is a GoDaddy parking page and a different site entirely. Defined 2026-09-03; it had been
+left to the implementer until then.
+
 The reason sentence must name only signals that actually fired. A reason that cites a signal
 which did not fire is a hard failure.
 

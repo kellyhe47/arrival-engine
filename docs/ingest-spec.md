@@ -11,6 +11,9 @@ something was not measured it says UNVERIFIED and the rule is **refuse, do not e
 **Companion data:** `db/roster.sql` is the machine-readable form of §2–§4 and is the authority.
 Prose here explains why; the tables decide.
 
+**To actually run a collection:** hand an agent `docs/ingest-prompts/00-COMMON.md` plus the one
+per-member file for the person being collected. Those ten prompts are this document applied.
+
 ---
 
 ## 1. The invariant, stated for ingest
@@ -69,7 +72,7 @@ fetch-what-looks-right path and no URL-guessing path. Adding a row requires a ne
 fetch it, record the status code, record which corroboration kinds fired.
 
 ### 3.2 Deny-list — `person_identity_negative`
-19 rows, every one a fetch that actually happened and reached the wrong person. A request whose URL,
+21 rows, every one a fetch that actually happened and reached the wrong person. A request whose URL,
 handle or domain matches a row is **refused**, not down-weighted. The deny-list is matched by value
 across all ten, because the failure being prevented is cross-attribution.
 
@@ -108,9 +111,10 @@ case is Qureshi. Emit `ambiguous`, show the chooser, brief nobody.
 | METERED | X API proper | anywhere, costs money |
 | SESSION | LinkedIn, X, Instagram (all three measured working, AUD-07) | **operator's machine only, never deployed** |
 
-SESSION adapters are **absent from the deployed runtime registry** (R-053). G-015 is
-defence-in-depth over that absence, not the mechanism. The deployed app opens the SQLite file
-read-only; the ingest/serve split is a file copy.
+SESSION adapters are **absent from the deployed runtime registry** (R-053). B-010 is consolidated
+in G-027: its `deployed_runtime_adapter_ids` contains no SESSION adapter while the operator-side
+case exercises an expired session. The deployed app opens the SQLite file read-only; the
+ingest/serve split is a file copy.
 
 **No captcha or bot-detection evasion at any tier** (R-008). TikTok's public page ships 25 captcha
 references; it is not built, at any login state. Dating apps are out permanently — no API, ToS
@@ -151,7 +155,7 @@ under DEC-6. It is not extended to captcha evasion, write operations, or non-ope
 
 ## 6. SESSION adapters
 
-### 6.1 Structurally read-only (R-007, G-028)
+### 6.1 Structurally read-only (R-007, B-018 / G-029)
 The adapter interface declares **no write operation**. Not "we don't call it" — it does not exist,
 so posting, liking, following, messaging and connecting are unreachable by bug, by retry, or by an
 injected instruction. The logged-in session exposes those affordances on every page (AUD-07-8); the

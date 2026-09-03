@@ -31,6 +31,9 @@
     "preexisting_state": {},
     "configuration": {
       "execution_context": "operator_machine",
+      "deployed_runtime_adapter_ids": [
+        "personal_blog_rss"
+      ],
       "adapters": {
         "personal_blog_rss": {
           "tier": "GREEN",

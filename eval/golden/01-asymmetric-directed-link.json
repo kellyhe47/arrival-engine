@@ -2,7 +2,7 @@
   "schema_version": 1,
   "id": "G-001",
   "name": "asymmetric-directed-link",
-  "why": "The brief's central scoring requirement is that A's interest in B is not B's interest in A. A directed citation must move one direction only. RE-BASELINED 2026-09-03: Wilson and Feld are both prominence tier 4 under the measured rule (640,845 and 388,685 followers), so S8 no longer fires and the asymmetry now rests on S5 alone — which is a stricter test of the requirement, not a weaker one. The prominence-gradient case is covered by G-005, G-007 and G-025.",
+  "why": "The brief's central scoring requirement is that A's interest in B is not B's interest in A. A directed citation must move one direction only. RE-BASELINED 2026-09-03: Wilson and Feld are both prominence tier 4 under the measured rule (640,845 and 388,685 followers), so S8 no longer fires and the asymmetry now rests on S5 alone — which is a stricter test of the requirement, not a weaker one. Prominence without qualifying substrate is covered by G-005; generic-topic exclusion is covered by G-025.",
   "covers": [
     "B-001",
     "B-002"

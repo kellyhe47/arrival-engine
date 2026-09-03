@@ -1,9 +1,10 @@
 # UI states, navigation and actions — what the sketch cannot carry
 
 Surfaces: **Card** (primary), **Why-this-score** (secondary, tap from Room), **Room** (demo control).
-There is no login, no settings, no member-facing view. The card is a staff instrument only —
-AUD-LINE-22: The Battery's charter already forbids members using presence features to watch each
-other, so the moment this becomes member-visible it violates a rule members were given.
+There is no login, no settings, no member-facing view. These are staff-intended surfaces. An
+unguessable URL and `noindex` mitigate discovery but are not access control; that limitation is the
+accepted P0-5 risk in the PRD. The Battery's charter already forbids members using presence features
+to watch each other.
 
 ## Navigation
 Room --(simulate arrival / webhook fires)--> Card --(tap score)--> Why-this-score --(back)--> Card
@@ -16,22 +17,25 @@ Card --(gate failure)--> Withheld card + failure list --(retry)--> Card
 | State | Trigger | What it shows |
 |---|---|---|
 | Ready | profile cached, room scored | Five blocks, 250-350 words |
-| No strong match | no present member clears score>=6 AND S3/S5/S7 | Room block says so, names the top score and why it missed. Never a recommendation. |
+| No strong match | no present member clears score>=6 AND S3/S5/S7 | Room block gives the anonymous top score and why it missed. No candidate name; never a recommendation. |
 | Cold trail | no first-person item inside 365 days | Now block states the gap in days and the last date. Never dresses old material as current. |
+| Unknown coverage | one or more expected sources was unreachable | Names the unavailable source classes, makes no silence claim, and uses a generic Say line. |
 | Empty room | roster empty | Room block says "first one here". Not an error. |
 | Ingesting | live re-run triggered | Per-adapter progress, including unavailable ones |
 | Withheld | any hard gate failed | Who block only, plus the failed gate. Degrades to a greeting, never to a guess. |
 | Ambiguous | resolver has >1 corroborated candidate | Host picks. The engine never guesses identity. |
-| Unknown | resolver has 0 candidates | "No profile. Greet and log." Card still renders the Say block generically. |
+| Not found | resolver has 0 corroborated candidates | "No profile. Greet and log." Card still renders the Say block generically. |
+| Thin profile | identity resolved but fewer facts are available | Attempts a full card without invention; if the evidence cannot support 250 words, shows a withheld greeting with no Notice block. |
 
 ### Why-this-score
 Fired signals with weights; signals that did NOT fire and why; excluded generic topics with their
-share of the room; the reverse-direction score. This is the whole answer to "expose the reasoning"
+share of the stored member base; the reverse-direction score. Room membership never changes
+genericity. This is the whole answer to "expose the reasoning"
 and it is one tap away, never on the card.
 
 ### Room
-Present list with arrival times; simulate-arrival and mark-departed controls. Stands in for the
-webhook, which the brief says is solved.
+Current-presence list ordered by arrival time, with simulate-arrival and mark-departed controls.
+Physical position is not tracked. This stands in for the webhook, which the brief says is solved.
 
 ## Actions and their outcomes
 | Action | Outcome |
@@ -46,7 +50,12 @@ webhook, which the brief says is solved.
 ## Where a decision is shown to the user, and in what words
 - The score: an integer out of 16, small, beside the reason. Never the headline. [DEC-2]
 - Provenance: a chip per fact — source host and date. Every rendered fact has one. [DEC-4]
-- A miss: named explicitly ("top score 5, needs 6"), never hidden as an empty section.
+- A stale supplied label: directly below the identity line in Who, in the form “the door said
+  [supplied]; it is [current] now.” Omitted when the label is current.
+- Suppression: directly below Notice when nonzero, as one class-and-count line. Suppressed text never
+  appears.
+- A miss: stated explicitly ("top score 5, needs 6") without naming the candidate, never hidden as
+  an empty section.
 - An unavailable source: named on the ingesting screen with its reason. Not hidden. [DEC-1]
 
 ## Primary journey, walked

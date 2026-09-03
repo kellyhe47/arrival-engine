@@ -4,12 +4,14 @@
   "name": "word-budget-over-band-fails",
   "why": "Three hundred and fifty words is the ceiling, taken from the slow end of adult silent reading because the host is standing and watching a door. One word over is a gate failure, not a warning.",
   "covers": [
-    "B-005"
+    "B-005",
+    "B-015"
   ],
   "case_type": "boundary",
   "traces_to": [
     "AUD-FORMAT-PDB",
     "AUD-FORMAT-BRYSBAERT",
+    "DEC-5",
     "RUBRIC-3"
   ],
   "defends_against": "An implementation that treats the word budget as advisory and ships a four-hundred-word card that reads fine at a desk and fails in a lobby.",

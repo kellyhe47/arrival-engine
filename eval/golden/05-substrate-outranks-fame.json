@@ -143,6 +143,13 @@
         "left": "result.ranked_matches.0.score",
         "right": "result.ranked_matches.1.score",
         "reason": "AUD-LINE-16: output must feed service, not selection."
+      },
+      {
+        "name": "prominence-without-substrate-does-not-fire-s8",
+        "operator": "eq",
+        "left": "result.ranked_matches.1.score",
+        "expected": 1,
+        "reason": "B-003: Perkins outranks Tavel in prominence, but their only overlap is the non-substrate hobby signal S6, so S8 must remain off."
       }
     ]
   }

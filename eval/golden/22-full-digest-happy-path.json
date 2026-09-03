@@ -2,11 +2,13 @@
   "schema_version": 1,
   "id": "G-022",
   "name": "full-digest-happy-path",
-  "why": "The whole product in one case: a name arrives, the room is scored, one match is surfaced with a reason built only from fired signals, a sourced deep cut is chosen, and the card closes on a line the host can say.",
+  "why": "The whole product in one case: a name arrives, the room is scored, one match is surfaced with a reason built only from fired signals, a sourced deep cut is chosen, suppressions are disclosed without leaking their text, and the card closes on a line the host can say. The runner executes this deterministic case twice and requires identical output.",
   "covers": [
     "B-006",
     "B-012",
-    "B-015"
+    "B-014",
+    "B-015",
+    "B-024"
   ],
   "case_type": "happy",
   "traces_to": [
@@ -14,6 +16,8 @@
     "AUD-FORMAT-SBAR",
     "BRIEF-DIGEST",
     "BRIEF-REASONING-EXPOSED",
+    "DEC-3",
+    "DEC-4",
     "DEC-5",
     "RUBRIC-3",
     "RUBRIC-4"
@@ -77,6 +81,18 @@
           "source_date": "2013-11-01",
           "search_first_page": false
         }
+      ],
+      "suppressed_facts": [
+        {
+          "fact_id": "f_form4",
+          "class": "finance_personal",
+          "text": "Sold 45,000 shares on 2026-05-14."
+        },
+        {
+          "fact_id": "f_family",
+          "class": "family_private",
+          "text": "REDACTED"
+        }
       ]
     },
     "preexisting_state": {
@@ -109,6 +125,7 @@
   },
   "when": {
     "operation": "generate_digest",
+    "repeat": 2,
     "input_refs": [
       "m_feld"
     ]
@@ -181,6 +198,13 @@
         ],
         "surfaced_count": 1,
         "deep_cut_fact_id": "f_random_day",
+        "withheld_count": 2,
+        "withheld_classes": [
+          "family_private",
+          "finance_personal"
+        ],
+        "suppression_notice": "2 withheld: family, finance",
+        "withheld_text_exposed": 0,
         "verdict": "pass",
         "gates_passed": true,
         "gate_failures": [],

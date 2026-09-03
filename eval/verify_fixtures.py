@@ -9,6 +9,7 @@ This validates the SPEC. It is not the product golden runner.
 """
 import json, sys, glob, os
 from datetime import date
+from urllib.parse import urlparse
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 GOLDEN = os.path.join(ROOT, "eval", "golden")
@@ -22,6 +23,17 @@ errors, checks = [], 0
 
 def err(fid, msg):
     errors.append(f"{fid}: {msg}")
+
+def chip_host(url):
+    """Host as it appears on a provenance chip: the URL's hostname with a leading `www.` removed.
+
+    The chip is read by a standing host, so it shows the registrable name, not the URL's literal
+    netloc. Normative in docs/scoring-model.md §6. Nothing else is stripped -- a real subdomain is
+    part of the identity of the source (`blog.emmettshear.com` is not `emmettshear.com`, which is a
+    GoDaddy parking page and a different site entirely).
+    """
+    h = urlparse(url).hostname
+    return h[4:] if h and h.startswith("www.") else h
 
 def ctx_key(c):
     return (c.get("type"), c.get("value"))
@@ -122,17 +134,45 @@ def by_id(fid, members, mid):
     err(fid, f"member {mid} not present in given.inputs")
     return None
 
+def should_surface(score_value, signal_ids, minimum=6, required=frozenset({"S3", "S5", "S7"})):
+    """The compact truth table replacing one-fixture-per-surfacing-clause."""
+    surfacing_score = score_value - (W["S8"] if "S8" in signal_ids else 0)
+    return surfacing_score >= minimum and bool(set(signal_ids) & set(required))
+
 def main():
     global checks
     files = sorted(glob.glob(os.path.join(GOLDEN, "*.json")))
     if not files:
         print("no fixtures found", file=sys.stderr); return 1
 
+    surfacing_cases = [
+        ("minimum-with-substrate", 6, ["S3", "S7"], True),
+        ("above-minimum-without-qualifying-substrate", 7, ["S1", "S2", "S4"], False),
+        ("below-minimum-with-substrate", 5, ["S2", "S7"], False),
+        ("s8-cannot-push-five-over-the-line", 6, ["S2", "S7", "S8"], False),
+    ]
+    for name, score_value, signal_ids, expected in surfacing_cases:
+        checks += 1
+        if should_surface(score_value, signal_ids) != expected:
+            err("POLICY", f"surfacing case {name} disagrees with B-004")
+
     for path in files:
         d = json.load(open(path))
         fid, op = d["id"], d["when"]["operation"]
         gi, res = d["given"]["inputs"], d["expect"]["exact"]["result"] or {}
         cfg = d["given"]["configuration"]
+
+        repeat = d["when"].get("repeat", 1)
+        checks += 1
+        if not isinstance(repeat, int) or isinstance(repeat, bool) or repeat < 1:
+            err(fid, f"when.repeat must be a positive integer, got {repeat!r}")
+        if repeat > 1:
+            checks += 1
+            if cfg.get("narrator_temperature") != 0:
+                err(fid, "repeated digest contract requires narrator_temperature=0")
+            checks += 1
+            if d["expect"]["exact"]["state_changes"] or d["expect"]["exact"]["external_calls"]:
+                err(fid, "repeated digest contract must be free of state changes and external calls")
 
         # --- config must not contradict the model ---
         if "bucket_weights" in cfg:
@@ -188,7 +228,7 @@ def main():
                     sigs_set = set(expected_signals(rm))
                     surf_score = rm["score"] - sum(s["weight"] for s in rm["fired_signals"]
                                                    if s["signal_id"] == "S8")
-                    want = surf_score >= mn and bool(sigs_set & req)
+                    want = should_surface(rm["score"], sigs_set, mn, req)
                     if want != rm["surfaced"]:
                         err(fid, f"{rm['member_id']}: surfaced={rm['surfaced']} but rule gives {want} "
                                  f"(surfacing score {surf_score} excl S8 vs min {mn}, "
@@ -290,7 +330,7 @@ def main():
                 elif f.get("provenance_class") == "inferred" and not f.get("composed_from"):
                     bad.append((f["fact_id"], "inferred_without_named_inputs"))
                 elif allowed_trust is not None and f.get("trust_class") not in allowed_trust:
-                    # R-056 / P-5: anyone could have written this. Traversal hint only.
+                    # R-026 / P-5: anyone could have written this. Traversal hint only.
                     bad.append((f["fact_id"], f.get("trust_class")))
                 else:
                     ok.append(f["fact_id"])
@@ -300,6 +340,23 @@ def main():
             got_bad = sorted((r["fact_id"], r["reason"]) for r in res["rejected"])
             if sorted(bad) != got_bad:
                 err(fid, f"rejected {got_bad} != re-derived {sorted(bad)}")
+            if "provenance_chips" in res:
+                checks += 1
+                expected_chips = sorted(
+                    (
+                        f["fact_id"],
+                        chip_host(f["source_url"]),
+                        f["provenance_class"],
+                    )
+                    for f in gi["candidate_facts"]
+                    if f["fact_id"] in ok
+                )
+                actual_chips = sorted(
+                    (c["fact_id"], c["source_host"], c["provenance_class"])
+                    for c in res["provenance_chips"]
+                )
+                if actual_chips != expected_chips:
+                    err(fid, f"provenance_chips {actual_chips} != re-derived {expected_chips}")
             # nothing untrusted may reach the narrator, even as context
             if "narrator_context_fact_ids" in res:
                 checks += 1
@@ -342,6 +399,16 @@ def main():
             checks += 1
             if res.get("operator_data_stored") != 0:
                 err(fid, "operator data was stored; DEC-7 requires zero")
+            interface = gi.get("adapter_interface")
+            if interface is not None:
+                checks += 1
+                declared = sorted(interface.get("declared_operations", []))
+                allowed_prefixes = tuple(cfg.get("allowed_operation_prefixes", []))
+                writes = [operation for operation in declared if not operation.startswith(allowed_prefixes)]
+                if declared != sorted(res.get("declared_operations", [])):
+                    err(fid, "declared_operations do not match the adapter interface")
+                if writes or res.get("write_operations_available") != 0:
+                    err(fid, f"SESSION adapter exposes non-read operations: {writes}")
 
         # --- blocked-source honesty ---
         if op == "run_ingestion":
@@ -351,6 +418,31 @@ def main():
                 if adap.get("measured_status") == "blocked":
                     if st["status"] != "unavailable" or st["facts"] != 0:
                         err(fid, f"{st['source_id']} measured blocked but reports {st}")
+            runtime_ids = cfg.get("deployed_runtime_adapter_ids")
+            if runtime_ids is not None:
+                checks += 1
+                session_ids = [
+                    source_id for source_id in runtime_ids
+                    if cfg["adapters"].get(source_id, {}).get("tier") == "SESSION"
+                ]
+                if session_ids:
+                    err(fid, f"SESSION adapters present in deployed runtime registry: {session_ids}")
+
+        # --- suppression disclosure without suppressed-text leakage ---
+        if "suppressed_facts" in gi:
+            checks += 1
+            suppressed = gi["suppressed_facts"]
+            expected_classes = sorted({fact["class"] for fact in suppressed})
+            if res.get("withheld_count") != len(suppressed):
+                err(fid, "withheld_count disagrees with suppressed facts")
+            if res.get("withheld_classes") != expected_classes:
+                err(fid, f"withheld_classes {res.get('withheld_classes')} != {expected_classes}")
+            if res.get("withheld_text_exposed") != 0:
+                err(fid, "suppressed fact text was marked exposed")
+            rendered_result = json.dumps(res, sort_keys=True)
+            leaked = [fact["fact_id"] for fact in suppressed if fact.get("text") in rendered_result]
+            if leaked:
+                err(fid, f"suppressed text leaked into result for {leaked}")
 
     print(f"checks run: {checks}")
     if errors:

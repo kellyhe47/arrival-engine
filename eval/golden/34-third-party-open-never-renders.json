@@ -2,16 +2,20 @@
   "schema_version": 1,
   "id": "G-034",
   "name": "third-party-open-never-renders",
-  "why": "Instagram's tagged tab is written by other people, and its first item for this member names a different Fred Wilson entirely. A stranger must not be able to place text into a member's card by tagging them.",
+  "why": "Fact selection has one narrow contract: render only facts with resolvable provenance, require named inputs for inferences, and never admit third-party-open text. This mixed case keeps the valid path and all three rejection paths together.",
   "covers": [
+    "B-007",
+    "B-008",
     "B-022"
   ],
   "case_type": "negative_control",
   "traces_to": [
     "AUD-07-7",
+    "AUD-LINE-3",
+    "AUD-LINE-5",
     "DEC-4"
   ],
-  "defends_against": "An implementation that treats a tagged post as a source about the member because the member's handle appears on it, letting an outsider write what a host says out loud.",
+  "defends_against": "An implementation that drops every fact, renders facts without sources, lets an untraceable inference inherit a source, or treats a tagged post as a fact about the member.",
   "time_sensitive": false,
   "given": {
     "inputs": {
@@ -23,6 +27,23 @@
           "provenance_class": "self_published",
           "source_url": "https://avc.com/",
           "source_date": "2026-07-23"
+        },
+        {
+          "fact_id": "f_unsourced",
+          "text": "Prefers the corner table.",
+          "trust_class": "subject_authored",
+          "provenance_class": "self_published",
+          "source_url": null,
+          "source_date": "2026-07-23"
+        },
+        {
+          "fact_id": "f_inferred_untraceable",
+          "text": "Is probably in town to raise.",
+          "trust_class": "subject_authored",
+          "provenance_class": "inferred",
+          "source_url": "internal://composition",
+          "source_date": "2026-09-03",
+          "composed_from": []
         },
         {
           "fact_id": "f_tagged",
@@ -47,6 +68,8 @@
     "operation": "select_renderable_facts",
     "input_refs": [
       "f_blog",
+      "f_unsourced",
+      "f_inferred_untraceable",
       "f_tagged"
     ]
   },
@@ -58,8 +81,23 @@
         ],
         "rejected": [
           {
+            "fact_id": "f_inferred_untraceable",
+            "reason": "inferred_without_named_inputs"
+          },
+          {
             "fact_id": "f_tagged",
             "reason": "third_party_open"
+          },
+          {
+            "fact_id": "f_unsourced",
+            "reason": "missing_provenance"
+          }
+        ],
+        "provenance_chips": [
+          {
+            "fact_id": "f_blog",
+            "source_host": "avc.com",
+            "provenance_class": "self_published"
           }
         ],
         "narrator_context_fact_ids": [

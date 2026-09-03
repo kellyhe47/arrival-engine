@@ -5,19 +5,21 @@ name; within ninety seconds a host reads a card telling them who arrived, who pr
 meet and why, and one thing they can say out loud. You do not need the original brief — the PRD has
 absorbed it.
 
-## 1. Sources of truth, in precedence order
-1. **`eval/golden/*.json`** — 31 fixtures, 24 behaviours. The acceptance contract.
-2. **`docs/PRD.md`** — 58 numbered requirements. §10 lists the open defects; §11 is the
+## 1. Sources of truth
+1. **`docs/PRD.md`** — 58 numbered requirements. §10 lists the open defects; §11 is the
    implementation contract; §12 indexes both. The full companion-document map is at the top of it.
+2. **`eval/golden/*.json`** — executable acceptance examples for the behaviours they cover.
 3. **`docs/scoring-model.md`** — the scoring oracle. Corrected 2026-09-03 to match PRD R-018/R-019;
    its old §3b room-statistic genericity rule is withdrawn.
 4. **`docs/ingest-spec.md` + `db/roster.sql`** — the fetch contract and the canonical cast. Anything
-   that collects data works from these two, not from the audit prose.
+   that collects data works from these two, not from the audit prose. **`docs/ingest-prompts/`**
+   holds ten ready-to-run collection prompts, one per member, built from them.
 5. **`docs/wireframes.html` + `docs/ui-states.md`** — every screen state.
 
-On conflict, fixtures win over prose — **except where PRD §10 says a fixture is itself defective**.
-Fix the spec and the fixture together, and record the change as a spec change with its provenance.
-**Never edit an expectation to make code pass.**
+For the same behaviour, precedence is: an explicit PRD §10 defect or exception → a covering golden
+fixture → the named domain authority → the PRD's summary. A fixture does not override an unrelated
+numbered requirement. Fix the spec and fixture together; **never edit an expectation merely to make
+code pass.**
 
 Already settled, do not relitigate: DEC-1..DEC-9 in `docs/decisions/DECISIONS.md`.
 
@@ -40,12 +42,15 @@ runtime registry), P0-6 (controlled vocabulary exists), **P0-8 (canonical cast e
 ## 3. Two commands, never conflated
 ```
 validate-spec   # schema + traceability + arithmetic. Exists and passes today:
-                #   python3 eval/verify_fixtures.py            (162 checks, green)
+                #   python3 eval/verify_fixtures.py            (136 checks, green)
                 #   python3 ~/.claude/skills/product-inception/scripts/validate_golden.py eval/golden
 test-golden     # DOES NOT EXIST YET. You build it. It must drive the real implementation,
                 # capture the four observation surfaces, and deep-compare to expect.exact.
 ```
 Every fixture must first be observed **failing for its intended reason**, then pass.
+`when.repeat` defaults to 1. When it is greater than 1, the runner must invoke the same operation
+against the same frozen inputs that many times and deep-compare every result; G-022 uses this to
+enforce B-014 without a separate self-reported idempotency fixture.
 Vendor `validate_golden.py` into the repo — today it lives in a skill directory outside it, so half
 the acceptance contract is not reproducible from a clone.
 
@@ -63,11 +68,13 @@ is the contract. A 200 is not identity confirmation.
 
 ## 5. Dependency facts for ticket ordering
 - **`test-golden` is consumed by everything and does not exist.** Build it first.
-- The **narrator is an injected seam**. It writes prose and makes no decisions. Temperature 0. No
-  fixture asserts model prose. Build the seam with a fixture-backed fake before any card work.
+- The **narrator is an injected seam**. It extracts facts and writes prose; its only policy judgement
+  is DEC-9 family suitability. Identity, scoring, ranking, structural render gates, suppression and
+  opt-out remain deterministic. Temperature 0. Fixtures assert decisions and shape, not exact prose.
+  Build the seam with a fixture-backed fake before any card work.
 - **Storage loads in one order:** `db/schema.sql` → `db/vocabulary.sql` → `db/roster.sql`.
   Verified: loads clean under SQLite with `foreign_keys = ON`; 10 people, 55 allow-listed sources,
-  19 deny-list rows, 24 topic assignments.
+  21 deny-list rows, 24 topic assignments.
 - **SESSION adapters** (LinkedIn, X, Instagram — all measured working; Facebook/TikTok unverified)
   run **only** on the operator's machine, read-only, and must be absent from the deployed runtime.
   The deployed app serves the profile cache. This split is not optional; see P0-4.

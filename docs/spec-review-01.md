@@ -1,5 +1,9 @@
 # Spec review 01 — THE ARRIVAL ENGINE
 
+> Historical snapshot: fixture IDs and checker counts below describe the corpus at review time.
+> Several cases were later consolidated; current coverage is keyed by `B-*` in
+> `eval/golden-manifest.json`, and current fixture IDs live in `eval/golden/`.
+
 **Date:** 2026-09-03 · **Target:** `docs/PRD.md` @ build-ready
 **Method:** seven parallel adversarial dimensions, every numeric claim recomputed from
 `docs/audit/*`, every fixture re-read, an 82-mutant mutation test against `eval/verify_fixtures.py`.

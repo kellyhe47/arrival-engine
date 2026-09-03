@@ -2,16 +2,18 @@
   "schema_version": 1,
   "id": "G-029",
   "name": "personalization-stripped-at-boundary",
-  "why": "A logged-in page is personalised. 'Followed by Alexandr Wang and Sam Altman' and 'Followed by Upasana and 5 others you know' are facts about the OPERATOR, not the member. They are not reproducible by anyone else, and storing them puts the operator's own contact graph inside a member's profile.",
+  "why": "A logged-in page is personalised. 'Followed by Alexandr Wang and Sam Altman' and 'Followed by Upasana and 5 others you know' are facts about the OPERATOR, not the member. They are not reproducible by anyone else, and storing them puts the operator's own contact graph inside a member's profile. The same adapter boundary must expose read operations only.",
   "covers": [
+    "B-018",
     "B-019"
   ],
   "case_type": "negative_control",
   "traces_to": [
+    "DEC-6",
     "DEC-7",
     "AUD-07-4"
   ],
-  "defends_against": "An implementation that stores whatever the page rendered, so a member's dossier silently accumulates the operator's social graph and cannot be reproduced from a different account.",
+  "defends_against": "An implementation that stores whatever the page rendered or exposes write capabilities, so a member's dossier silently accumulates the operator's social graph or a retry can act through the operator's account.",
   "time_sensitive": false,
   "given": {
     "inputs": {
@@ -30,6 +32,14 @@
           "degree_of_connection": "3rd",
           "viewer_handle": "justanotherkay_"
         }
+      },
+      "adapter_interface": {
+        "source_id": "x_profile",
+        "tier": "SESSION",
+        "declared_operations": [
+          "fetch_profile",
+          "fetch_activity"
+        ]
       }
     },
     "preexisting_state": {},
@@ -49,6 +59,11 @@
         "following_handles",
         "bio",
         "joined_at"
+      ],
+      "allowed_operation_prefixes": [
+        "fetch_",
+        "read_",
+        "list_"
       ]
     },
     "clock": {}
@@ -73,7 +88,12 @@
           "following_count",
           "viewer_handle"
         ],
-        "operator_data_stored": 0
+        "operator_data_stored": 0,
+        "declared_operations": [
+          "fetch_activity",
+          "fetch_profile"
+        ],
+        "write_operations_available": 0
       },
       "state_changes": [],
       "emitted_events": [],

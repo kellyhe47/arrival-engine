@@ -130,7 +130,7 @@ also instructs: "where the scope is ambiguous, make a call, and tell us on Frida
 
 **Consequent constraints (all measured, see audit 07):**
 1. Only images published by the SUBJECT are analysed. Tagged-tab images are third_party_open
-   (R-056) and are not analysed for facts about the member.
+   (R-026) and are not analysed for facts about the member.
 2. Screenshot the rendered post. Never fetch or store signed CDN URLs (AUD-07-11).
 3. Vision output is DATA, never instruction (AUD-07-12). Text-in-image is an injection surface.
 4. No image is stored. Only the derived structured observation is kept, with the post permalink as
@@ -145,7 +145,7 @@ also instructs: "where the scope is ambiguous, make a call, and tell us on Frida
 
 ## DEC-9 — No structural family-fact rule; judgement at write time (user's call, 2026-09-03)
 Spec-review P0-3 found R-038 ("family facts never render") had no definition, no schema field, no
-fixture, and one happy-path fixture (G-024) that MANDATED rendering a family-derived fact
+fixture, and one former happy-path provenance fixture that MANDATED rendering a family-derived fact
 ("His family foundation paid to digitise the 1901-1906 Jewish Encyclopedia").
 
 I offered four boundaries, recommending the structural one (`derived_from_edges[]` rejected in
@@ -154,8 +154,9 @@ I offered four boundaries, recommending the structural one (`derived_from_edges[
 
 What this means, stated plainly so no later reader thinks P0-3 was missed:
   - R-038 is REWRITTEN as a narrator-prompt instruction (the leak test), not a gate.
-  - Family-derived facts about ORGANISATIONS and inherited context MAY render. G-024 stands
-    unchanged; the Kopelman Foundation fact is legitimate output.
+  - Family-derived facts about ORGANISATIONS and inherited context MAY render. The former Kopelman
+    Foundation example remains legitimate output, but its fixture was removed when provenance
+    cases were consolidated into G-034; it asserted no separate family-fact rule.
   - There is NO fixture that can fail when a family fact reaches a card, because by decision there
     is no rule to violate.
   - K-4 in the PRD risk table must say this honestly: the family half of the RUBRIC-4 defence is a
@@ -176,7 +177,7 @@ ACCEPTED and now in the PRD:
   P-6 Instagram captions feed S4        -> R-005/R-031, schema context.resolved
   P0-1 genericity                       -> R-019, vocabulary property, G-025 rebased
   P0-2 S8 cannot create matches         -> R-018, surfacing evaluated excluding S8
-  P0-4 runtime registry                 -> R-053, structural absence; G-015 is defence-in-depth
+  P0-4 runtime registry                 -> R-053, structural absence; B-010 consolidated in G-027
   P0-6 controlled vocabulary            -> db/vocabulary.sql (slug collision seed-stage-* fixed)
 
 DROPPED:
@@ -192,9 +193,9 @@ STILL OPEN, and they are all fixture defects rather than spec defects:
 
 ## DEC-11 — Adopted from the comparison implementation
 Reviewed /Users/kellyhe/Documents/gauntlet/arena-hall-arrival-engine/docs/PRD.md. Adopted:
-  - Stale supplied labels (their R-017/019) -> our R-014/R-015 + G-031/G-032. Their strongest idea
+  - Stale supplied labels (their R-017/019) -> our R-014/R-015 + B-020/G-031. Their strongest idea
     and we had nothing on it. The brief's own roster says "Emmett Shear — Twitch"; he runs Softmax.
-  - Suppression counter, class and count only (their R-033) -> our R-028 + G-036. Makes restraint
+  - Suppression counter, class and count only (their R-033) -> our R-028 + B-024/G-022. Makes restraint
     provable without leaking, and is the visible answer to RUBRIC-3.
   - Huffman's SEC Form 4 sales as the named worked example of what is left out -> R-029.
   - Brokering mode: mutual / broker / light_touch (their R-025) -> R-022. Tells the host what to DO,

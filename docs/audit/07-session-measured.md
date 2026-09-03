@@ -6,7 +6,7 @@ that is the wrong measurement if an operator is logged in. Correct. This file re
 
 Method: Claude in Chrome against the operator's own signed-in browser. Read-only — no post, message,
 like, follow, comment or connection request was issued, and the adapter interface has no write path
-(DEC-6, fixture G-028). Every row below was observed, not inferred.
+(DEC-6, B-018 consolidated in G-029). Every row below was observed, not inferred.
 
 ## Results
 
@@ -141,7 +141,7 @@ alongside Messages and Notifications links. DEC-7's whitelist stripping is not o
 only thing keeping the operator's identity out of member profiles. Note also that the logged-in
 session exposes WRITE surfaces (Follow button, New post, Messages) on every page — DEC-6's
 structural read-only constraint (no write operation declared in the adapter interface) is what
-prevents these being reachable, and G-028 is the fixture that holds it.
+prevents these being reachable, and B-018 / G-029 holds that interface contract.
 
 ---
 
@@ -157,7 +157,7 @@ Tested on one public post the subject published himself:
 | **location tag** | "Menotti's Coffee Stop" | A STRUCTURED venue field, distinct from caption text. This resolves the AUD-07-6 ambiguity: a location *tag* is unambiguous where "In Venice this week" is a claim. Prefer the tag; fall back to the caption only as an unresolved claim. |
 | **absolute date** | "February 10, 2015" | The grid gives relative dates ("603w", "1d"). The post page gives an absolute one. Ingest dates from the post page, never from the grid. |
 | engagement | 237 likes, 5 comments | weak signal, cheap |
-| comments | `@brianhynes`, `@santisiri` (verified) | third_party_open per R-056 — traversal hints only |
+| comments | `@brianhynes`, `@santisiri` (verified) | third_party_open per R-026 — traversal hints only |
 
 ## AUD-07-10 — What the IMAGE yields that no text source does
 
@@ -185,4 +185,4 @@ fact store. The screenshot path needs no URL handling at all.
 Text-in-image is exactly as untrusted as tagged-post text. A photographed whiteboard, sign or screen
 can carry arbitrary text, including text shaped like instructions. Any OCR/vision output is DATA:
 it is never concatenated into a prompt as an instruction, and text recovered from an image published
-by a third party is `third_party_open` under R-056.
+by a third party is `third_party_open` under R-026.

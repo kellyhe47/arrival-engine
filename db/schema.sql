@@ -4,7 +4,7 @@
 -- so query-time graph traversal is never needed. Inner-circle expansion is an INGEST-time walk that
 -- writes facts back onto the member; by render time everything is a point lookup.
 --
--- The file IS the cache required by DEC-3 / R-052: ingestion writes it on the operator's machine,
+-- The file IS the cache required by DEC-3 / R-049: ingestion writes it on the operator's machine,
 -- the deployed app opens it read-only. That split becomes a file copy rather than architecture.
 
 PRAGMA foreign_keys = ON;
@@ -23,7 +23,7 @@ CREATE TABLE run (
 
 -- ── People ────────────────────────────────────────────────────────────────────
 -- is_member = 0 covers the inner circle (co-founders, colleagues, tagged associates). They exist so
--- their edges are traversable at ingest. They are NEVER scored and NEVER surfaced (R-018).
+-- their edges are traversable at ingest. They are NEVER scored and NEVER surfaced (R-055).
 CREATE TABLE person (
   id                  TEXT PRIMARY KEY,
   is_member           INTEGER NOT NULL CHECK (is_member IN (0,1)),
@@ -46,7 +46,7 @@ CREATE TABLE member_flags (
 );
 
 -- ── Facts ─────────────────────────────────────────────────────────────────────
--- provenance_class = who published it.  trust_class = who could have WRITTEN it (P-5/R-056).
+-- provenance_class = who published it.  trust_class = who could have WRITTEN it (P-5/R-026).
 -- The two are independent: a fact can be public, sourced, and still authored by a stranger.
 CREATE TABLE fact (
   id               TEXT PRIMARY KEY,
@@ -68,14 +68,14 @@ CREATE TABLE fact (
 CREATE INDEX fact_subject ON fact(subject_id, source_date DESC);
 CREATE INDEX fact_live    ON fact(subject_id) WHERE superseded_by IS NULL;
 
--- The render gate as a view, so G-011/G-012/R-056 are enforced by the store rather than by care.
+-- The render gate as a view, so B-007/B-008/R-025/R-026 are enforced by the store rather than by care.
 CREATE VIEW v_renderable_fact AS
   SELECT * FROM fact
    WHERE superseded_by IS NULL
-     AND source_url IS NOT NULL                                    -- G-011
+     AND source_url IS NOT NULL                                    -- B-007 / G-034
      AND NOT (provenance_class = 'inferred'
-              AND (composed_from IS NULL OR json_array_length(composed_from) = 0))  -- G-012
-     AND trust_class <> 'third_party_open';                        -- P-5 / R-056
+              AND (composed_from IS NULL OR json_array_length(composed_from) = 0))  -- B-008 / G-034
+     AND trust_class <> 'third_party_open';                        -- P-5 / R-026
 
 -- Full-text over fact bodies. This is the deep-cut mining surface.
 CREATE VIRTUAL TABLE fact_fts USING fts5(text, content='fact', content_rowid='rowid');
@@ -194,7 +194,7 @@ CREATE TABLE card (
   run_id         TEXT NOT NULL REFERENCES run(id)
 );
 
--- ── Deletion (P-3 / R-055) ────────────────────────────────────────────────────
+-- ── Deletion (P-3 / R-032) ────────────────────────────────────────────────────
 -- ON DELETE CASCADE above makes `DELETE FROM person WHERE id=?` a real purge: facts, topics,
 -- contexts, edges, source attempts and flags all go. Explicitly the opposite of OpenTable's
 -- "no way for a restaurant to permanently delete a guest", where hidden profiles auto-reinstate
@@ -211,7 +211,7 @@ CREATE TABLE card (
 -- What counts as corroboration (R-012). G-016 passes an opaque list; this enumerates it.
 -- STRONG: the source itself names the subject, or a filing/registry binds handle to legal person.
 -- WEAK:   consistent-but-forgeable signal (a bio backlink, a matching display name).
--- Rule (R-056): accept an account on >=1 STRONG, or >=2 WEAK from DIFFERENT sources. Never on
+-- Rule (R-012): accept an account on >=1 STRONG, or >=2 WEAK from DIFFERENT sources. Never on
 -- handle equality alone — `spez` on Reddit is Huffman, `@spez` on X is a stranger (G-016).
 CREATE TABLE corroboration_kind (
   slug     TEXT PRIMARY KEY,

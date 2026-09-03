@@ -17,8 +17,8 @@ graph nodes so their edges are traversable, but they are **never scored and neve
 ### Fact
 `id, subject_id, text, provenance_class(self_published|on_record|third_party|inferred),
  source_url, source_host, source_date, composed_from[], search_first_page(bool)`
-The provenance fields are required. A fact without `source_url` cannot render (G-011).
-An `inferred` fact without `composed_from` cannot render (G-012).
+The provenance fields are required. A fact without `source_url` cannot render (B-007 / G-034).
+An `inferred` fact without `composed_from` cannot render (B-008 / G-034).
 
 ### Topic
 Controlled vocabulary slug, shared across people so overlaps are computable.
@@ -56,7 +56,7 @@ engine dressing topical similarity up as a relationship.
 
 ## Two rules that keep the social layer safe to ship
 
-1. **Personalization stripped at the boundary** (DEC-7, G-029/G-030). The logged-in view is
+1. **Personalization stripped at the boundary** (DEC-7, B-019 / G-029). The logged-in view is
    personalised — "Followed by Alexandr Wang and Sam Altman", "3rd degree", "5 others you know" are
    facts about the *operator*, not the member. Whitelist member-owned fields; drop everything else.
 2. **Wide collection, narrow disclosure.** The graph holds the inner circle so it can be traversed.
@@ -86,7 +86,7 @@ A graph database earns its keep on query-time traversal you cannot predict in ad
 has none, `rank_room` is at most ~50 point lookups plus an edge check, and the brief rules out
 "infrastructure theatre" outright.
 
-**The file IS the cache** that DEC-3 and R-052 require: ingestion writes it on the operator's
+**The file IS the cache** that DEC-3 and R-049 require: ingestion writes it on the operator's
 machine, the deployed app opens it read-only. That split stops being architecture and becomes a
 file copy — which is also why a live demo cannot fail on a network call.
 
@@ -97,11 +97,11 @@ file copy — which is also why a live demo cannot fail on a network call.
 | `topic.discriminating` | **P0-1.** Genericity is a property of the tag, measured once over the member base, room-independent. Replaces the room statistic that was non-monotonic, room-size-inverted, and failed on its own justifying case (5 of 10 is exactly 50%). `holder_count` / `base_size` are stored so the flag is recomputable, not trusted. |
 | `source_status` | **P-4.** The only way to distinguish *"we looked and there was nothing"* from *"we could not look"*. Without this table, "Eric Ries is dormant" and "archive.org returned 503" are the same row — the exact error the audit caught. |
 | `v_recency_state` | Makes unreachability **contagious**: one unreached source downgrades a profile to `unknown`. Absence of evidence from a source you could not read is not evidence of absence. |
-| `v_renderable_fact` | Enforces G-011 (no source, no render), G-012 (inferred facts name their inputs) and R-056 (`third_party_open` never renders) in the **store**, not in application care. |
+| `v_renderable_fact` | Enforces B-007 (no source, no render), B-008 (inferred facts name their inputs) and R-026 (`third_party_open` never renders); the mixed contract is G-034. Enforcement lives in the **store**, not in application care. |
 | `fact.trust_class` | **P-5.** Independent of `provenance_class`: a fact can be public, sourced, and still authored by a stranger. The Instagram tagged tab is the measured case. |
 | `edge` type `no_edge_confirmed` | **R-019.** Records measured *absence*, so topical similarity can never be dressed up as a relationship. |
 | `member_flags.do_not_brief` + `v_present` | **P-3.** The opt-out removes the member from *other* members' rooms too. Honoured at scoring time, so no digest is built and then discarded. |
-| `ON DELETE CASCADE` throughout | **R-055.** `DELETE FROM person` is a real purge. Explicitly the opposite of OpenTable, where a hidden profile auto-reinstates with its notes intact. |
+| `ON DELETE CASCADE` throughout | **R-032.** `DELETE FROM person` is a real purge. Explicitly the opposite of OpenTable, where a hidden profile auto-reinstates with its notes intact. |
 | `card` | If a member ever asks what was said about them, this answers it — with the exact fact ids that rendered. |
 | `person.name_respelling` | **P-1.** NPR pronouncer convention, `[EL-suh]`, NULL when the name is obvious. |
 
