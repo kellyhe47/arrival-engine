@@ -1,0 +1,76 @@
+{
+  "schema_version": 1,
+  "id": "G-034",
+  "name": "third-party-open-never-renders",
+  "why": "Instagram's tagged tab is written by other people, and its first item for this member names a different Fred Wilson entirely. A stranger must not be able to place text into a member's card by tagging them.",
+  "covers": [
+    "B-022"
+  ],
+  "case_type": "negative_control",
+  "traces_to": [
+    "AUD-07-7",
+    "DEC-4"
+  ],
+  "defends_against": "An implementation that treats a tagged post as a source about the member because the member's handle appears on it, letting an outsider write what a host says out loud.",
+  "time_sensitive": false,
+  "given": {
+    "inputs": {
+      "candidate_facts": [
+        {
+          "fact_id": "f_blog",
+          "text": "Has written about crypto protocols since 2013.",
+          "trust_class": "subject_authored",
+          "provenance_class": "self_published",
+          "source_url": "https://avc.com/",
+          "source_date": "2026-07-23"
+        },
+        {
+          "fact_id": "f_tagged",
+          "text": "Contributed a sculpture to a World Cup public art installation.",
+          "trust_class": "third_party_open",
+          "provenance_class": "third_party",
+          "source_url": "https://www.instagram.com/p/DalKAw4kcSl/",
+          "source_date": "2026-06-01"
+        }
+      ]
+    },
+    "preexisting_state": {},
+    "configuration": {
+      "render_trust_classes": [
+        "subject_authored",
+        "publisher"
+      ]
+    },
+    "clock": {}
+  },
+  "when": {
+    "operation": "select_renderable_facts",
+    "input_refs": [
+      "f_blog",
+      "f_tagged"
+    ]
+  },
+  "expect": {
+    "exact": {
+      "result": {
+        "renderable_fact_ids": [
+          "f_blog"
+        ],
+        "rejected": [
+          {
+            "fact_id": "f_tagged",
+            "reason": "third_party_open"
+          }
+        ],
+        "narrator_context_fact_ids": [
+          "f_blog"
+        ],
+        "third_party_open_in_narrator_context": 0
+      },
+      "state_changes": [],
+      "emitted_events": [],
+      "external_calls": []
+    },
+    "properties": []
+  }
+}

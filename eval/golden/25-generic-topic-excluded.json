@@ -2,7 +2,7 @@
   "schema_version": 1,
   "id": "G-025",
   "name": "generic-topic-excluded",
-  "why": "The edge audit measured venture-capital-craft on five of the ten. A room of four VCs all sharing it must not produce four strong matches; a topic everyone holds is not a reason to introduce anyone.",
+  "why": "venture-capital-craft is held by 5 of the 10 \u2014 measured, holder share 0.50 >= 0.40. It is excluded as a property of the TAG, room-independent, so a room of four VCs does not produce four strong matches on the fact that they are all VCs.",
   "covers": [
     "B-016"
   ],
@@ -11,7 +11,7 @@
     "AUD-EDGES-GENERIC",
     "RUBRIC-3"
   ],
-  "defends_against": "An implementation that scores raw topic-set intersection, recommending every VC to every other VC because they all write about venture capital.",
+  "defends_against": "An implementation that recomputes genericity from the current room, which is non-monotonic (a fifth guest deletes the match), room-size-inverted, and lets the pair through at exactly 50% \u2014 the share actually measured.",
   "time_sensitive": false,
   "given": {
     "inputs": {
@@ -93,13 +93,23 @@
         "S5",
         "S7"
       ],
-      "generic_topic_max_share": 0.5,
       "tie_break": [
         "large_signal_count_desc",
         "evidence_recency_desc",
         "member_id_asc"
       ],
-      "generic_topic_min_room": 4
+      "vocabulary": {
+        "venture-capital-craft": {
+          "discriminating": false,
+          "holder_count": 5,
+          "base_size": 10
+        },
+        "seed-stage-financing": {
+          "discriminating": true,
+          "holder_count": 2,
+          "base_size": 10
+        }
+      }
     },
     "clock": {}
   },
@@ -115,9 +125,9 @@
         "excluded_topics": [
           {
             "topic": "venture-capital-craft",
-            "holders": 4,
-            "room_size": 4,
-            "share": 1.0
+            "discriminating": false,
+            "holder_count": 5,
+            "base_size": 10
           }
         ],
         "ranked_matches": [

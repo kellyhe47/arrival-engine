@@ -1,0 +1,69 @@
+{
+  "schema_version": 1,
+  "id": "G-033",
+  "name": "one-unreached-source-means-unknown",
+  "why": "Eric Ries looked dormant and had shipped a book that month; staleness was a retrieval artifact. Absence of evidence from a source you could not read is not evidence of absence, so a single unreached source must downgrade the whole verdict.",
+  "covers": [
+    "B-021"
+  ],
+  "case_type": "negative_control",
+  "traces_to": [
+    "AUD-03-RIES-ARTIFACT",
+    "DEC-7"
+  ],
+  "defends_against": "An implementation that computes recency from whatever it managed to fetch, so a 503 on one archive silently becomes 'nothing published since 2021' on a card read aloud to the author.",
+  "time_sensitive": true,
+  "given": {
+    "inputs": {
+      "source_status": [
+        {
+          "source_id": "personal_blog_rss",
+          "status": "ok",
+          "fact_count": 3
+        },
+        {
+          "source_id": "newsletter",
+          "status": "ok",
+          "fact_count": 0
+        },
+        {
+          "source_id": "wayback",
+          "status": "unavailable",
+          "reason": "http_503",
+          "fact_count": 0
+        }
+      ],
+      "latest_reached_item": {
+        "published_at": "2021-06-01"
+      }
+    },
+    "preexisting_state": {},
+    "configuration": {
+      "stale_after_days": 365
+    },
+    "clock": {
+      "as_of": "2026-09-03T18:00:00Z"
+    }
+  },
+  "when": {
+    "operation": "build_now_block",
+    "input_refs": [
+      "m_ries"
+    ]
+  },
+  "expect": {
+    "exact": {
+      "result": {
+        "recency_state": "unknown",
+        "unreached_sources": 1,
+        "claims_recent_activity": false,
+        "claims_silence": false,
+        "block_kind": "coverage_gap"
+      },
+      "state_changes": [],
+      "emitted_events": [],
+      "external_calls": []
+    },
+    "properties": []
+  }
+}

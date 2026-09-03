@@ -26,12 +26,16 @@ def err(fid, msg):
 def ctx_key(c):
     return (c.get("type"), c.get("value"))
 
-def generic_topics(room, max_share, min_room=4):
-    """Topics held by strictly more than max_share of the room, once the room is big enough.
+def generic_topics(vocabulary):
+    """Non-discriminating topics, read from the controlled vocabulary.
 
-    The floor matters: in a room of two, any shared topic is held by 100% of the room, so without
-    it the gate would delete every match in a quiet room.
+    Genericity is a property of the TAG, measured once over the member base and stored, NOT a
+    statistic recomputed from the current room. The room-statistic version was non-monotonic,
+    room-size-inverted, and failed on the only case ever measured (5 of 10 is exactly 50%).
     """
+    return {t for t, v in (vocabulary or {}).items() if not v.get("discriminating", True)}
+
+def _unused_room_genericity(room, max_share, min_room=4):
     n = len(room)
     if n < min_room:
         return set()
@@ -155,13 +159,19 @@ def main():
             present = gi.get("present_members", [])
             if a and present and isinstance(present[0], dict):
                 # genericity gate, re-derived from the room including the arriving member
-                excluded = generic_topics([a] + present,
-                                          cfg.get("generic_topic_max_share", 0.5),
-                                          cfg.get("generic_topic_min_room", 4))
+                excluded = generic_topics(cfg.get("vocabulary"))
                 checks += 1
                 asserted_excl = sorted(e["topic"] for e in res.get("excluded_topics", []))
                 if sorted(excluded) != asserted_excl:
-                    err(fid, f"excluded_topics {asserted_excl} != re-derived {sorted(excluded)}")
+                    err(fid, f"excluded_topics {asserted_excl} != vocabulary-derived {sorted(excluded)}")
+                # the 0.40 rule must be arithmetically consistent with the stored flag
+                for t, v in (cfg.get("vocabulary") or {}).items():
+                    if "holder_count" in v and "base_size" in v:
+                        checks += 1
+                        want = (v["holder_count"] / v["base_size"]) < 0.40
+                        if v.get("discriminating") != want:
+                            err(fid, f"vocabulary {t}: discriminating={v.get('discriminating')} "
+                                     f"but {v['holder_count']}/{v['base_size']} gives {want}")
                 seen_scores = []
                 for rm in res["ranked_matches"]:
                     b = by_id(fid, present, rm["member_id"])
@@ -175,10 +185,14 @@ def main():
                     checks += 1
                     mn = cfg.get("surface_min_score", 6)
                     req = set(cfg.get("surface_requires_any_of", ["S3", "S5", "S7"]))
-                    want = rm["score"] >= mn and bool(set(expected_signals(rm)) & req)
+                    sigs_set = set(expected_signals(rm))
+                    surf_score = rm["score"] - sum(s["weight"] for s in rm["fired_signals"]
+                                                   if s["signal_id"] == "S8")
+                    want = surf_score >= mn and bool(sigs_set & req)
                     if want != rm["surfaced"]:
                         err(fid, f"{rm['member_id']}: surfaced={rm['surfaced']} but rule gives {want} "
-                                 f"(score {rm['score']} vs min {mn}, signals {expected_signals(rm)})")
+                                 f"(surfacing score {surf_score} excl S8 vs min {mn}, "
+                                 f"signals {expected_signals(rm)})")
 
                 # rank ordering and ties
                 checks += 1
@@ -268,12 +282,16 @@ def main():
         # --- provenance selection ---
         if op == "select_renderable_facts":
             checks += 1
+            allowed_trust = cfg.get("render_trust_classes")
             ok, bad = [], []
             for f in gi["candidate_facts"]:
                 if not f.get("source_url"):
                     bad.append((f["fact_id"], "missing_provenance"))
                 elif f.get("provenance_class") == "inferred" and not f.get("composed_from"):
                     bad.append((f["fact_id"], "inferred_without_named_inputs"))
+                elif allowed_trust is not None and f.get("trust_class") not in allowed_trust:
+                    # R-056 / P-5: anyone could have written this. Traversal hint only.
+                    bad.append((f["fact_id"], f.get("trust_class")))
                 else:
                     ok.append(f["fact_id"])
             if sorted(ok) != sorted(res["renderable_fact_ids"]):
@@ -282,6 +300,14 @@ def main():
             got_bad = sorted((r["fact_id"], r["reason"]) for r in res["rejected"])
             if sorted(bad) != got_bad:
                 err(fid, f"rejected {got_bad} != re-derived {sorted(bad)}")
+            # nothing untrusted may reach the narrator, even as context
+            if "narrator_context_fact_ids" in res:
+                checks += 1
+                untrusted = {f["fact_id"] for f in gi["candidate_facts"]
+                             if allowed_trust is not None and f.get("trust_class") not in allowed_trust}
+                leaked = untrusted & set(res["narrator_context_fact_ids"])
+                if leaked or res.get("third_party_open_in_narrator_context") != 0:
+                    err(fid, f"untrusted facts reached narrator context: {sorted(leaked)}")
 
         # --- gate/grade precedence ---
         if op == "evaluate_digest":

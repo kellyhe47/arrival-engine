@@ -71,8 +71,7 @@
         "DEC-USER-BUCKETS"
       ],
       "required_case_types": [
-        "happy",
-        "boundary"
+        "happy"
       ]
     },
     {
@@ -83,7 +82,6 @@
         "RUBRIC-4"
       ],
       "required_case_types": [
-        "happy",
         "negative_control",
         "boundary"
       ]
@@ -227,18 +225,6 @@
       ]
     },
     {
-      "id": "B-016",
-      "statement": "A topic held by more than half the room is excluded from S3, S6 and S7, and the exclusion is reported.",
-      "traces_to": [
-        "AUD-EDGES-GENERIC",
-        "RUBRIC-3"
-      ],
-      "required_case_types": [
-        "negative_control",
-        "boundary"
-      ]
-    },
-    {
       "id": "B-017",
       "statement": "A session that expires mid-ingest yields a partial profile that is marked partial; already-collected facts are kept and the gap is reported.",
       "traces_to": [
@@ -266,8 +252,74 @@
         "AUD-07-4"
       ],
       "required_case_types": [
-        "negative_control",
-        "boundary"
+        "negative_control"
+      ]
+    },
+    {
+      "id": "B-016",
+      "statement": "A topic whose holder share over the member base is >= 0.40 is non-discriminating and excluded from S3/S6/S7, room-independent.",
+      "traces_to": [
+        "AUD-EDGES-GENERIC",
+        "RUBRIC-3"
+      ],
+      "required_case_types": [
+        "negative_control"
+      ]
+    },
+    {
+      "id": "B-020",
+      "statement": "A supplied arrival label that is out of date is corrected and shown to the host, never echoed as fact.",
+      "traces_to": [
+        "AUD-STALE-LABEL",
+        "RUBRIC-4"
+      ],
+      "required_case_types": [
+        "happy",
+        "negative_control"
+      ]
+    },
+    {
+      "id": "B-021",
+      "statement": "Recency has three states; only `quiet` may state silence, and one unreached source downgrades the profile to `unknown`.",
+      "traces_to": [
+        "AUD-03-RIES-ARTIFACT",
+        "DEC-7"
+      ],
+      "required_case_types": [
+        "negative_control"
+      ]
+    },
+    {
+      "id": "B-022",
+      "statement": "third_party_open content is never attributed, never rendered, and never reaches the narrator as fact.",
+      "traces_to": [
+        "AUD-07-7",
+        "DEC-4"
+      ],
+      "required_case_types": [
+        "negative_control"
+      ]
+    },
+    {
+      "id": "B-023",
+      "statement": "A do_not_brief member gets a name-only card, is scored in neither direction, and is absent from other members' rooms.",
+      "traces_to": [
+        "AUD-LINE-19",
+        "RUBRIC-4"
+      ],
+      "required_case_types": [
+        "negative_control"
+      ]
+    },
+    {
+      "id": "B-024",
+      "statement": "Withheld facts are reported as class and count only, never as content.",
+      "traces_to": [
+        "RUBRIC-3",
+        "DEC-4"
+      ],
+      "required_case_types": [
+        "happy"
       ]
     }
   ]

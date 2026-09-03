@@ -164,3 +164,48 @@ What this means, stated plainly so no later reader thinks P0-3 was missed:
   - Residual risk carried: AUD-LINE-6 (Target, Meyer) is the evidence that this is where harm lands,
     and the harm lands on someone who is not the member. If a card ever does this, the leak test in
     the prompt is the only thing that was standing in the way.
+
+## DEC-10 — Pending queue resolved (2026-09-03)
+All six queued changes and the eight spec-review P0s were decided in one pass.
+
+ACCEPTED and now in the PRD:
+  P-1 phonetic respelling in Who        -> R-034
+  P-3 do-not-brief + real deletion      -> R-032, schema member_flags + ON DELETE CASCADE, G-035
+  P-4 quiet vs unknown recency          -> R-040, schema source_status + v_recency_state, G-033
+  P-5 trust_class / injection surface   -> R-026, schema fact.trust_class + v_renderable_fact, G-034
+  P-6 Instagram captions feed S4        -> R-005/R-031, schema context.resolved
+  P0-1 genericity                       -> R-019, vocabulary property, G-025 rebased
+  P0-2 S8 cannot create matches         -> R-018, surfacing evaluated excluding S8
+  P0-4 runtime registry                 -> R-053, structural absence; G-015 is defence-in-depth
+  P0-6 controlled vocabulary            -> db/vocabulary.sql (slug collision seed-stage-* fixed)
+
+DROPPED:
+  P-2 merge NPR/announce-card audit material — audit hygiene, shapes no requirement. The one
+      finding worth keeping (the pronouncer) was already lifted into R-034.
+
+STILL OPEN, and they are all fixture defects rather than spec defects:
+  P0-5 no enforcement for "never member-visible" — mitigated by unguessable URL + noindex,
+       accepted and stated as K-1..K-6 risk. There is no auth to add; the brief excludes it.
+  P0-7 word_count handed to fixtures instead of derived.
+  P0-8 contradictory member attributes across fixtures; the cast must be derived from
+       db/vocabulary.sql. Applying the stated prominence rule moves Ries 3 -> 4.
+
+## DEC-11 — Adopted from the comparison implementation
+Reviewed /Users/kellyhe/Documents/gauntlet/arena-hall-arrival-engine/docs/PRD.md. Adopted:
+  - Stale supplied labels (their R-017/019) -> our R-014/R-015 + G-031/G-032. Their strongest idea
+    and we had nothing on it. The brief's own roster says "Emmett Shear — Twitch"; he runs Softmax.
+  - Suppression counter, class and count only (their R-033) -> our R-028 + G-036. Makes restraint
+    provable without leaking, and is the visible answer to RUBRIC-3.
+  - Huffman's SEC Form 4 sales as the named worked example of what is left out -> R-029.
+  - Brokering mode: mutual / broker / light_touch (their R-025) -> R-022. Tells the host what to DO,
+    not just whom to name.
+  - Deceased homonym never auto-resolved (their R-015) -> R-013.
+  - Source precedence on contradiction (their R-012) -> R-010.
+  - Primary + one backup, everyone else collapses (their R-036) -> R-038.
+  - Name-drop never an instruction (their R-041) -> R-039.
+  - Thin profile emits fewer facts, fabricates nothing (their R-038) -> R-041.
+  - Positional room view (their R-044) -> R-044.
+  - None of the ten are in Texas; the brief's "same city" is false as written -> K-6.
+NOT adopted: their 0/1/3 buckets and max 48 (ours is 1/2/3, ceiling 16, already fixture-pinned);
+their floor of 6 coincides with ours; their fact-class ban list is superseded by DEC-9, which the
+user decided the other way.

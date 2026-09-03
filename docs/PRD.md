@@ -1,345 +1,280 @@
 # THE ARRIVAL ENGINE — PRD
 
-**Status:** build-ready. **Date:** 2026-09-03.
-**Acceptance contract:** `eval/golden/*.json` (30 fixtures, 19 behaviors). Prose here carries the
-*why*; the fixtures and wireframes carry the *what*. Where they disagree, the fixtures win.
+**Acceptance contract:** `eval/golden/*.json`. Prose carries the *why*; fixtures carry the *what*.
+Where they disagree, fixtures win — except the four fixtures named defective in §10.
 
-**Tagging.** `[source]` = from the brief, its rubric, or a measured audit finding.
-`[decided]` = the user's call, logged in `docs/decisions/DECISIONS.md`. `[proposal]` = mine, pending.
-Review the `[proposal]` lines.
+`[source]` brief / rubric / measured audit · `[decided]` user's call (`docs/decisions/DECISIONS.md`)
+· `[proposal]` mine. Review the `[proposal]` lines.
 
-**Companion artifacts**
-| File | What it is |
-|---|---|
-| `docs/audit/01`–`07` | Ground truth, ~7,700 lines, every claim URL-backed with HTTP status |
-| `docs/decisions/DECISIONS.md` | DEC-0 … DEC-7 |
-| `docs/scoring-model.md` | Normative scoring spec — the fixture oracle |
-| `docs/knowledge-graph.md` | Node, edge and source-tier schema |
-| `docs/architecture.excalidraw` | 20 nodes / 23 edges, machine-recoverable |
-| `docs/wireframes.html`, `docs/ui-states.md` | Every screen state, not just the happy path |
-| `eval/golden-manifest.json`, `eval/golden/*.json`, `eval/verify_fixtures.py` | The contract + its checker |
+Companions: `scoring-model.md` (oracle) · `knowledge-graph.md` + `db/schema.sql` (storage) ·
+`wireframes.html` + `ui-states.md` (surfaces) · `architecture.excalidraw` · `audit/01–07` (ground
+truth, every claim URL-backed) · `spec-review-01.md` (adversarial review).
 
 ---
 
-## 1. Problem
+## 1. Thesis
 
-R-001 `[source]` Arena Hall's members are founders and investors. Today, knowing who walked in and
-who they should meet lives in one person's head, supported by software the CEO writes from a
-terminal after midnight. The engine removes that constraint.
+**R-001** `[source]` A webhook fires with a name and one or two identifying details. A host has
+~90 seconds between the door and the handshake. No facial recognition, no CV — arrival is solved.
 
-R-002 `[source]` A webhook fires with a name and one or two identifying details. Arrival detection
-is assumed solved; no facial recognition, no computer vision, ever.
+**R-002** `[source]` The failure mode is not incompleteness, it is creepiness. *"A member who feels
+SEEN renews and brings friends. A member who feels DOSSIERED quits and tells people why."*
 
-R-003 `[source]` The output is read by a host in **about ninety seconds** while the member walks in.
+**R-003** `[proposal]` The shippable test, from a working maître d': **would the member be pleased
+to read this card over the host's shoulder?** (AUD-LINE-14.)
 
-R-004 `[source]` The product dies on the wrong side of one line: a member who feels **seen** renews
-and brings friends; a member who feels **dossiered** quits and tells people why.
+**R-004** `[proposal]` **The engine must never assert what it merely failed to observe.** Every
+defect the audit found was a variant of this: the `@spez` collision, the operator's graph leaking
+into member profiles, the wrong Fred Wilson in a tagged post, "Ries is dormant" the month he
+shipped a book. Every gate below exists to enforce it.
 
----
+## 2. Sourcing
 
-## 2. Scope
+**R-005** `[source]` Sources are tiered by **measured** access. Audit 04 tested logged-out; audit 07
+tested a logged-in session.
 
-**In:** ingestion across open and session-assisted sources; a per-member knowledge graph; asymmetric
-pairwise scoring against everyone present; a staff-facing digest; one mobile-first surface.
-
-**Out** `[source]`: facial recognition or any CV; login, accounts, roles; member-facing views;
-polish for its own sake. **Out** `[decided]`: dating-app data — no access path exists at any login
-state and it implies GDPR Art. 9 special-category data.
-
-R-005 `[decided]` **Working beats pretty.** Ship a rough thing that runs.
-
-R-006 `[proposal]` The repo records **hours spent** against a visible cut line, because RUBRIC-1
-scores *"what did you get working, and in how many hours — both numbers matter."* Even with time
-constraints lifted (DEC-0), the demo needs an hours number to answer that question.
-
----
-
-## 3. Data sourcing
-
-R-007 `[source]` Sources are tiered by **measured** access, never by assumption. Audit 04 tested
-logged-out access; audit 07 tested a logged-in session. Both are recorded with HTTP status.
-
-| Tier | Sources | Runs where |
+| Tier | Sources | Runs |
 |---|---|---|
-| **GREEN** | blog RSS full-text (`avc.com`, `feld.com`, `hunterwalk.com`, `nabeelqu.substack.com`), HN Algolia, SEC EDGAR, Wikipedia, Wayback CDX, YouTube transcripts, podcast RSS, Open Library `search/inside` | anywhere, **including the deployed URL** |
-| **METERED** | X API | anywhere; costs money |
-| **SESSION** | **LinkedIn, X, Instagram, Facebook, TikTok** — operator's logged-in browser, read-only | **ingestion only, never the deployed URL** |
+| **GREEN** | blog RSS full-text, HN Algolia, SEC EDGAR, Wikipedia, Wayback, YouTube transcripts, podcast RSS, Open Library | anywhere, incl. deployed |
+| **METERED** | X API | anywhere, costs money |
+| **SESSION** | LinkedIn, X, Instagram (measured working); Facebook, TikTok (UNVERIFIED) | ingest only, **never deployed** |
 
-R-008 `[decided, DEC-1/DEC-6]` The relational layer — inner circle, tagged associates, follow-graph
-— **is in scope and is built**. My audit's RED verdicts were measured logged-out; the user correctly
-objected that this is the wrong measurement, and audit 07 confirmed it.
+**R-006** `[decided, DEC-1/6]` The relational layer — inner circle, tagged associates, follow-graph —
+is built. My RED verdicts were measured logged-out; the user correctly objected. Audit 07 confirmed:
+LinkedIn returns full post bodies and tagged people; X's follow list comes free via the
+accessibility tree; Instagram captions yield places and pursuits.
 
-R-009 `[source, AUD-07]` **Measured session yields.** LinkedIn returns full post bodies, dates,
-engagement, tagged people (`cc: …`) and reposts — and overturned a prior finding: Perkins posted
-**1 day** before the audit, where the logged-out sweep found no 2026 first-person output at all.
-X returns bio, counts, join date, birthday; the **following list is retrievable via the accessibility
-tree** (not text extraction), replacing a ~$13.45/pull metered call with $0. Instagram, Facebook and
-TikTok are **UNVERIFIED** — not logged in at test time. The PRD does not assume they work.
+**R-007** `[decided, DEC-6]` **Read-only, structurally.** No write operation exists in the adapter
+interface, so posting, liking or following is unreachable by bug, retry or injected instruction.
+*(G-028)*
 
-R-010 `[decided, DEC-6]` **Read-only, structurally.** Session adapters declare read operations only.
-No post, message, like, follow, comment, reaction or connection request exists in the interface, so
-it cannot be reached by a bug, a retry, or an instruction injected into a page. *(G-028)*
+**R-008** `[proposal]` No captcha or bot-detection evasion, at any tier. Human pace.
 
-R-011 `[proposal]` No captcha or bot-detection evasion is designed or built, at any tier. Navigation
-runs at human pace. TikTok's page carries 25 captcha references; that is a wall, not a challenge.
+**R-009** `[decided, DEC-7]` Personalized strings are stripped at the adapter boundary against a
+**whitelist**. "Followed by Sam Altman", "3rd degree", "5 others you know" are facts about the
+*operator*. *(G-029)*
 
-R-012 `[decided, DEC-7]` **Personalized strings are stripped at the adapter boundary.** A logged-in
-page renders facts about *the operator* — `Followed by Alexandr Wang and Sam Altman`, `3rd`,
-`5 others you know`. These are not reproducible by Arena Hall, they make coverage depend on who the
-operator knows, and they leak the operator's contacts into a member's profile. Extraction runs
-against a **whitelist** of member-owned fields; unknown fields are dropped. *(G-029, G-030)*
+**R-010** `[proposal]` **Source precedence on contradiction:** the member's own words > their
+organisation's > the follow graph > press. A lower tier never overrides a higher one. *(from the
+comparison PRD, R-012)*
 
-R-013 `[source]` Identity resolution requires **corroboration**. A handle match alone is not
-identity: `spez` on Reddit is Steve Huffman; `@spez` on X is an unrelated account with 103 followers
-and no posts. Emmett Shear is `emmett` on HN, not `eshear`. *(G-016)*
+**R-011** `[source]` An unavailable source reports unavailability and returns empty — never
+backfilled from a snippet or a model. A session expiring mid-ingest yields a profile **marked
+partial**. *(G-015, G-027)*
 
-R-014 `[source]` An unavailable source **reports unavailability and returns empty**. It is never
-backfilled from a search snippet or a language model. *(G-015, G-027)*
+## 3. Identity and staleness
 
-R-015 `[proposal]` A session expiring mid-ingest yields a **partial profile, marked partial**.
-Collected facts are kept; the gap is visible. *(G-027)*
+**R-012** `[source]` Resolution requires **corroboration**; a handle match is not identity.
+`spez` on Reddit is Huffman; `@spez` on X is a stranger with 103 followers. *(G-016)*
 
----
+**R-013** `[proposal]` More than one candidate → **`ambiguous`: show the chooser, emit no brief.**
+Zero → `not_found`. A candidate marked **deceased is never auto-resolved** — "Nabeel Qureshi"
+resolves to the writer and to an apologist who died in 2017. Briefing on a dead man is the worst
+available failure.
 
-## 4. Knowledge graph
+**R-014** `[source]` **The supplied label is a hint to verify, never a fact to echo.** The brief's
+own roster is stale for several of the ten: Shear runs **Softmax**, not Twitch. A host who opens
+with *"so, Twitch…"* has damaged the relationship before the handshake.
 
-R-016 `[decided]` One graph per member, merged into one store. Full schema: `docs/knowledge-graph.md`.
+**R-015** `[proposal]` The brief emits `label_correction {supplied, current, stale}`. When stale,
+the card shows it explicitly — *"the door said Twitch; it's Softmax now"* — because the host may
+have already read the door.
 
-R-017 `[source]` Every fact carries `provenance_class` ∈ {`self_published`, `on_record`,
-`third_party`, `inferred`}, a `source_url` and a `source_date`, assigned at ingestion.
+## 4. Scoring
 
-R-018 `[proposal]` Non-member people (co-founders, spouses, tagged colleagues) exist as graph nodes
-so their edges are traversable, but are **never scored and never surfaced**. This is what makes wide
-collection compatible with a narrow card.
+Oracle: `scoring-model.md`. Directional: `score(A→B)` ≠ `score(B→A)`.
 
-R-019 `[source, AUD-EDGES]` Confirmed absences are stored as `no_edge_confirmed`. Feld's 5,551 posts
-contain **zero** occurrences of Tavel, Huffman, Shear, Qureshi or Perkins. Recording the absence
-stops the engine dressing topical similarity up as a relationship.
+**R-016** `[decided]` Weights bucket to exactly three values — SMALL 1, MID 2, LARGE 3. A signal
+fires at full weight or not at all.
 
-R-020 `[source]` Topics use a **controlled vocabulary** shared across people, so overlaps are
-computable rather than string-matched.
-
----
-
-## 5. Scoring
-
-Normative spec: `docs/scoring-model.md`. Fixtures G-001 … G-008, G-017, G-023, G-025, G-026.
-
-R-021 `[decided]` `score(A → B)` reads "how much A should want to meet B" and is **asymmetric**.
-Asymmetry arises only from directed evidence (S5) and the status gradient (S8). With neither, both
-directions are identical. *(G-001, G-002)*
-
-R-022 `[decided]` Weights are bucketed into exactly three values — SMALL 1, MID 2, LARGE 3. A signal
-fires at full weight or not at all. No partial firings, no learned weights, no tuning.
-
-| id | signal | weight | directed |
+| id | signal | w | directed |
 |---|---|---|---|
-| S1 | peer tier + cohort (same tier AND same career decade) | 2 | no |
-| S2 | same-industry adjacency | 2 | no |
-| S3 | cross-industry complementarity (different industries + shared professional topic) | 3 | no |
-| S4 | life-context overlap (place, institution, life event, pursuit) | 3 | no |
-| S5 | directed declared link (A follows / cites / co-mentions B) | 3 | **yes** |
-| S6 | shared personal interest | 1 | no |
-| S7 | shared professional thesis | 3 | no |
-| S8 | status gradient (B more prominent than A) | 1 | **yes** |
+| S1 | peer tier + cohort | 2 | |
+| S2 | same-industry | 2 | |
+| S3 | cross-industry + shared professional topic | 3 | |
+| S4 | life-context overlap (place, institution, event, pursuit) | 3 | |
+| S5 | directed link — follows / cites / co-mentions | 3 | **✓** |
+| S6 | shared personal interest | 1 | |
+| S7 | shared professional thesis | 3 | |
+| S8 | status gradient | 1 | **✓** |
 
-R-023 `[proposal]` S2 and S3 are **mutually exclusive**, so the ceiling is **16**, not 18.
-*(caught by `eval/verify_fixtures.py`, not by reading — G-023)*
+**R-017** `[proposal]` S2 and S3 are mutually exclusive, so the ceiling is **16**.
 
-R-024 `[proposal]` **S8 cannot fire unless a substrate signal (S2/S3/S5/S7) has already fired**, and
-it is capped at SMALL. Prominence breaks ties; it never creates a match. Without this the engine
-introduces everyone to the most famous person present — which is *selection*, the documented Fleming
-failure mode, not *service*. It is also the answer to the VP-versus-CEO question: the aspirational
-pull is real and modelled, but one prominence point never beats one shared thesis. *(G-003–G-005)*
+**R-018** `[proposal]` **S8 cannot create a match.** The surfacing threshold is evaluated on the
+score **excluding S8**; S8 affects display and ranking only. Prominence breaks ties, never makes
+them. Without this the engine sends everyone to the most famous person present — *selection*, the
+Fleming failure, not service. *(fixes P0-2)*
 
-R-025 `[proposal]` **Generic-topic exclusion.** A topic is excluded from S3, S6 and S7 when the room
-holds ≥4 people and >50% of them hold it. AUD-EDGES measured `venture-capital-craft` on five of the
-ten; without this, Kopelman↔Tavel (no discoverable edge) scores as strongly as Wilson↔Feld (296
-mutual citations). The min-room floor is load-bearing: in a room of two, any shared topic is held by
-100% of the room, and without the floor the gate deletes every match in a quiet room. *(G-025, G-026)*
+**R-019** `[proposal]` **Genericity is a property of the vocabulary, not the room.** A topic is
+excluded from S3/S6/S7 when `holder_count / base_size ≥ 0.40`, measured once over the member base
+and stored in `topic.discriminating`. `venture-capital-craft` is held by 5 of 10 and is excluded.
+The prior room-statistic version was non-monotonic, room-size-inverted, and failed on its own
+justifying case. *(fixes P0-1; mechanism in `db/vocabulary.sql`)*
 
-R-026 `[proposal]` **Surfacing threshold.** A match is surfaced only at `score ≥ 6` **and** with at
-least one of S3/S5/S7 fired. Demographics alone — same city, same tier, same decade — is not a
-reason to interrupt someone. A card that says "nobody obvious tonight" is a feature: a weak
-name-drop burns credibility a strong one later needs. *(G-006–G-008)*
+**R-020** `[proposal]` **Introduction floor = 6**, and at least one of S3/S5/S7 must have fired.
+Demographics alone is not a reason to interrupt someone. Below the floor **nobody is named** — not
+as primary, not as backup.
 
-R-027 `[proposal]` Ties break by LARGE-signal count, then evidence recency, then member id. The
-ordering is deterministic and the arbitrary final tiebreak is documented as arbitrary. *(G-017)*
+**R-021** `[proposal]` Ties break by LARGE-signal count, then evidence recency, then id. *(G-017)*
 
----
+**R-022** `[proposal]` **Brokering mode**, in precedence order: `mutual` (both ≥ floor) →
+`broker` (gap ≥ 6) → `light_touch`. It changes what the host physically does — mutual means
+introduce and step away; broker means stay and carry the reason across.
 
-## 6. The digest
+**R-023** `[proposal]` Every fired signal carries a one-line `evidence` string naming why it fired.
+That is what makes the number arguable rather than oracular.
 
-R-028 `[source, AUD-FORMAT]` **250–350 words.** The declassified President's Daily Brief of
-3 Sep 1968 is 5 items / ~265 words / ~87 seconds read aloud. Brysbaert (2019, 190 studies, 18,573
-participants) puts adult silent non-fiction reading at 175–300 wpm; the slow end binds, because the
-host is standing, walking and watching a door. Outside the band is a **hard gate failure**. *(G-010)*
+## 5. Disclosure
 
-R-029 `[source]` **Exactly five ordered bare-noun blocks**, no summary paragraph, no transitions:
+**R-024** `[decided, DEC-4]` Deep cut: **anything public, with the source shown.** The provenance
+chip is not decoration — it is the mechanism that makes the widest policy defensible.
 
-| # | Block | Contains |
-|---|---|---|
-| 1 | **Who** | Name + one borrowed, attributed line (the White House palm-card unit) |
-| 2 | **Now** | What they are actually doing — or an honest statement that the trail is cold |
-| 3 | **Room** | Top matches: reason first, score small |
-| 4 | **Notice** | The deep cut, with provenance |
-| 5 | **Say** | The line the host can say out loud |
+**R-025** `[source]` **A fact with no source cannot render.** An **inferred** fact must name what it
+was composed from. Enforced in the store by `v_renderable_fact`, not by care. *(G-011, G-012)*
 
-R-030 `[source, AUD-FORMAT-SBAR]` The card **ends on a sayable line, not a fact**. In clinical SBAR
-the Recommendation slot is mandatory; a brief that ends on information is an unfinished handoff.
+**R-026** `[proposal]` **`trust_class` is independent of provenance:** `subject_authored` /
+`publisher` / `third_party_open`. Instagram's tagged tab is written by **other people** — its first
+item names the wrong Fred Wilson (the conceptual artist). `third_party_open` content is never
+attributed without corroboration, never rendered, and never concatenated into a model prompt as
+fact. It is a traversal hint only. *(AUD-07-7 — an injection surface, measured)*
+
+**R-027** `[decided, DEC-9]` Family facts are governed by a **write-time judgement in the narrator
+prompt, not a gate.** Family *organisations* and inherited context may render. Spec-review P0-3
+argued for a structural rule; I recommended it, the user chose write-time judgement. **No fixture
+can fail when a family fact reaches a card, because there is no rule to violate.** Residual risk
+accepted (AUD-LINE-6: in Target and Meyer the person harmed was not the subject).
+
+**R-028** `[proposal]` **The suppression counter.** The card shows withheld facts as **class and
+count only** — *"2 withheld: finance, family"* — never content. It proves restraint without
+leaking, and it is the visible answer to *"what did you choose to leave out."*
+
+**R-029** `[source]` The worked example: **Huffman's SEC Form 4 share sales are public, filed and
+verified — and suppressed.** A host who mentions them has ended the relationship.
+
+**R-030** `[proposal]` The model may only **rephrase retrieved text, never add facts.** A
+hallucinated fact read aloud to a founder is unrecoverable in the room.
+
+**R-031** `[decided, DEC-8]` **Image analysis is in scope; face recognition is not.** The brief's
+exclusion is scoped to arrival detection. In: scene, object, activity, venue, text-in-image. Out
+permanently: face recognition, matching, clustering, or inference from a face. Only
+subject-published images; screenshot the render, never store a signed CDN URL; no image is stored,
+only the derived observation; an image-derived fact must corroborate a textual one to render.
+Demonstrated value: the blog said "music", the photo said *vinyl and vintage receivers*.
+
+**R-032** `[proposal]` **Do Not Brief.** A member may opt out of recognition. Their card renders
+name and role only — no dossier, no matches, no score computed either way — and they are removed
+from *other* members' rooms, because a one-way opt-out is not an opt-out. Honoured at scoring time.
+Deletion is a real purge (`ON DELETE CASCADE`), not a hidden flag that reinstates.
+*(Oracle OPERA's Incognito mode is the only comparable that ships this; AUD-LINE-19.)*
+
+## 6. The card
+
+**R-033** `[source]` **250–350 words.** The declassified PDB of 3 Sep 1968 is 5 items / ~265 words /
+~87s aloud; Brysbaert (2019, 190 studies) puts adult silent reading at 175–300 wpm and the slow end
+binds, because the host is standing and watching a door. Outside the band is a hard gate failure.
+
+**R-034** `[source]` **Five ordered bare-noun blocks**, no summary, no transitions:
+`Who` (name + one borrowed attributed line, plus a phonetic respelling when the name is not obvious
+— NPR convention, `[EL-suh]`) · `Now` · `Room` · `Notice` (the deep cut) · `Say`.
+
+**R-035** `[source]` The card **ends on a sayable line, not a fact** — SBAR's Recommendation slot.
 *(G-009)*
 
-R-031 `[decided, DEC-2]` **Reason first, score small.** The "why" is the headline; the number sits
-beside it, de-emphasised, out of 16. No product on the market ships both a score and its reasoning —
-relationship CRMs expose scores and deliberately hide reasoning; event matchmakers show reasoning
-and never expose a score. The brief asks for both, which is unoccupied territory.
+**R-036** `[decided, DEC-2]` **Reason first, score small.** No product ships both a score and its
+reasoning; relationship CRMs hide the reasoning, event matchmakers hide the score.
 
-R-032 `[source]` The reason sentence **names only signals that actually fired**. A reason citing a
-connection the engine did not find is worse than no reason, because the host says it out loud to the
-member. *(G-020)*
+**R-037** `[source]` The reason names **only signals that actually fired**. *(G-020)*
 
-R-033 `[decided, DEC-4]` **Deep cut: anything public, with the source shown.** Any verifiable public
-fact qualifies provided the card carries its provenance. I flagged AUD-LINE-3 ("it was public" is
-the weakest defence — every Clearview image was public) and AUD-LINE-5 (composition is the danger);
-the user chose breadth. The provenance chip is therefore not decoration — it is the mechanism that
-makes the widest policy defensible, and it is the palm-card pattern: a borrowed line with its source
-attached. *(G-024)*
+**R-038** `[proposal]` **One primary introduction, one backup. Everyone else collapses.** Candidates
+below the floor appear only as `not_named` with a reason.
 
-R-034 `[source]` **A fact with no source cannot render.** Provenance is a required field, not display
-metadata. *(G-011)*
+**R-039** `[proposal]` The intro is a **name-drop, never an instruction** — *"Eric Ries is here; his
+new book is about exactly the incentive problem you've been working on"*, not *"go talk to Eric."*
+Members are not routed.
 
-R-035 `[source, AUD-LINE-5]` An **inferred** fact must name the facts it was composed from, or it
-cannot render. Two Uber timestamps are boring; joined, they are a one-night stand. The creepiness
-lives in the join. *(G-012)*
+**R-040** `[source]` **Recency has three states, not two:** `active` · `quiet` (every source
+reached, genuinely nothing) · `unknown` (a source was unreachable). **Only `quiet` may state
+silence.** One unreached source downgrades to `unknown` — absence of evidence from a source you
+could not read is not evidence of absence. Ries looked dormant and had shipped a book that month;
+staleness was a retrieval artifact. Tavel's Aug-2026 podcast is a **rerun** of an Apr-2025 recording
+and must be dated by recording. *(G-013, G-014)*
 
-R-036 `[source, AUD-STALE]` **Staleness is stated, never disguised.** Kopelman has no first-person
-content since 2014-11-12; Tavel's newest owned post is 12 months old; her Aug 2026 podcast is a
-**rerun of an Apr 2025 recording** and must be dated by recording, not publication. *(G-013, G-014)*
+**R-041** `[proposal]` A **thin profile emits fewer facts**, sets `non_obvious_fact_id: null`, and
+fabricates nothing. Kopelman is the thinnest of the ten.
 
-R-037 `[proposal]` The card is a **staff instrument** and is never member-visible. The Battery's
-charter already forbids members using presence features to surveil each other; the moment this
-becomes member-visible it violates a rule members have been given.
+**R-042** `[proposal]` The card is a **staff instrument**, never member-visible. The Battery's
+charter already forbids members using presence features to watch each other.
 
-R-038 `[decided, DEC-9]` Facts about family or intimates are governed by a **write-time judgement
-in the narrator prompt (the leak test), not by a gate.** Family-derived facts about *organisations*
-and inherited context may render — G-024's Kopelman Foundation fact is legitimate output.
-Spec-review P0-3 argued for a structural rule (`derived_from_edges[]`, rejected in
-`select_renderable_facts`, the same treatment that makes writes unreachable in R-010); I recommended
-it and the user chose write-time judgement instead. **There is therefore no fixture that can fail
-when a family fact reaches a card, because there is no rule to violate.** Recorded so this reads as
-a decision, not an oversight. Evidence of where the harm lands if it does: AUD-LINE-6 — in both
-Target and Meyer the person harmed was not the subject of record.
+## 7. Surfaces
 
----
+`wireframes.html` · `ui-states.md`.
 
-## 7. Surfaces and states
+**R-043** `[decided]` Mobile-first, no login. One primary surface (the card), plus **Why-this-score**
+(one tap) and **Room**.
 
-Wireframes: `docs/wireframes.html`. Full state table, navigation and actions: `docs/ui-states.md`.
+**R-044** `[proposal]` **Room is positional, not a list** — a host needs to know where the named
+person actually is in order to point.
 
-R-039 `[decided]` One primary surface: the **card**, mobile-first. Plus **Why-this-score** (one tap)
-and **Room** (demo control standing in for the webhook).
+**R-045** `[source]` States every surface must define: ready · no-strong-match · cold trail ·
+**unknown coverage** · empty room · ingesting · withheld · ambiguous · not-found · thin profile.
 
-R-040 `[source]` Every state is designed, not just the happy path: ready, no-strong-match, cold
-trail, empty room, ingesting, withheld, ambiguous name, unknown name. *(G-013, G-019)*
+**R-046** `[proposal]` **Why-this-score** shows fired signals with weights, signals that did *not*
+fire and why, excluded generic topics, and the reverse-direction score.
 
-R-041 `[proposal]` **Why-this-score** shows fired signals with weights, signals that did *not* fire
-and why, excluded generic topics with their share of the room, and the reverse-direction score.
-This is the whole answer to "expose the reasoning", one tap away and never on the card.
-
-R-042 `[proposal]` The **ingesting** screen names unavailable adapters and their reasons rather than
-hiding them. On stage this screen is half the argument for RUBRIC-2.
-
-R-043 `[proposal]` **Retry never relaxes a gate.** The obvious implementation of a retry button is
+**R-047** `[proposal]` **Retry never relaxes a gate.** The obvious implementation is
 re-render-until-pass, which converts a hard gate into a retry loop.
 
-R-044 `[proposal]` On ambiguity the **host picks**; the engine never guesses an identity.
+## 8. Architecture and storage
 
----
+**R-048** `[decided]` **Ingest** (offline, authenticated, slow) → SQLite with provenance on every
+row. **Arrival** (online, fast) reads the frozen file: `external_calls: []`.
 
-## 8. Evaluation
+**R-049** `[proposal]` **Graph shape, relational store.** No operation traverses more than one hop;
+inner-circle expansion is an ingest-time walk that writes facts back onto the member. The SQLite
+file *is* the cache DEC-3 requires — the ingest/serve split becomes a file copy.
 
-R-045 `[decided, DEC-5]` **Gate on structure, grade on content.** Hard pass/fail: word count, blocks
-present and ordered, all facts sourced, inferred facts name inputs, correct top match, sayable
-close. Graded with partial credit: deep cut found and non-obvious, reason cites a resolvable source,
-talk track reads as sayable. A gate failure outranks any content grade — a card scoring 4/4 on
-content still fails if it carries one unsourced fact. *(G-021)*
+**R-050** `[proposal]` **Deterministic:** resolution, scoring, buckets, ranking, floor, disclosure.
+**Probabilistic:** fact extraction at ingest, prose at compose. The boundary is enforced by the
+fixtures — no golden test asserts model prose, and no model output changes a score. The narrator is
+an injected seam at both points; temperature 0.
 
-R-046 `[source]` Two distinct commands: `validate-spec` (schema, arithmetic, traceability — runs
-today) and `test-golden` (drives the real implementation against the fixtures — needs the runner).
-They must never be conflated.
-
-R-047 `[proposal]` Digest generation is **idempotent**: same name, same roster, same cache, same
-card. Narrator temperature 0. The demo re-runs an arrival on stage; a card that varies between runs
-is a sample, not a decision. *(G-018)*
-
-R-048 `[proposal]` The narrator is an **injected seam**. The model writes prose; it never makes a
-decision. Everything in the matching path is deterministic. No fixture asserts model prose.
-
----
+**R-051** `[proposal]` Facts are **append-only** (supersede, never UPDATE) and every row names its
+`run_id`, so a re-scrape is diffable and *"what did the card say on Friday, and why"* is answerable.
 
 ## 9. Demo and deliverables
 
-R-049 `[source]` Ship: **a live URL**, **the repo**, and **one paragraph** on what to build next
-with a month and Arena Hall's real data.
+**R-052** `[source]` Ship: a live URL, the repo, and one paragraph on what to build next with a
+month and real member data.
 
-R-050 `[decided, DEC-3]` **Ten cached + one live re-run.** All ten profiles pre-built and cached so
-rendering never depends on a network call. One live ingestion run is triggerable on stage to prove
-the pipeline is real.
+**R-053** `[decided, DEC-3]` **Ten cached + one live re-run.** The on-stage run exercises **GREEN
+adapters only**, so it cannot fail on a dead session. SESSION adapters are **absent from the runtime
+registry**; G-015 is defence-in-depth, not the mechanism. *(fixes P0-4)*
 
-R-051 `[proposal]` The on-stage live run exercises **GREEN adapters only**, so it cannot fail on a
-dead session in front of the room. Session-assisted ingestion happens beforehand, locally.
+**R-054** `[proposal]` The repo records **hours spent** against a visible cut line — RUBRIC-1 scores
+*"in how many hours"* and needs a number.
 
-R-052 `[proposal]` The deployed app **serves the cache**. Session adapters are absent from the
-runtime registry entirely — sharing one registry between the ingestion job and the web app is how
-the live URL ends up trying to open a browser it does not have. *(G-015)*
+## 10. Risks and open defects
 
----
+`spec-review-01.md` holds the full review (8 P0 / 15 P1 / 11 P2). **P0-1, P0-2, P0-3, P0-4 and P0-6
+are resolved above.** Three remain, all fixture defects:
 
-## 10. Risks
-
-| # | Risk | Standing |
+| id | defect | fix |
 |---|---|---|
-| K-1 | Session adapters violate platform ToS; enforcement is **account-level on the operator's own account**. Meta §3.2(3) covers logged-in collection; LinkedIn "Don'ts" cl.2 bans it; *hiQ* lost on breach of contract and ate a permanent injunction. | Raised, user accepted (DEC-6) |
-| K-2 | Instagram, Facebook, TikTok session yields are **UNVERIFIED**. | Must be measured before they are claimed |
-| K-3 | Session data is **not reproducible** by Arena Hall — they cannot re-derive it from a different account. | Mitigated by DEC-7 stripping; residual |
-| K-4 | RUBRIC-4 pressure. DEC-4 takes the widest sourcing policy. Provenance is enforced structurally (R-034). **The family half is a prompt instruction, not a mechanism** (DEC-9) — a prompt is not enforcement, and this is the half that defends the widest-sourcing decision. | Provenance mitigated; family risk **accepted by decision** |
-| K-5 | The live re-run fails on stage. | Mitigated by R-050/R-051 |
-| K-6 | AUD-EDGES is **incomplete** — Kopelman has no retrievable first-person archive, Tavel's 2006–15 blog was not enumerated, firm-level co-investment could not be scraped. | Named as a corpus gap; `no_edge_confirmed` must not be asserted where the corpus was never searched |
+| P0-5 | "never member-visible" has no enforcement: no auth + public URL + ten real named people | unguessable URL + `noindex`; accepted risk, stated |
+| P0-7 | `word_count` is handed to fixtures, not derived (circular) | fixtures supply block text; the runner counts |
+| P0-8 | fixtures assign contradictory attributes to one member id (`m_ries` 3 vs 4) | derive the cast from `db/vocabulary.sql`; do not edit expectations |
 
----
+| # | risk | standing |
+|---|---|---|
+| K-1 | SESSION adapters breach platform ToS; enforcement is account-level on the **operator's** account | raised, accepted (DEC-6) |
+| K-2 | Facebook / TikTok yields UNVERIFIED | measure before claiming |
+| K-3 | Session data is not reproducible by Arena Hall from another account | mitigated by DEC-7; residual |
+| K-4 | Provenance is structural (R-025); **the family half is a prompt instruction, not a mechanism** | accepted by decision (DEC-9) |
+| K-5 | AUD-EDGES incomplete — Kopelman has no retrievable first-person archive; feld.com's search index is unqueryable | never assert `no_edge_confirmed` where the corpus was not searched |
+| K-6 | **None of the ten are in Texas.** The brief's "same city" is false as written | harmless for scoring; noted so it is not mistaken for a modelling assumption |
 
-## 11. Open defects — read before implementing
+## 11. Index
 
-`docs/spec-review-01.md` (715 lines) is an adversarial review of this document. It re-ran both
-checkers (green) and then found what passing checkers cannot. **8 P0 / 15 P1 / 11 P2 are open.**
-Six of its findings were dropped on re-verification and are listed there so they are not re-raised.
-
-The eight P0s, unfixed at time of writing. Fix these first:
-
-| id | defect |
-|---|---|
-| P0-1 | **R-025's genericity gate never fires on its own justifying case.** `venture-capital-craft` is 5 of 10 = *exactly* 50%; the predicate is `>50%`. Kopelman↔Tavel — the pair the rule exists to prevent — surfaces at 7 in the demo room. Mutation: `max_share` 0.6/0.7/0.8/0.99 all pass all fixtures. **Agreed fix: genericity is a property of the VOCABULARY, not of the room** — mark a tag `discriminating: false` once, from the corpus, room-independent. This also resolves P1-3 and P1-4. |
-| P0-2 | **R-024 is false: S8 can create matches.** The substrate set {S2,S3,S5,S7} ≠ the surfacing set {S3,S5,S7}. G-008's own pair sits at 5; raising the other party's fame makes it 6 and it surfaces. **Fix: evaluate the surfacing threshold on the score EXCLUDING S8.** S8 then affects display and ranking only, which is what R-024 claims. |
-| P0-3 | R-038 vs G-024 — **resolved by DEC-9**, not by fix. See R-038. |
-| P0-4 | **R-052 contradicts G-015.** R-052 says SESSION adapters are "absent from the runtime registry"; G-015 hands one an `enabled, session_present` adapter in `deployed_runtime`. The architecture has no runtime/registry node at all. Pick one: structural absence, or a runtime check with the fixture as defence-in-depth. |
-| P0-5 | **R-037 "never member-visible" has no enforcement surface.** No auth (excluded by the brief) + a public live URL + ten real named people = the cards are publicly readable. Absent from the risk table. |
-| P0-6 | **R-020's controlled vocabulary does not exist.** 16 topic and 6 industry slugs are used across fixtures and never enumerated, including the inconsistent pair `seed-stage-financing` / `seed-stage-investing`. `prominence_tier` and `seniority_tier` have zero audit backing. |
-| P0-7 | **`word_count` is handed in, not derived** (fixture-contract rule 5, circularity). G-010's five blocks are literally `"..."` and it asserts 351 words. The 250 floor is unpinned in every direction; tokenization is undefined. |
-| P0-8 | **Fixtures assign contradictory attributes to the same member ids** — `m_wilson` prominence 3 and 4; `m_shear` 3 and 4. G-004 and G-017 cannot both load from one cache. Needs a canonical cast, asserted by the verifier. |
-
-Six further changes are queued in `scratchpad/PENDING-PRD-CHANGES.md` and are **not yet in this
-document**: P-1 phonetic pronouncer in the Who block · P-2 merge NPR/announce-card audit material ·
-P-3 **"Do Not Brief" opt-out and real deletion** · P-4 **`recency_state` must distinguish `quiet`
-from `unknown`** (Ries looked dormant and was not — staleness was a retrieval artifact) ·
-P-5 **tagged content is an injection surface** (`trust_class`) · P-6 Instagram captions make S4 real.
-
-P-3 and P-4 are the two most valuable additions; P-5 is the most urgent correctness fix.
-
-## 12. Requirement index
-
-Data R-007…R-015 · Graph R-016…R-020 · Scoring R-021…R-027 · Digest R-028…R-038 ·
-Surfaces R-039…R-044 · Evaluation R-045…R-048 · Demo R-049…R-052 · Problem R-001…R-006.
-Open defects: 8 P0 / 15 P1 / 11 P2 in `docs/spec-review-01.md`; 6 queued changes in the scratchpad.
-
-**Fixture coverage:** every behavior in `eval/golden-manifest.json` (19) is covered by at least one
-of the 30 fixtures; both `validate_golden.py` and `verify_fixtures.py` pass (197 arithmetic checks).
+Thesis R-001–004 · Sourcing R-005–011 · Identity R-012–015 · Scoring R-016–023 ·
+Disclosure R-024–032 · Card R-033–042 · Surfaces R-043–047 · Architecture R-048–051 ·
+Demo R-052–054 · Risks R-055 n/a.

@@ -1,0 +1,62 @@
+{
+  "schema_version": 1,
+  "id": "G-032",
+  "name": "current-label-is-not-corrected",
+  "why": "The correction must fire on staleness, not on every arrival. A host told 'the door said Canva; it's Canva now' loses trust in the whole card.",
+  "covers": [
+    "B-020"
+  ],
+  "case_type": "negative_control",
+  "traces_to": [
+    "AUD-STALE-LABEL",
+    "RUBRIC-4"
+  ],
+  "defends_against": "An implementation that always emits a correction block, or that treats any former-org history as evidence the current label is wrong.",
+  "time_sensitive": true,
+  "given": {
+    "inputs": {
+      "arrival": {
+        "member_id": "m_perkins",
+        "supplied_label": "Canva"
+      },
+      "profile": {
+        "member_id": "m_perkins",
+        "current_org": "Canva",
+        "current_org_since": "2012-01-01",
+        "former_orgs": [
+          "Fusion Books"
+        ]
+      }
+    },
+    "preexisting_state": {},
+    "configuration": {
+      "verify_supplied_label": true
+    },
+    "clock": {
+      "as_of": "2026-09-03T19:00:00Z"
+    }
+  },
+  "when": {
+    "operation": "resolve_label",
+    "input_refs": [
+      "m_perkins"
+    ]
+  },
+  "expect": {
+    "exact": {
+      "result": {
+        "label_correction": {
+          "supplied": "Canva",
+          "current": "Canva",
+          "stale": false
+        },
+        "show_correction_to_host": false,
+        "echo_supplied_label": true
+      },
+      "state_changes": [],
+      "emitted_events": [],
+      "external_calls": []
+    },
+    "properties": []
+  }
+}

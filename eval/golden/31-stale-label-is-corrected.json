@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "id": "G-031",
+  "name": "stale-label-is-corrected",
+  "why": "The brief's own roster lists Emmett Shear as Twitch; he has run Softmax since 2025. A host who opens with 'so, Twitch...' has damaged the relationship before the handshake. The supplied label is a hint to verify, never a fact to echo.",
+  "covers": [
+    "B-020"
+  ],
+  "case_type": "happy",
+  "traces_to": [
+    "AUD-STALE-LABEL",
+    "RUBRIC-4"
+  ],
+  "defends_against": "An implementation that trusts the webhook's identifying detail and prints it in the Who block, confidently introducing a member by a company he left.",
+  "time_sensitive": true,
+  "given": {
+    "inputs": {
+      "arrival": {
+        "member_id": "m_shear",
+        "supplied_label": "Twitch"
+      },
+      "profile": {
+        "member_id": "m_shear",
+        "current_org": "Softmax",
+        "current_org_since": "2025-03-01",
+        "former_orgs": [
+          "Twitch",
+          "Justin.tv",
+          "Y Combinator",
+          "OpenAI (interim)"
+        ]
+      }
+    },
+    "preexisting_state": {},
+    "configuration": {
+      "verify_supplied_label": true
+    },
+    "clock": {
+      "as_of": "2026-09-03T19:00:00Z"
+    }
+  },
+  "when": {
+    "operation": "resolve_label",
+    "input_refs": [
+      "m_shear"
+    ]
+  },
+  "expect": {
+    "exact": {
+      "result": {
+        "label_correction": {
+          "supplied": "Twitch",
+          "current": "Softmax",
+          "stale": true
+        },
+        "show_correction_to_host": true,
+        "echo_supplied_label": false
+      },
+      "state_changes": [],
+      "emitted_events": [],
+      "external_calls": []
+    },
+    "properties": []
+  }
+}
