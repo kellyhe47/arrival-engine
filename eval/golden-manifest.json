@@ -160,14 +160,16 @@
     },
     {
       "id": "B-010",
-      "statement": "A source measured as blocked returns empty and is recorded as unavailable; it is never fabricated or silently substituted.",
+      "statement": "Adapters are tiered GREEN / METERED / SESSION. A SESSION adapter never runs in the deployed runtime; an unavailable adapter reports unavailability and returns empty, and is never fabricated or silently substituted.",
       "traces_to": [
         "DEC-1",
+        "DEC-6",
         "AUD-RED"
       ],
       "required_case_types": [
         "failure",
-        "negative_control"
+        "negative_control",
+        "boundary"
       ]
     },
     {
@@ -230,6 +232,38 @@
       "traces_to": [
         "AUD-EDGES-GENERIC",
         "RUBRIC-3"
+      ],
+      "required_case_types": [
+        "negative_control",
+        "boundary"
+      ]
+    },
+    {
+      "id": "B-017",
+      "statement": "A session that expires mid-ingest yields a partial profile that is marked partial; already-collected facts are kept and the gap is reported.",
+      "traces_to": [
+        "DEC-6"
+      ],
+      "required_case_types": [
+        "failure"
+      ]
+    },
+    {
+      "id": "B-018",
+      "statement": "Session-assisted adapters expose read operations only. No write operation exists in the adapter interface, so posting, messaging, liking or following is unreachable.",
+      "traces_to": [
+        "DEC-6"
+      ],
+      "required_case_types": [
+        "negative_control"
+      ]
+    },
+    {
+      "id": "B-019",
+      "statement": "Session adapters extract only whitelisted member-owned fields; personalized strings about the operator's own graph are dropped at the boundary and never enter a fact record.",
+      "traces_to": [
+        "DEC-7",
+        "AUD-07-4"
       ],
       "required_case_types": [
         "negative_control",

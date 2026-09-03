@@ -1,0 +1,104 @@
+{
+  "schema_version": 1,
+  "id": "G-015",
+  "name": "session-adapter-never-runs-in-runtime",
+  "why": "A session-assisted adapter depends on the operator's browser and cannot exist on the deployed URL the brief requires. Running it in the serving runtime is the failure that turns a working demo into a live-URL error.",
+  "covers": [
+    "B-010"
+  ],
+  "case_type": "boundary",
+  "traces_to": [
+    "DEC-1",
+    "DEC-6",
+    "AUD-RED"
+  ],
+  "defends_against": "An implementation that shares one adapter registry between the ingestion job and the web app, so the deployed site tries to open a logged-in browser it does not have.",
+  "time_sensitive": false,
+  "given": {
+    "inputs": {
+      "fetch_plan": [
+        {
+          "source_id": "personal_blog_rss",
+          "member_id": "m_huffman"
+        },
+        {
+          "source_id": "linkedin_profile",
+          "member_id": "m_huffman"
+        },
+        {
+          "source_id": "x_following",
+          "member_id": "m_huffman"
+        }
+      ]
+    },
+    "preexisting_state": {},
+    "configuration": {
+      "execution_context": "deployed_runtime",
+      "adapters": {
+        "personal_blog_rss": {
+          "tier": "GREEN",
+          "enabled": true
+        },
+        "hn_algolia": {
+          "tier": "GREEN",
+          "enabled": true
+        },
+        "linkedin_profile": {
+          "tier": "SESSION",
+          "enabled": true,
+          "session_present": true
+        },
+        "x_following": {
+          "tier": "METERED",
+          "enabled": false
+        }
+      }
+    },
+    "clock": {}
+  },
+  "when": {
+    "operation": "run_ingestion",
+    "input_refs": [
+      "m_huffman"
+    ]
+  },
+  "expect": {
+    "exact": {
+      "result": {
+        "facts_ingested": 0,
+        "source_status": [
+          {
+            "source_id": "linkedin_profile",
+            "status": "skipped",
+            "reason": "session_tier_not_available_in_runtime",
+            "facts": 0
+          },
+          {
+            "source_id": "personal_blog_rss",
+            "status": "ok",
+            "facts": 0
+          },
+          {
+            "source_id": "x_following",
+            "status": "skipped",
+            "reason": "adapter_disabled",
+            "facts": 0
+          }
+        ]
+      },
+      "state_changes": [],
+      "emitted_events": [
+        {
+          "type": "adapter_skipped",
+          "source_id": "linkedin_profile"
+        },
+        {
+          "type": "adapter_skipped",
+          "source_id": "x_following"
+        }
+      ],
+      "external_calls": []
+    },
+    "properties": []
+  }
+}

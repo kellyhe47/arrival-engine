@@ -1,0 +1,89 @@
+{
+  "schema_version": 1,
+  "id": "G-027",
+  "name": "expired-session-yields-partial-profile",
+  "why": "A logged-in session dies without warning. The facts already collected are good and must be kept; the gap must be visible so nobody reads a half-built profile as a complete one.",
+  "covers": [
+    "B-017",
+    "B-010"
+  ],
+  "case_type": "failure",
+  "traces_to": [
+    "AUD-RED",
+    "DEC-1",
+    "DEC-6"
+  ],
+  "defends_against": "An implementation that discards the whole run on session failure, or worse, keeps the partial profile without marking it partial so it silently looks complete forever.",
+  "time_sensitive": false,
+  "given": {
+    "inputs": {
+      "fetch_plan": [
+        {
+          "source_id": "personal_blog_rss",
+          "member_id": "m_perkins"
+        },
+        {
+          "source_id": "linkedin_profile",
+          "member_id": "m_perkins"
+        }
+      ]
+    },
+    "preexisting_state": {},
+    "configuration": {
+      "execution_context": "operator_machine",
+      "adapters": {
+        "personal_blog_rss": {
+          "tier": "GREEN",
+          "enabled": true
+        },
+        "linkedin_profile": {
+          "tier": "SESSION",
+          "enabled": true,
+          "session_present": false
+        }
+      }
+    },
+    "clock": {}
+  },
+  "when": {
+    "operation": "run_ingestion",
+    "input_refs": [
+      "m_perkins"
+    ]
+  },
+  "expect": {
+    "exact": {
+      "result": {
+        "facts_ingested": 7,
+        "profile_complete": false,
+        "profile_marked_partial": true,
+        "source_status": [
+          {
+            "source_id": "linkedin_profile",
+            "status": "unavailable",
+            "reason": "session_expired",
+            "facts": 0
+          },
+          {
+            "source_id": "personal_blog_rss",
+            "status": "ok",
+            "facts": 7
+          }
+        ]
+      },
+      "state_changes": [],
+      "emitted_events": [
+        {
+          "type": "profile_marked_partial",
+          "member_id": "m_perkins"
+        },
+        {
+          "type": "source_unavailable",
+          "source_id": "linkedin_profile"
+        }
+      ],
+      "external_calls": []
+    },
+    "properties": []
+  }
+}

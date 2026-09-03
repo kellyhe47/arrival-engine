@@ -59,3 +59,53 @@ GRADED (partial credit, reported as a score + failure list):
   - talk-track reads as sayable
 Every scoring fixture's observation envelope must therefore emit BOTH a gate verdict and a
 graded component. Settled before fixtures are written, per the fixture contract.
+
+## DEC-6 — Session-assisted ingestion, READ-ONLY (user's call, 2026-09-03)
+User pushed back on the RED verdicts: the audit measured LOGGED-OUT access, which is a different
+question from what a logged-in session can see. Correct objection. User authorises using their own
+logged-in accounts, driven through Claude in Chrome.
+
+**Hard constraint, stated by the user and binding on the design:**
+> "You can use my account but you ARE NOT ALLOWED TO MAKE ANY WRITE changes
+>  aka no posts, no messages, no likes"
+
+Enforced structurally, not by care:
+  - Session-assisted adapters expose READ operations only. There is no write path in the adapter
+    interface, so a write cannot be reached by a bug, a retry, or a prompt.
+  - No follows, connection requests, DMs, likes, reactions, comments, or profile edits. Ever.
+  - Navigation and reading at human pace. No captcha or bot-detection evasion is designed or built.
+
+**Architectural consequence — this is the important one.**
+A session-assisted adapter CANNOT run on the deployed live URL the brief requires
+("a live URL we can click"). It only runs on the operator's machine with their browser.
+So the adapter taxonomy becomes three tiers, and ingestion is firmly separated from serving:
+  - GREEN        — runs anywhere, including in the deployed app. Free, keyless, measured 200.
+  - METERED      — runs anywhere, costs money per call (X API).
+  - SESSION      — runs ONLY at ingestion time, on the operator's machine, read-only.
+                   Output is written to the profile cache; the deployed app serves the cache.
+This is compatible with DEC-3 (ten cached + one live re-run): the on-stage live re-run exercises
+GREEN adapters only, so it cannot fail on a dead session in front of the room.
+
+**Risks the user was told once and accepted:**
+  - Meta ToS 3.2(3) covers automated collection "regardless of whether ... logged-in";
+    LinkedIn User Agreement "Don'ts" cl.2 bans automated profile scraping. Enforcement is
+    account-level and lands on the USER's personal account.
+  - A session can expire mid-ingest. That is a designed failure mode, not an error (see B-017).
+
+**Status: PARTIALLY MEASURED, 2026-09-03 — see docs/audit/07-session-measured.md.**
+  - LinkedIn  SESSION-GREEN. Full post bodies, dates, engagement, tagged people, reposts.
+              Overturned the "Perkins has no 2026 first-person output" finding: she posted 1d ago.
+  - X profile SESSION-GREEN. Bio, counts, join date, birthday.
+  - X following list SESSION-GREEN via the accessibility tree (NOT text extraction). Free, replacing
+              a ~$13.45/pull metered call. Virtualized: scroll required, so it is a batch job.
+  - Instagram UNVERIFIED — session not logged in at test time. Retest.
+  - Facebook, TikTok UNVERIFIED — not tested.
+Dating apps remain out: no access path at any login state, and special-category data.
+
+## DEC-7 — Personalized strings are stripped at the adapter boundary (forced by AUD-07-4)
+The logged-in view is personalised: "Followed by Alexandr Wang and Sam Altman", "Followed by
+Upasana, Imshan and 5 others you know", "3rd" degree. Those are facts about THE OPERATOR, not the
+member. They are not reproducible by Arena Hall, they make coverage depend on who the operator
+knows, and they leak the operator's contacts into a member profile.
+Rule: session adapters extract against a WHITELIST of member-owned fields. Personalized strings are
+dropped at the boundary and never enter a fact record. Whitelist, never blacklist.

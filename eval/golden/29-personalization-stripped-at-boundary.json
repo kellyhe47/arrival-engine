@@ -1,0 +1,84 @@
+{
+  "schema_version": 1,
+  "id": "G-029",
+  "name": "personalization-stripped-at-boundary",
+  "why": "A logged-in page is personalised. 'Followed by Alexandr Wang and Sam Altman' and 'Followed by Upasana and 5 others you know' are facts about the OPERATOR, not the member. They are not reproducible by anyone else, and storing them puts the operator's own contact graph inside a member's profile.",
+  "covers": [
+    "B-019"
+  ],
+  "case_type": "negative_control",
+  "traces_to": [
+    "DEC-7",
+    "AUD-07-4"
+  ],
+  "defends_against": "An implementation that stores whatever the page rendered, so a member's dossier silently accumulates the operator's social graph and cannot be reproduced from a different account.",
+  "time_sensitive": false,
+  "given": {
+    "inputs": {
+      "raw_session_read": {
+        "source_id": "x_profile",
+        "member_id": "m_wilson",
+        "fields": {
+          "bio": "I am a VC",
+          "following_count": 1345,
+          "follower_count": 640800,
+          "joined_at": "2007-03",
+          "followed_by_people_you_know": [
+            "Alexandr Wang",
+            "Sam Altman"
+          ],
+          "degree_of_connection": "3rd",
+          "viewer_handle": "justanotherkay_"
+        }
+      }
+    },
+    "preexisting_state": {},
+    "configuration": {
+      "extraction_mode": "whitelist",
+      "field_whitelist": [
+        "display_name",
+        "headline",
+        "location",
+        "employer",
+        "education",
+        "follower_count",
+        "post_body",
+        "post_published_at",
+        "post_tagged_people",
+        "repost_of",
+        "following_handles",
+        "bio",
+        "joined_at"
+      ]
+    },
+    "clock": {}
+  },
+  "when": {
+    "operation": "extract_session_fields",
+    "input_refs": [
+      "x_profile"
+    ]
+  },
+  "expect": {
+    "exact": {
+      "result": {
+        "stored_fields": [
+          "bio",
+          "follower_count",
+          "joined_at"
+        ],
+        "dropped_fields": [
+          "degree_of_connection",
+          "followed_by_people_you_know",
+          "following_count",
+          "viewer_handle"
+        ],
+        "operator_data_stored": 0
+      },
+      "state_changes": [],
+      "emitted_events": [],
+      "external_calls": []
+    },
+    "properties": []
+  }
+}

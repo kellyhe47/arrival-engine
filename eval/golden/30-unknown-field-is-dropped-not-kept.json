@@ -1,0 +1,73 @@
+{
+  "schema_version": 1,
+  "id": "G-030",
+  "name": "unknown-field-is-dropped-not-kept",
+  "why": "The rule must be a whitelist, not a blacklist. A platform can add a personalised field at any time, and a blacklist silently admits every field nobody has thought to forbid yet.",
+  "covers": [
+    "B-019"
+  ],
+  "case_type": "boundary",
+  "traces_to": [
+    "DEC-7",
+    "AUD-07-4"
+  ],
+  "defends_against": "An implementation that blocks a known list of personalised keys and passes everything else through, which fails open the first time a platform ships a new field.",
+  "time_sensitive": false,
+  "given": {
+    "inputs": {
+      "raw_session_read": {
+        "source_id": "linkedin_profile",
+        "member_id": "m_perkins",
+        "fields": {
+          "headline": "Co-founder & CEO at Canva",
+          "follower_count": 370639,
+          "some_new_field_shipped_last_tuesday": "mutual connections in your network"
+        }
+      }
+    },
+    "preexisting_state": {},
+    "configuration": {
+      "extraction_mode": "whitelist",
+      "field_whitelist": [
+        "display_name",
+        "headline",
+        "location",
+        "employer",
+        "education",
+        "follower_count",
+        "post_body",
+        "post_published_at",
+        "post_tagged_people",
+        "repost_of",
+        "following_handles",
+        "bio",
+        "joined_at"
+      ]
+    },
+    "clock": {}
+  },
+  "when": {
+    "operation": "extract_session_fields",
+    "input_refs": [
+      "linkedin_profile"
+    ]
+  },
+  "expect": {
+    "exact": {
+      "result": {
+        "stored_fields": [
+          "follower_count",
+          "headline"
+        ],
+        "dropped_fields": [
+          "some_new_field_shipped_last_tuesday"
+        ],
+        "operator_data_stored": 0
+      },
+      "state_changes": [],
+      "emitted_events": [],
+      "external_calls": []
+    },
+    "properties": []
+  }
+}

@@ -301,6 +301,22 @@ def main():
                res["content_grade"]["possible"] != len(gr):
                 err(fid, "content_grade disagrees with given grades")
 
+        # --- session-adapter whitelist ---
+        if op == "extract_session_fields":
+            checks += 1
+            wl = set(cfg["field_whitelist"])
+            raw = gi["raw_session_read"]["fields"]
+            keep = sorted(k for k in raw if k in wl)
+            drop = sorted(k for k in raw if k not in wl)
+            if keep != sorted(res["stored_fields"]):
+                err(fid, f"stored_fields {res['stored_fields']} != whitelist-derived {keep}")
+            checks += 1
+            if drop != sorted(res["dropped_fields"]):
+                err(fid, f"dropped_fields {res['dropped_fields']} != whitelist-derived {drop}")
+            checks += 1
+            if res.get("operator_data_stored") != 0:
+                err(fid, "operator data was stored; DEC-7 requires zero")
+
         # --- blocked-source honesty ---
         if op == "run_ingestion":
             checks += 1

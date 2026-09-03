@@ -11,6 +11,7 @@
     "AUD-HANDLE-COLLISION",
     "AUD-RED",
     "DEC-1",
+    "DEC-6",
     "RUBRIC-2"
   ],
   "defends_against": "An implementation that resolves identity by handle equality across platforms without requiring a corroborating signal.",
