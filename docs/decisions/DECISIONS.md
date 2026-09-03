@@ -142,3 +142,25 @@ also instructs: "where the scope is ambiguous, make a call, and tell us on Frida
 7. An image-derived fact never renders on the card ALONE. It must corroborate a fact from a second,
    textual source — which is the demonstrated value anyway (AUD-07-10: "music" -> "vinyl").
    This single rule is what keeps image analysis on the hospitality side of the line.
+
+## DEC-9 — No structural family-fact rule; judgement at write time (user's call, 2026-09-03)
+Spec-review P0-3 found R-038 ("family facts never render") had no definition, no schema field, no
+fixture, and one happy-path fixture (G-024) that MANDATED rendering a family-derived fact
+("His family foundation paid to digitise the 1901-1906 Jewish Encyclopedia").
+
+I offered four boundaries, recommending the structural one (`derived_from_edges[]` rejected in
+`select_renderable_facts`, the same treatment that protects the operator's account from writes).
+**User chose: no structural rule, judgement at write time.**
+
+What this means, stated plainly so no later reader thinks P0-3 was missed:
+  - R-038 is REWRITTEN as a narrator-prompt instruction (the leak test), not a gate.
+  - Family-derived facts about ORGANISATIONS and inherited context MAY render. G-024 stands
+    unchanged; the Kopelman Foundation fact is legitimate output.
+  - There is NO fixture that can fail when a family fact reaches a card, because by decision there
+    is no rule to violate.
+  - K-4 in the PRD risk table must say this honestly: the family half of the RUBRIC-4 defence is a
+    prompt instruction, not a mechanism. The reviewer's objection stands on the record and was
+    answered by decision, not by fix.
+  - Residual risk carried: AUD-LINE-6 (Target, Meyer) is the evidence that this is where harm lands,
+    and the harm lands on someone who is not the member. If a card ever does this, the leak test in
+    the prompt is the only thing that was standing in the way.

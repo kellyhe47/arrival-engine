@@ -456,3 +456,46 @@ so topic similarity alone will happily rank Kopelman↔Tavel — a pair with **n
 searched, including all 212 of his posts and all 133 of hers** — as highly as Wilson↔Feld, the
 densest edge in the set. **Topic overlap and relationship evidence must be scored on separate axes,
 and the engine must be able to say out loud: "you have never mentioned each other."**
+
+---
+
+## E-NEW — Huffman <-> Shear: same YC batch, Summer 2005. STRONG. (measured 2026-09-03)
+
+The strongest edge found outside the Wilson/Feld cluster, and the cleanest asymmetry in the set.
+
+**Evidence**
+- YC's own live company directory (Algolia index `YCCompany_production`, public key from
+  `https://www.ycombinator.com/companies`), `facetFilters=[["batch:Summer 2005"]]` -> exactly 9 hits:
+  `Clickfacts, Infogami, Kiko, Loopt, Memamp, Parakey, Reddit, Simmery, TextPayMe`.
+  Both **Kiko** (Shear) and **Reddit** (Huffman) are in it.
+- `ycombinator.com/companies/reddit` — "Batch: Summer 2005 … Founded by Steve Huffman and Alexis Ohanian"
+- `ycombinator.com/companies/kiko` — "Summer 2005 … Former Founders Justin Kan … Emmett Shear"
+- Shear in his own words, HN item 1821879, 2010-10-22:
+  *"This is where we wrote a good deal of the code for Kiko, and where Steve wrote a lot of Reddit.
+  It makes me nostalgic for our 2005 YC batch, and sad to see it go on the market."*
+- Shear, HN 47219766, 2026-03-02: *"You may know me as the founder of Twitch (YC S05)"*
+
+**Direction is ONE-WAY, and this is the demo-grade finding.**
+Shear names Huffman (HN 2666830, 2011-06-17: *"The founding team of reddit was Steve Huffman (spez)
+and Alexis Ohanian (kn0thing)."*). Huffman has **never** named Shear: all 67 `spez` HN comments
+contain zero occurrences of emmett / shear / kiko. They co-occur in exactly **one** HN thread ever
+(item 1481914, 2010), with no reply relationship.
+=> `shared_org` symmetric (S2/S3), plus `cited_in_own_writing` Shear->Huffman only (S5 one-way).
+This is exactly the shape R-021 asserts and G-001 fixtures.
+
+**Two institutional bridges, both verified in filings**
+- **Michael Seibel** — Shear's Justin.tv/Twitch co-founder — sits on **Reddit's board**.
+  Reddit 424B4: *"Michael Seibel has served on our board of directors since July 2020 … from June
+  2007 to October 2011, he served as Chief Executive Officer of Justin.tv (now known as Twitch.tv)"*
+- **Adam Goldstein** — Huffman's Hipmunk co-founder — is on **Softmax's board**.
+  softmax.com/about: *"Adam Goldstein Board Member and Founder Emeritus / Cofounded Hipmunk"*
+
+**Caveat:** Twitch's YC page says Winter 2007 — that is Justin.tv's batch. The S2005 tie is
+Kiko<->Reddit, not Twitch<->Reddit. An implementation keying on "Twitch" will miss this edge.
+
+**Negative results worth keeping** (searched, not skipped): Huffman has NO edge to Wilson, Feld,
+Kopelman, Tavel, Walk, Ries, Qureshi or Perkins in any first-person corpus. Reddit's 424B4 contains
+zero occurrences of any of the other nine names. Justin.tv's Form D related persons are Shear, Kan,
+Alsop, Kurzweil, Paik, Sutton — no USV, Foundry, First Round, Benchmark or Homebrew.
+One residual gap: feld.com now serves a Pagefind WASM index that could not be queried headlessly;
+in-body mentions there cannot be fully excluded.
