@@ -142,3 +142,47 @@ only thing keeping the operator's identity out of member profiles. Note also tha
 session exposes WRITE surfaces (Follow button, New post, Messages) on every page — DEC-6's
 structural read-only constraint (no write operation declared in the adapter interface) is what
 prevents these being reachable, and G-028 is the fixture that holds it.
+
+---
+
+# Image analysis — measured end to end, 2026-09-03
+
+Tested on one public post the subject published himself:
+`instagram.com/fredwilson/p/y7OvZKRNxF/` — deliberately chosen with NO people in frame.
+
+## AUD-07-9 — The post page carries structured fields the grid does not
+
+| Field | Value | Why it matters |
+|---|---|---|
+| **location tag** | "Menotti's Coffee Stop" | A STRUCTURED venue field, distinct from caption text. This resolves the AUD-07-6 ambiguity: a location *tag* is unambiguous where "In Venice this week" is a claim. Prefer the tag; fall back to the caption only as an unresolved claim. |
+| **absolute date** | "February 10, 2015" | The grid gives relative dates ("603w", "1d"). The post page gives an absolute one. Ingest dates from the post page, never from the grid. |
+| engagement | 237 likes, 5 comments | weak signal, cheap |
+| comments | `@brianhynes`, `@santisiri` (verified) | third_party_open per R-056 — traversal hints only |
+
+## AUD-07-10 — What the IMAGE yields that no text source does
+
+Extracted from the photograph, no faces present, no face analysis performed:
+- a wall rack holding ~100+ vinyl LPs
+- a silver-faced vintage Luxman receiver and a turntable
+- commercial espresso equipment, airpots, white subway tile
+- **text in image**, hand-lettered sign: "DON'T SEE WHAT YOU ARE LOOKING FOR? LET'S TALK ABOUT IT"
+
+**The scoring value is CORROBORATION, not novelty.** Audit 01 measured Wilson's blog category
+"My Music" at **898 posts** — ~10% of his lifetime output. The photo shows he stops to photograph
+analog audio gear in the wild. Same interest, two independent sources, one textual and one visual.
+Text gave us `music`; the image gave us `vinyl / vintage-audio`, which is specific enough for a host
+to say out loud. This is the argument for image analysis: it specifies and corroborates a topic that
+text states only vaguely.
+
+## AUD-07-11 — Signed CDN URLs cannot be handled; screenshot the rendered post instead
+Extracting `img.currentSrc` was refused: Instagram CDN URLs carry signed query-string tokens and the
+harness blocks returning them. This is the correct outcome and it fixes the architecture:
+**render the post and screenshot it**. Never fetch, log or persist a signed CDN URL — they are
+short-lived, they carry session-derived tokens, and storing one puts an operator credential into the
+fact store. The screenshot path needs no URL handling at all.
+
+## AUD-07-12 — Images are also an injection surface
+Text-in-image is exactly as untrusted as tagged-post text. A photographed whiteboard, sign or screen
+can carry arbitrary text, including text shaped like instructions. Any OCR/vision output is DATA:
+it is never concatenated into a prompt as an instruction, and text recovered from an image published
+by a third party is `third_party_open` under R-056.

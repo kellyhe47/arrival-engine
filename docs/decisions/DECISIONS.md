@@ -109,3 +109,36 @@ member. They are not reproducible by Arena Hall, they make coverage depend on wh
 knows, and they leak the operator's contacts into a member profile.
 Rule: session adapters extract against a WHITELIST of member-owned fields. Personalized strings are
 dropped at the boundary and never enter a fact record. Whitelist, never blacklist.
+
+## DEC-8 — Image analysis IS in scope; face recognition is not (2026-09-03)
+User: "For the social media scraping, we absolutely must analyze the pictures themselves."
+
+**The brief's exclusion, quoted in full:**
+> "No facial recognition, no computer vision. Assume arrival detection is solved: a webhook fires
+>  with a name. In our view that is the easy half, and it is not the half we are testing."
+
+**The call, and the reasoning to give on Friday.** The exclusion is scoped to ARRIVAL DETECTION —
+its stated rationale is that identifying who walked in is "the easy half". Reading a photograph a
+member published themselves, to learn that he collects vinyl, is not arrival detection. The brief
+also instructs: "where the scope is ambiguous, make a call, and tell us on Friday why you made it."
+
+  IN SCOPE : scene, object, activity, venue and text-in-image understanding.
+  OUT, PERMANENTLY : face recognition, face matching, face clustering, identifying any person by
+                     their face, or inferring age/gender/ethnicity/emotion from a face.
+                     This is refused regardless of framing. It is the one capability the brief
+                     names outright, and it is the line the product cannot cross.
+
+**Consequent constraints (all measured, see audit 07):**
+1. Only images published by the SUBJECT are analysed. Tagged-tab images are third_party_open
+   (R-056) and are not analysed for facts about the member.
+2. Screenshot the rendered post. Never fetch or store signed CDN URLs (AUD-07-11).
+3. Vision output is DATA, never instruction (AUD-07-12). Text-in-image is an injection surface.
+4. No image is stored. Only the derived structured observation is kept, with the post permalink as
+   provenance. This keeps the fact store free of member photographs entirely.
+5. Images containing identifiable people yield ONLY non-person content (setting, objects, activity).
+   People present in a photo are not enumerated, counted, described or identified.
+6. Children, homes' interiors, medical settings and anything in a domestic-private setting yield no
+   facts at all. Nearest to AUD-LINE-6: facts about family are a different class of object.
+7. An image-derived fact never renders on the card ALONE. It must corroborate a fact from a second,
+   textual source — which is the demonstrated value anyway (AUD-07-10: "music" -> "vinyl").
+   This single rule is what keeps image analysis on the hospitality side of the line.
