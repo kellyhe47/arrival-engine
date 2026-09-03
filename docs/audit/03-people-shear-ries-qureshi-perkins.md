@@ -1,19 +1,61 @@
-# Audit 03 — Shear / Ries / Qureshi / Perkins
+# People audit — Shear, Ries, Qureshi, Perkins
 
-_Assembled from four sub-agent audits. Each section retains its author's evidence and UNVERIFIED markers._
+**Audit date: 2026-09-03.** Part of the Arena Hall Arrival Engine audit phase (see `00-AUDIT-BRIEF.md`). This document measures the **real, retrievable** public footprint of four of the ten stand-in figures. It is a measurement record, not a research essay.
 
+**Rules applied throughout.** A search-engine snippet is never cited as a source — every quotation was extracted from a page actually fetched. HTTP status codes are observed, not assumed. Guessed URLs that failed are recorded as negative findings rather than deleted. Anything believed but not confirmed against a primary artifact is marked **UNVERIFIED**.
+
+**Method.** `curl` (with and without a desktop Chrome User-Agent) for honest status codes and redirect chains; `WebFetch` for page text; a real headless browser where bot challenges blocked both; the Wayback Machine via `curl` where the live web was gone; and structured APIs (Hacker News Firebase/Algolia, GitHub, SEC EDGAR, OpenLibrary, iTunes Search) where HTML was walled. Work was fanned out across four parallel auditors and reconciled here.
 
 ---
 
-# Emmett Shear — public footprint measurement audit
+## Cross-cutting findings
+
+**1. Retrievability varies enormously across these four, and not in the way reputation predicts.** Ranked by how much of their own unmediated voice a machine can actually read today:
+
+| | Own-voice corpus retrievable? | Best single artifact | Verdict |
+|---|---|---|---|
+| **Nabeel Qureshi** | **Very high** | A 120,836-char public speaker-labeled podcast transcript, plus 14 full-text essays via RSS | Richest of the four |
+| **Emmett Shear** | **High, but historical** | **927 Hacker News items, 2007-02-19 → 2026-03-02**, free via API | Deep archive, thin present |
+| **Eric Ries** | **High** | **392-post blog archive** + 12 current newsletter issues + SEC primary documents | Live and layered |
+| **Melanie Perkins** | **Very low** | A ~64,000-char first-person memoir — **only reachable via archive.org** | Structurally walled |
+
+**2. The most-walled person is the most famous one.** Every `canva.com` path tested returned **403** (11/11), including under a full Chrome UA. Perkins has **no personal website** (`melanieperkins.com` refuses connection; the `.com.au` is parked for sale on GoDaddy). Her X is a JS wall, her LinkedIn returns **999**. The four places she speaks in her own voice are unreadable by four *different* mechanisms. Everything quotable about her in 2026 is journalist-mediated — her own words survive only in the Internet Archive.
+
+**3. Uniform social-platform result across all four.** No subject has a usable public Instagram or TikTok. LinkedIn returned **999** for Shear, Ries and Perkins and a hard signup wall for Qureshi — **no activity feed is readable logged-out for anyone**. **Nobody's X following list is visible logged-out** for any of the four; only the aggregate count leaks. Do not design anything that depends on these.
+
+**4. Name collision is a live hazard, not a hypothetical.** `en.wikipedia.org/wiki/Nabeel_Qureshi` is a **different person** (the Christian apologist, 1983–2017); our subject has no Wikipedia article. `instagram.com/nabeelqu` is a different person again ("Nabeel qurban Ali"). `youtube.com/@eshear` is "eshwar mr Kannada gamer". `eshear.com` is a GoDaddy parking page that returns **200 on every path**, and `emmettshear.com` was an Indonesian SEO spam blog before it stopped resolving. `youtube.com/feeds/videos.xml?user=canva` silently resolves to an unrelated Hong Kong personal channel. **A 200 is not identity confirmation.**
+
+**5. AFR routes on the trailing article ID and rewrites the rest of the path.** Two invented `afr.com` slugs both returned **200** — to a superannuation-tax story and a Formula 1 story respectively. Any AFR citation not obtained by following a real link is untrustworthy. Separately, AFR and SMH (both Nine Entertainment) carry an explicit anti-AI clause in `robots.txt` and are **hard-excluded from the search tool at the API level**. The outlets that cover Canva's finances most closely are invisible to this pipeline; Forbes **Australia** and Startup Daily are the open substitutes.
+
+**6. Feeds are scarcer than expected, and often worse than the alternative.** Qureshi's own RSS is title-only — the **Substack mirror carries full text and four extra items**. Ries's *most active* channel (a beehiiv newsletter) has **no working RSS at all**. Softmax has no feed; its only machine-readable index is `sitemap.xml`. The only confirmed working feed in Perkins's entire orbit belongs to Canva's **company** YouTube channel. Feed availability is inversely correlated with how current the channel is.
+
+**7. Two infrastructure conditions materially shaped this audit and should be recorded.**
+- **The Internet Archive was intermittently offline** — `web.archive.org/cdx/...` returned **HTTP 503, "Internet Archive services are temporarily offline"** during the Qureshi pass, while succeeding for the Shear and Perkins passes. Since archive.org is the *only* route to Perkins's own writing and to Shear's 2006–2010 blog, this is a single point of failure for a third of the value in this document.
+- **The Nitter/X-mirror route is closed.** `xcancel.com` now serves a cease-and-desist notice dated "Monday 24th August" — roughly ten days before this audit.
+- Note also that `WebFetch` refuses `web.archive.org` entirely; all archive work here was done with `curl`.
+
+**8. "Stale" is usually a retrieval artifact, not a fact about the person.** Ries looked dormant (blog: 3 posts since 2021, podcast dead 8 months, X unreadable since January) and is in fact mid-book-launch with 12 newsletter issues, near-daily YouTube uploads, and GitHub pushes **on the audit date itself**. Shear's Mar–Sep 2026 gap is a gap in what is *fetchable* — his X timeline is JS-walled, so silence cannot be inferred. State recency claims as claims about *the record*, not about the person.
+
+## Per-person quick reference
+
+| | Richest source | Best deep cut | Recency (Mar–Sep 2026) |
+|---|---|---|---|
+| **Shear** | Hacker News: 927 items, karma 4,858, via Firebase/Algolia API | "Optimize Prime," his 2006–2010 blog — incl. **Aaron Swartz in his comments section** | **Thin.** Mar 2 HN post, Apr 2026 GitHub/company blog, then nothing. Own bylined writing ~16 months old. |
+| **Ries** | Startup Lessons Learned: 392 posts, 2008 → 2026 + SEC/EDGAR primary docs | A **320-page Tom Lehrer songbook** he ghostscript-stitched himself | **Very live.** New book May 26; newsletter through Aug 23; YouTube + GitHub **same-day**. |
+| **Qureshi** | `nabeelqu.co` + Substack full-text feed + a 120k-char public transcript | A **chess endgame kata trainer** he vibe-coded, closing a loop opened in a 2020 essay | **Very live.** X Aug 31; essay May 2; New Statesman May 23; Dialectic Jun 29; GitHub Sept. |
+| **Perkins** | Her own "21 Questions" memoir — **archive.org only** | She learned to kitesurf **as an instrument to reach Bill Tai, and hated it** — in her own words | **Active but mediated.** No fetchable first-person publication in the window. |
+
+---
+
+## Emmett Shear — public footprint measurement audit
 
 Audit date: **2026-09-03**. Every URL below was actually requested (curl or WebFetch). Status codes are observed, not assumed.
 
 ---
 
-## 1. Source inventory
+### 1. Source inventory
 
-### 1.1 Headline table
+#### 1.1 Headline table
 
 | Channel | URL fetched | HTTP | Feed? | Volume / cadence | Gated? |
 |---|---|---|---|---|---|
@@ -41,7 +83,7 @@ Audit date: **2026-09-03**. Every URL below was actually requested (curl or WebF
 | HumanX speaker page | `https://www.humanx.co/speaker/emmett-shear` | **404** | — | Guessed from a search result — **does not exist** | n/a |
 | ThreadReader | `https://threadreaderapp.com/user/eshear` | 200 | — | 18 unrolled threads, May 2024 → **Nov 24 2025** | Open |
 
-### 1.2 Softmax — the live centre of gravity
+#### 1.2 Softmax — the live centre of gravity
 
 `https://softmax.com/blog` (200) lists exactly six posts:
 
@@ -60,7 +102,7 @@ Only **two** posts carry Shear's own byline, and both are co-credited to **Claud
 
 **No RSS/Atom feed exists.** All of these 404'd: `softmax.com/feed`, `/rss.xml`, `/index.xml`, `/blog/rss.xml`, `/blog/feed`. The only machine-readable index is `sitemap.xml`.
 
-### 1.3 The Softmax "coworld" gallery — 139 URLs, largely undocumented
+#### 1.3 The Softmax "coworld" gallery — 139 URLs, largely undocumented
 
 The sitemap exposes a very large environment gallery that is not linked prominently from the homepage. A partial list of fetched `<loc>` entries: `/sugarscape`, `/atlas`, `/browse`, `/vanilla-wow` (plus `/vanilla-wow/arena-wow`, `/dungeon-wow`, `/race-wow`), `/nethack`, `/minecraft`, `/factorio`, `/hanabi`, `/nomic`, `/nomic-fable`, `/eleusis`, `/liars-dice`, `/werecog`, `/cogplomacy`, `/cogtan`, `/cogs-against-humanity`, `/cogs-vs-clips`, `/cogmud`, `/cogolf`, `/cosino`, `/coguire`, `/polymarket-coworld`, `/tribal-fortress`, `/battleroyale`, `/pudge-wars`, `/atari-57`, `/atari-cabinet`, `/vizdoom-deathmatch`, `/smac-starcraft-micro`, `/procgen`, `/pommerman`, `/lux-ai`, `/halite`.
 
@@ -68,7 +110,7 @@ The sitemap exposes a very large environment gallery that is not linked prominen
 
 Note the naming joke running through the whole gallery: agents are "cogs", so Diplomacy → *Cogplomacy*, Catan → *Cogtan*, Werewolf → *Werecog*, Machiavelli → *Cogiavelli*, agriculture → *Cogriculture*.
 
-### 1.4 Hacker News — the single richest verifiable archive
+#### 1.4 Hacker News — the single richest verifiable archive
 
 `https://hacker-news.firebaseio.com/v0/user/emmett.json` (200) returns his self-written bio verbatim:
 
@@ -80,7 +122,7 @@ A second account, `eshear` (`/user/eshear.json`, 200), created **2006-10-09** �
 
 Direct HN page fetches (`news.ycombinator.com/user?id=...`) returned **429 Too Many Requests** from both curl and WebFetch; the Firebase and Algolia APIs were the working route.
 
-### 1.5 Negative findings on plausible-looking URLs
+#### 1.5 Negative findings on plausible-looking URLs
 
 These matter as much as the positives:
 
@@ -92,7 +134,7 @@ These matter as much as the positives:
 - **No book.** I found no evidence of an authored book anywhere in the fetched sources.
 - **Substack is a shell.** `eshear.substack.com/feed` (200) contains a single item, title `Coming soon`, description `This is Emmett's Substack.`, `pubDate: Tue, 17 Oct 2023 02:43:22 GMT`. Registered a month before the OpenAI weekend; never used since.
 
-### 1.6 GitHub — `https://github.com/eshear` (200)
+#### 1.6 GitHub — `https://github.com/eshear` (200)
 
 Profile: name "Emmett Shear", location "San Francisco, CA", 9 public repos, 48 followers, created 2009-02-04, **profile updated 2026-05-24**. Repos from `api.github.com/users/eshear/repos`:
 
@@ -110,7 +152,7 @@ Profile: name "Emmett Shear", location "San Francisco, CA", 9 public repos, 48 f
 
 `autoquine` has **no README** (`raw.githubusercontent.com/eshear/autoquine/main/README.md` → **404**); the contents API shows three files: `README` (859 B, extensionless), `autoquine.py` (5,951 B), `test_autoquine.py` (1,458 B).
 
-### 1.7 Podcasts
+#### 1.7 Podcasts
 
 Verified from fetched pages:
 
@@ -122,7 +164,7 @@ A parallel sub-agent was dispatched to systematically verify the wider podcast r
 
 ---
 
-## 2. Recency probe (Mar – Sep 2026)
+### 2. Recency probe (Mar – Sep 2026)
 
 **Verdict: the trail is thin but not dead.** There is solid activity in **March and April 2026** and then it goes quiet. I found **nothing at all dated June–September 2026** in any source I could fetch.
 
@@ -154,9 +196,9 @@ Source: `https://hn.algolia.com/api/v1/search_by_date?tags=author_emmett` → `h
 
 ---
 
-## 3. The deep cut
+### 3. The deep cut
 
-### 3.1 "Optimize Prime" — his 2006–2010 blog, now reachable only through the Wayback Machine
+#### 3.1 "Optimize Prime" — his 2006–2010 blog, now reachable only through the Wayback Machine
 
 This is the find of the audit. His HN submissions from 2007–08 link to `blog.emmettshear.com`, a domain that no longer resolves. Wayback CDX (`http://web.archive.org/cdx/search/cdx?url=blog.emmettshear.com/post*`) returns a **complete 25-post inventory**, Aug 21 2006 → Feb 12 2010. The blog was called **"Optimize Prime"** — a Transformers pun — and ran on DotClear 2 hosted at Gandi.
 
@@ -208,7 +250,7 @@ URL: `https://web.archive.org/web/20070208094503/http://blog.emmettshear.com:80/
 
 URL: `https://web.archive.org/web/20061206190139/http://blog.emmettshear.com/` (200)
 
-### 3.2 Amateur quantum gravity — "crackpot physics from someone who isn't a physicist"
+#### 3.2 Amateur quantum gravity — "crackpot physics from someone who isn't a physicist"
 
 On **2025-08-11** he posted a 21-tweet speculative theory of quantum gravity, opening verbatim:
 
@@ -220,7 +262,7 @@ On **2025-08-11** he posted a 21-tweet speculative theory of quantum gravity, op
 
 He cites, by name, *"A free energy principle for generic quantum systems"* by Fields, Friston, Glazebrook and **Levin** — the same Michael Levin whose Tufts lab, per reporting, seeded Softmax's ideas. URL: `https://threadreaderapp.com/thread/1954738143833539031.html` (200)
 
-### 3.3 The abandoned blog-post-idea list (2025-06-20)
+#### 3.3 The abandoned blog-post-idea list (2025-06-20)
 
 He found and published an old private list of essays he never wrote — a direct window into his obsessions. Verbatim entries:
 
@@ -234,7 +276,7 @@ He found and published an old private list of essays he never wrote — a direct
 
 URL: `https://threadreaderapp.com/thread/1936140530603491338.html` (200)
 
-### 3.4 Documented intellectual obsessions, from his own HN submissions
+#### 3.4 Documented intellectual obsessions, from his own HN submissions
 
 His ~50 HN story submissions (2007–2016) are a portrait of an omnivore rather than a tech executive. Fetched from the Algolia API, actual titles and dates:
 
@@ -245,13 +287,13 @@ His ~50 HN story submissions (2007–2016) are a portrait of an omnivore rather 
 - **Odd corners**: "Abstract Expressionism was (in part) a covert CIA operation" (2010-11-10), "Reality looks staged" (a TVTropes link, 2008-01-20), "Bram Cohen on Taboo Words" (a LiveJournal link, 2008-08-12).
 - **Rationalist reading long predating the AI work**: he cited LessWrong posts on HN in **2010** and **2012** ("Markets are anti-inductive", "The Bottom Line") and quoted the Quaker/Republican nonmonotonic-reasoning parable in 2010.
 
-### 3.5 Things I could NOT document
+#### 3.5 Things I could NOT document
 
 Despite targeted keyword sweeps over the full 927-item HN corpus, I found **no documentary evidence** for: rock climbing, sailing, D&D/tabletop roleplay, anime, or a named meditation practice/retreat. The single "climb" hit is a 2008 joke about running being "a gateway sport", and the single "meditation" hit is a passing mention in 2022 advice. His contemplative interest is real but is attested in the Par Conley interview, not in his own writing — treat "Buddhism/meditation" as **thinly sourced**.
 
 ---
 
-## 4. What is not retrievable
+### 4. What is not retrievable
 
 Observed, not assumed:
 
@@ -274,7 +316,7 @@ I also did **not** find, anywhere: a newsletter he actually writes, a YouTube ch
 
 ---
 
-## 5. Voice sample
+### 5. Voice sample
 
 Three samples, all verbatim from pages I fetched.
 
@@ -296,7 +338,69 @@ Three samples, all verbatim from pages I fetched.
 
 ---
 
-# Eric Ries — public footprint measurement audit
+### 6. Podcast record — supplement (filled by the lead auditor)
+
+The section-1.7 gap is now closed. Method: the **iTunes Search API** (`https://itunes.apple.com/search?term=Emmett+Shear&entity=podcastEpisode&limit=60`, **HTTP 200, 201,138 bytes**), which returns Apple's index of publisher-submitted RSS. `resultCount: 60`. Titles, dates and descriptions below are verbatim from that fetched JSON.
+
+**Headline corrections to §1.7 and §2:**
+- **His last podcast appearance is Feb 2026, not Nov 2025.** Two 2026 episodes exist.
+- **No Lex Fridman episode and no Dwarkesh Patel episode appear anywhere in 60 results.** The §1.7 caution was correct — treat both as **non-existent** absent a URL.
+- The record is genuinely long: **~35 distinct appearances, 2020-02-21 → 2026-02-24**, plus a wall of Nov 2023 news podcasts *about* him.
+
+#### Verified appearances (interviews, not news coverage)
+
+| Date | Show | Episode | Apple URL |
+|---|---|---|---|
+| **2026-02-24** | Istanbul Ignited by Slush'D | "Why Leadership Is About Repetition, Not Charisma" | `.../id1864349137?i=1000742782942` |
+| **2026-02-03** | The Hope Axis by Anna Gát | "Emmett Shear - Explaining AI to the Humanities" | `.../id1777483353?i=1000747786593` |
+| 2025-12-27 | The Cognitive Revolution | "Controlling Tools or Aligning Creatures? Emmett Shear (Softmax) & Séb Krier (GDM)" | `.../id1669813431?i=1000742901702` |
+| 2025-12-19 | Founders in Arms | "AGI, Alignment, and the Future of AI Power" | `.../id1679703534?i=1000742034105` |
+| 2025-11-17 | The a16z Show | "Building AI That Actually Cares" | (verified in §1.7) |
+| 2025-09-26 | Doom Debates! | "Ex-OpenAI CEO Says AI Labs Are Making a HUGE Mistake" | — |
+| 2025-09-25 | Win-Win with Liv Boeree | "#47 — Why NATURE Holds the Answers To AI Alignment" | `.../id1724791350?i=1000728259767` |
+| 2025-09-23 | The Social Radars | "Founder Mode: Emmett Shear, Founder, Softmax & Twitch" | `.../id1677066062?i=1000728087564` |
+| 2025-09-19 | Parker Podcast | "SF, Power, AI Alignment, Meditation, Softmax" | (= parconley.com, §1.7) |
+| 2025-09-11 | Complex Systems (patio11) | "AI alignment, with Emmett Shear" | `.../id1753399812?i=1000726091913` |
+| 2025-07-18 | The Trajectory | "AGI as 'Another Kind of Cell' in the Tissue of Life" | — |
+| 2025-06-24 | Doom Debates! | "Emmett Shear's New 'Softmax' AI Alignment Plan — Is It Legit?" | — |
+| 2024-06-12 | Clearer Thinking (Spencer Greenberg) | "Worldviews, altruism, and embracing variance" | — |
+| 2024-05-13 | Pattern Breakers | "How Twitch Changed Media by Merging it with Gaming" | — |
+| **2023-11-22** | **The Social Radars** | **"Emmett Shear, Co-Founder of Twitch"** | `.../id1677066062?i=1000635708653` |
+| 2023-09-11 | My First Million | "Life After Twitch, Jeff Bezos Lessons & AI Doomsday Odds" | — |
+| 2023-09-06 | Audience of One | "#033 — on Practice, Agency, Coordination, & Positive Sum Games" | — |
+| 2023-06-16 | The Logan Bartlett Show | "EP 69: Emmett Shear (Co-Founder, Twitch)" | — |
+| 2022-07-18 | How I Built This with Guy Raz | "Twitch: Emmett Shear" | — |
+| 2021-07-27 | The Quest Pod (Justin Kan) | "Twitch Co-Founders Reunion" w/ Michael Seibel | — |
+| 2021-02-02 | The Quest Pod (Justin Kan) | "Twitch, 10 Years Later" | — |
+| 2020-11-26 | Invest Like the Best | "The New Language of the Internet" (Founder's Field Guide EP.9) | — |
+| 2020-02-21 | 20VC | "On When To Persist vs When To Give Up" | — |
+
+#### The 2023 OpenAI episode — a precise finding
+
+**He gave no interview about the OpenAI weekend while it was happening.** What the index shows for 2023-11-20 is a cluster of *news* podcasts talking **about** him — Bloomberg Daybreak, Bankless ("Sam Altman Fired as OpenAI CEO, Joins Microsoft?"), The AI Daily Brief, AI Chat, Eagle Eyes On Tech — none of which he participated in.
+
+The one genuine interview in that window is **The Social Radars, 2023-11-22** — two days after the Altman restoration — and its description (verbatim from the API) shows it is **not about OpenAI at all**:
+
+> "Today we talk with Emmett Shear, who was in the very first YC batch in 2005 with a startup called Kiko. But you know him better as the co-founder of Twitch, which YC funded in 2007. Learn how Twitch grew from one guy walking around with a camera on his head to one of the biggest communities on the i[nternet]"
+
+That is a warm, useful fact for a host: **the interview he sat for in the immediate aftermath of the most-covered 72 hours of his career was a friendly YC-history conversation about Kiko and a guy with a camera on his head.** He returned to the same show two years later (2025-09-23) as a Softmax founder.
+
+#### Descriptions worth having verbatim (all from the fetched API payload)
+
+**Complex Systems, 2025-09-11:**
+> "Patrick McKenzie (patio11) is joined by Emmett Shear, co-founder of Twitch, former interim CEO of OpenAI, who now runs Softmax AI alignment. Emmett argues that current AI safety approaches focused on "systems of control" are fundamentally flawed and proposes "organic alignment" instead"
+
+**The Social Radars, 2025-09-23** — a concrete management artefact, and a good host hook:
+> "Emmett Shear, who told us about an interesting founder mode technique he developed when he was running Twitch. He wanted people there to be able to answer the question "What would Emmett do?" and he found the best way to ensure this was via the weekly all-han[ds]"
+
+**The Hope Axis, 2026-02-03** — the most recent, and notably aimed at a non-technical audience:
+> "This week on The Hope Axis, I'm joined by Emmett Shear to talk about AI, hope, and how we should actually think about the future… We discuss why AI inspires so much fear, what"
+
+**Transcripts:** **none confirmed.** The a16z page carries no transcript (§1.7); the Par Conley page has an LLM-generated one the page itself flags as error-prone. I did not verify transcripts for any other episode — treat podcast transcripts for Shear as **largely unavailable**.
+
+**Caveat:** these dates and descriptions come from Apple's index of publisher RSS, not from fetching each show's own page. The index is primary-derived and self-consistent, but individual episode pages were **not** separately opened except where §1.7 says so.
+
+## Eric Ries — public footprint measurement audit
 
 Audit date: **2026-09-03**. Every URL below was actually requested (curl and/or WebFetch). Status codes are observed, not assumed.
 
@@ -304,9 +408,9 @@ Audit date: **2026-09-03**. Every URL below was actually requested (curl and/or 
 
 ---
 
-## 1. Source inventory
+### 1. Source inventory
 
-### 1.1 Summary table
+#### 1.1 Summary table
 
 | Channel | URL fetched | HTTP | Feed | Volume | Date range | Last item |
 |---|---|---|---|---|---|---|
@@ -333,7 +437,7 @@ Audit date: **2026-09-03**. Every URL below was actually requested (curl and/or 
 | Lean Startup Co. | `https://leanstartup.co/` | 200 | — | — | — | — |
 | Incorruptible book site | `https://www.incorruptible.co/` | 200 | — | — | — | — |
 
-### 1.2 Startup Lessons Learned — the big dormant archive, measured
+#### 1.2 Startup Lessons Learned — the big dormant archive, measured
 
 Host is **Blogger/Blogspot on the custom domain** `www.startuplessonslearned.com` (Blogger blog ID visible in the Atom feed: `tag:blogger.com,1999:blog-75337272645071285…`). `startuplessonslearned.blogspot.com` was not separately probed; the custom domain is canonical.
 
@@ -359,7 +463,7 @@ Posts per year, counted from the sitemap URL paths:
 
 *Caveat, stated honestly:* paging the Blogger summary feed (`max-results=100`, `start-index=1/101/201/301`) returned only **336** of the 392 entries — the 2015–2018 block was missing from the paged results. The sitemap and `totalResults` both say 392, so I use 392 and flag the feed-paging shortfall rather than papering over it.
 
-### 1.3 Newsletter — the current primary channel
+#### 1.3 Newsletter — the current primary channel
 
 `https://news.theleanstartup.com/` is a **beehiiv** publication (confirmed by `media.beehiiv.com` asset URLs in the HTML), not Substack. Publication name "Eric Ries"; tagline as rendered: *"Eric Ries on why great companies go bad — and what founders, CEOs, and operators can do about it."*
 
@@ -384,7 +488,7 @@ All 12 posts visible in the archive (2026):
 
 Cadence: launch-week burst around the book, then a steady **roughly biweekly** rhythm from late June.
 
-### 1.4 X / Twitter
+#### 1.4 X / Twitter
 
 `https://x.com/ericries` returns 200 but is a JavaScript shell. Real data came from the **syndication widget** `https://syndication.twitter.com/srv/timeline-profile/screen-name/ericries` (HTTP 200), parsed from its `__NEXT_DATA__` payload:
 
@@ -403,7 +507,7 @@ Notable dated tweets recovered verbatim:
 - 2021-08-26: **"Today, the Long-Term Stock Exchange welcomes @Twilio and @Asana as the first two companies to list on the exchange."**
 - 2024-05-11: **"I'm thrilled to share this trailer to launch my new podcast, The Eric Ries Show -- an ongoing series of conversations about company building for the future we all deserve."**
 
-### 1.5 Books — verified from fetched pages
+#### 1.5 Books — verified from fetched pages
 
 | Book | Publisher | Date | ISBN | Pages | Source fetched |
 |---|---|---|---|---|---|
@@ -420,7 +524,7 @@ Notes:
 - **The Leader's Guide is the one book I could not verify from a primary page.** Kickstarter returns 403 to both curl and WebFetch on `/projects/ericries/the-leaders-guide` and two other guessed slugs; `web.archive.org` is not fetchable by this tool. Wikipedia states it raised **$588,903** — that figure is **UNVERIFIED** against Kickstarter itself.
 - *The Black Art of Java Game Programming*: OpenLibrary lists the author as **Joel Fan only**. Ries's co-authorship is sourced solely to his own blog bio (§3.3) — treat the co-author credit as **self-reported**.
 
-### 1.6 LTSE and the SEC regulatory record — the under-used source
+#### 1.6 LTSE and the SEC regulatory record — the under-used source
 
 This is the richest verifiable vein, and it is almost entirely primary-document.
 
@@ -460,7 +564,7 @@ The press release **does not name LTSE or the petition** — the connection is i
 
 `ltse.com/insights` also carries **"Long-Term Stock Exchange Board Names Maliz Beams Interim CEO."** Web search indicates this succeeded **Bill Harts**, not Ries — but I did **not** fetch a primary page confirming the Harts→Beams sequence, so that succession detail is **UNVERIFIED**.
 
-### 1.7 Podcast
+#### 1.7 Podcast
 
 **The Eric Ries Show** — RSS at `https://anchor.fm/s/f51132a8/podcast/rss` (200, 552 KB), discovered via the `<link rel="alternate">` tag on `ericriesshow.com`.
 
@@ -473,7 +577,7 @@ Channel description verbatim from the feed: *"Founder, entrepreneur, and best-se
 
 Earlier podcast: **Out of the Crisis**, 2020–2021, distributed as blog posts (e.g. `.../2021/05/out-of-crisis-27-eren-bali-of-carbon.html`). At least 27 episodes by post title; `outofthecrisis.fm` **would not resolve (DNS failure, curl 000)** and two guessed transistor.fm feed URLs **404'd**.
 
-### 1.8 YouTube
+#### 1.8 YouTube
 
 Channel `@TheEricRiesShow`, external ID **`UCQnF0c8GaWDm9T4yMDpGcPA`**. Feed `https://www.youtube.com/feeds/videos.xml?channel_id=UCQnF0c8GaWDm9T4yMDpGcPA` (200), 15 entries, **near-daily short-form uploads**:
 
@@ -485,7 +589,7 @@ Channel `@TheEricRiesShow`, external ID **`UCQnF0c8GaWDm9T4yMDpGcPA`**. Feed `ht
 
 `https://www.youtube.com/@ericries` **404'd** (guessed handle) — negative finding.
 
-### 1.9 Conference-talk record, measured
+#### 1.9 Conference-talk record, measured
 
 Rather than assert "he speaks a lot," I counted. Of the 336 blog entries I could retrieve titles for, **45 (13%) are conference/speaking posts**. Named venues, all from post titles with dates:
 
@@ -505,7 +609,7 @@ Rather than assert "he speaks a lot," I counted. Of the 336 blog entries I could
 
 The speaking corpus is heavily **2009–2013**; it thins sharply after. The successor org **Lean Startup Co.** (`https://leanstartup.co/`, 200, title *"Lean Startup Co: Innovation & Product Development Consulting"*) is now positioned as a consultancy, not a conference brand.
 
-### 1.10 GitHub
+#### 1.10 GitHub
 
 `https://api.github.com/users/ericries` (200): **11 public repos, 3 followers**, account created **2014-11-15**, no name/bio/company set. Identity is inferable from repo contents (see §3), not from profile metadata — I flag that the account is only **circumstantially** attributable, though `incorruptible-videos-media` ("Media assets for Incorruptible book launch videos", containing an `eric-ries-website` directory) makes it near-certain.
 
@@ -520,7 +624,7 @@ The speaking corpus is heavily **2009–2013**; it thins sharply after. The succ
 
 ---
 
-## 2. Recency probe (Mar–Sep 2026)
+### 2. Recency probe (Mar–Sep 2026)
 
 **The trail is emphatically live.** Four dated, fetched, verbatim items:
 
@@ -552,9 +656,9 @@ The post lists a May–June 2026 tour: Union Square SF (May 18), ProductCon NYC 
 
 ---
 
-## 3. The deep cut
+### 3. The deep cut
 
-### 3.1 He is cc'd on his own exchange's SEC cover letter — and it isn't signed by him
+#### 3.1 He is cc'd on his own exchange's SEC cover letter — and it isn't signed by him
 
 `https://www.sec.gov/rules/other/2018/long-term-stock-exchange/long-term-stock-exchange-form1-filing-letter.pdf` (200). Read as an image because WebFetch could not decode the PDF. It is **Davis Polk & Wardwell letterhead**, hand-signed by **Annette L. Nazareth** (herself a former SEC Commissioner), stamped **"SEC Mail Processing Section NOV 09 2018"**, verbatim:
 
@@ -566,7 +670,7 @@ and, at the bottom:
 
 The founding document of the exchange he is famous for creating lists him as a **carbon copy**. This is not on page one of any search for his name.
 
-### 3.2 A 320-page Tom Lehrer songbook he compiled himself
+#### 3.2 A 320-page Tom Lehrer songbook he compiled himself
 
 `https://api.github.com/repos/ericries/tom-lehrer` (200) — 11 stars, the most-starred thing on his GitHub, and it has nothing to do with startups. README verbatim (`https://raw.githubusercontent.com/ericries/tom-lehrer/main/README.md`, 200):
 
@@ -582,7 +686,7 @@ The README embeds the `pdfinfo` output of the artifact he built:
 
 A **documented hobby**: when Lehrer released his catalogue to the public domain, Ries scraped the site and ghostscript-stitched a 320-page, 97 MB songbook. He also maintains `skintiers` — *"a skeptical, evidence-first directory of skincare: what the research actually shows, graded on a consistent effect-size x effect-quality rubric"* (created 2026-07-27, pushed 2026-09-03).
 
-### 3.3 The 2008 "About the author" post — Catalyst Recruiting, There.com, MUDs, and a 1996 Java book
+#### 3.3 The 2008 "About the author" post — Catalyst Recruiting, There.com, MUDs, and a 1996 Java book
 
 `https://www.startuplessonslearned.com/2008/10/about-author.html` (200). This is the **only** post in the entire 392-post archive that matches a search for "Catalyst Recruiting," and one of only two matching "Yale." (WebFetch refused to reproduce it on copyright grounds; I pulled the raw HTML with curl and extracted the post body myself.) Verbatim:
 
@@ -596,7 +700,7 @@ A **documented hobby**: when Lehrer released his catalogue to the public domain,
 
 The post is also self-annotated: *"(Update February, 2011: This post originally dates from October, 2008 back when I first started writing this blog. I've updated the 'official' conference bio below but otherwise the text remains unchanged from that original essay.)"*
 
-### 3.4 The unnamed failure post
+#### 3.4 The unnamed failure post
 
 `https://www.startuplessonslearned.com/2009/01/achieving-failure.html` (200), 2009-01-30, "Achieving a failure":
 
@@ -604,7 +708,7 @@ The post is also self-annotated: *"(Update February, 2011: This post originally 
 
 Notable for what it withholds: he describes a company that raised tens of millions and hired hundreds, and **never names it** — referring only to "this ill-fated company." (Contextually There.com; **UNVERIFIED** as he does not say so.) The "the my" typo is his.
 
-### 3.5 Answer.AI — founding director of an AI lab, rarely attached to his name
+#### 3.5 Answer.AI — founding director of an AI lab, rarely attached to his name
 
 `https://www.answer.ai/posts/2023-12-12-launch.html` (200), dated **2023-12-12**, authored by **Jeremy Howard**, describing the founding team:
 
@@ -614,7 +718,7 @@ Corroborated on his own LTSE bio page, which names **"Answer.AI, an AI R&D lab"*
 
 ---
 
-## 4. What is not retrievable
+### 4. What is not retrievable
 
 Everything here was actually attempted; statuses are observed.
 
@@ -637,7 +741,7 @@ Everything here was actually attempted; statuses are observed.
 
 ---
 
-## 5. Voice sample
+### 5. Voice sample
 
 **Written, 2008 — the post that coined the term.** `https://www.startuplessonslearned.com/2008/09/lean-startup.html` (raw HTML via curl, 200):
 
@@ -655,11 +759,13 @@ Everything here was actually attempted; statuses are observed.
 
 **Characterization:** the 2008 voice is a practitioner narrating his own reasoning in public — hedged, parenthetical, showing the trial-and-error ("After some trial and error, I've settled on…"), typos left in place. The 2026 voice is declarative and definitional — short assertive sentences, redefinition-as-argument ("Profit *is*…", "Purpose is not a mission statement"), a manifesto register rather than a lab notebook. Constant across both decades: he builds arguments by **renaming things** — "lean startup," "pivot," "innovation accounting," "profit as human flourishing."
 
----
+## Nabeel Qureshi — public footprint measurement audit
+
+Audit date: **2026-09-03**. Audited directly by the lead auditor. Every URL below was actually requested; status codes are observed, not assumed.
 
 **Disambiguation warning (load-bearing):** "Nabeel Qureshi" is a heavily-collided name. `https://en.wikipedia.org/wiki/Nabeel_Qureshi` (HTTP 200) is **a different person** — the Christian apologist/author (1983–2017). Our subject has **no English Wikipedia article** that I could find. There is also a Pakistani film director of the same name. Any automated name-based lookup will pull the wrong person. Same for Instagram (see §4).
 
-## 1. Source inventory
+### 1. Source inventory
 
 **Retrieval note up front:** `nabeelqu.co` sits behind a **Vercel bot challenge**. Every `curl` request returned `HTTP 429` with header `x-vercel-mitigated: challenge` and a body titled `Vercel Security Checkpoint`. `WebFetch` on `https://nabeelqu.co/` also returned **HTTP 429**. The site was only readable via a **real headless browser** (which solves the challenge). The usual fallback — the Wayback Machine — was **also unavailable**: `http://web.archive.org/cdx/search/cdx?url=nabeelqu.co*` returned **HTTP 503, "Internet Archive services are temporarily offline."** So: this site is trivially readable by a human, and non-trivially readable by a naive scraper. Worth designing for.
 
@@ -679,7 +785,7 @@ Everything here was actually attempted; statuses are observed.
 | Instagram | `https://www.instagram.com/nabeelqu/` | 200 | — | **Different person** | See §4. |
 | TikTok | `https://www.tiktok.com/@nabeelqu` | 200 | — | Empty handle | See §4. |
 
-### Off-site writing (from `nabeelqu.co`, hrefs extracted from the live DOM)
+#### Off-site writing (from `nabeelqu.co`, hrefs extracted from the live DOM)
 
 | Piece | URL | Status |
 |---|---|---|
@@ -688,7 +794,7 @@ Everything here was actually attempted; statuses are observed.
 | "Moral AI" (the Waluigi Effect piece), WIRED, May 2023 | `https://www.wired.com/story/waluigi-effect-generative-artificial-intelligence-morality/` | linked from site (not separately fetched — **UNVERIFIED**) |
 | "Compounding Intelligence: Adapting to the AI Revolution", Mercatus | `https://papers.ssrn.com/sol3/papers.cfm?abstract_id=4946332` | SSRN, linked from site (**UNVERIFIED**) |
 
-### Interview record (transcribed verbatim from the site's `INTERVIEWS` table)
+#### Interview record (transcribed verbatim from the site's `INTERVIEWS` table)
 
 | Show | Date | URL |
 |---|---|---|
@@ -708,11 +814,11 @@ Everything here was actually attempted; statuses are observed.
 
 **This is the single highest-density retrievable artifact on him**: ~2 hours of his unscripted speech, in clean text, free, with speaker labels — better than any of his essays for capturing how he actually talks. Dialectic #13 (`http://dialectic.fm/nabeel-qureshi`, Mar 2025) is presumably the same format (**UNVERIFIED** — not separately fetched).
 
-### Cadence, measured
+#### Cadence, measured
 
 Essays are **rare and long**, not frequent. From the Substack feed: 2019 ×1, 2020 ×4, 2022 ×1, 2023 ×3, 2024 ×2, 2025 ×2, 2026 ×1. **There was a ~17-month gap between Jul 2020 and Jul 2022, and a ~15-month gap between Jan 2024 and Oct 2024.** His own site's claim of "usually every month or two" is **not borne out by the data**. The high-frequency channel is X (9,112 posts), not the essays.
 
-### Retrievability pattern (measured, all via `curl` with a normal desktop UA)
+#### Retrievability pattern (measured, all via `curl` with a normal desktop UA)
 
 | URL | Status |
 |---|---|
@@ -728,7 +834,7 @@ Essays are **rare and long**, not frequent. From the Substack feed: 2019 ×1, 20
 
 **Rule of thumb for this person: Substack-hosted content is reliably machine-readable; his own Vercel deployments and institutional hosts (Mercatus, SSRN) are not.** Six of his seven listed interviews are Substack-hosted, so the *interview* corpus is far easier to ingest than his *own site*. Ironic but useful: the highest-signal path to his essays is the Substack mirror, not the canonical URL.
 
-## 2. Recency probe (Mar–Sep 2026)
+### 2. Recency probe (Mar–Sep 2026)
 
 **Not stale. Active on multiple channels within the last 4 days.**
 
@@ -756,9 +862,9 @@ Essays are **rare and long**, not frequent. From the Substack feed: 2019 ×1, 20
 
 **Current status, verbatim from his own site:** "I'm an entrepreneur, writer, and researcher. I'm currently working on a startup in stealth." The startup being stealth is itself the retrieval gap — there is no company newsroom, no funding announcement, no product page.
 
-## 3. The deep cut
+### 3. The deep cut
 
-### 3a. He is a serious art-house film obsessive, with a public ranked canon — and an open invitation
+#### 3a. He is a serious art-house film obsessive, with a public ranked canon — and an open invitation
 `https://nabeelqu.co/movies` (browser, 200). Titled **"Favourite Movies"**, header verbatim:
 > "A tiny and arbitrary selection of the movies I like, organized by director. ★ = top 10. If you like this sort of thing too, email me!"
 
@@ -766,7 +872,7 @@ Organized by **director**, not title — 27 directors. The ★ top-10 picks incl
 
 **Why this is host-usable:** it is an explicit, printed invitation to talk to him about it. The Weerasethakul thread is corroborated independently — the Dialectic #50 description lists "Apichatpong Weerasethakul" among shared favourites, and his Oct 2024 *Better Known* appearance is summarized on his own site as "Weerasethakul, Empson's ambiguity, Wittgenstein's notebooks, Sokolov's Goldberg Variations, Shklovsky, Vikram Seth."
 
-### 3b. He built a chess **endgame kata trainer** and vibe-coded it with Claude Code
+#### 3b. He built a chess **endgame kata trainer** and vibe-coded it with Claude Code
 `https://github.com/nqureshi/chess-trainer` (200). Repo description verbatim:
 > "Simple trainer for chess endgames and other critical positions. Vibe-coded fully with Claude Code."
 
@@ -780,7 +886,7 @@ Three positions: **Lucena**, **Philidor**, and **King + Pawn vs King**. Feature 
 
 In **July 2023** he published "Notes on Puzzles," described on his own site as "What chess puzzles, mathematical problem-solving, and startup founding have in common." And then he actually built the drilling tool. A host can say: *you've been writing about chess intuition since 2020 and you finally built the trainer.*
 
-### 3c. His "Principles" page is a genuine oddity — meditation teachers and Zone 2 cardio
+#### 3c. His "Principles" page is a genuine oddity — meditation teachers and Zone 2 cardio
 `https://nabeelqu.co/principles`, `Last updated: 2023.10.02`. Not a generic productivity list. Verbatim entries:
 > "Pick some kind of fitness/athletic activity to get addicted to, and get addicted to it for its own sake. (For me, this is running. Zone 2 cardio is underrated.)"
 
@@ -794,7 +900,7 @@ In **July 2023** he published "Notes on Puzzles," described on his own site as "
 
 The **Rob Burbea / jhana** reference is the sharp one — that is a specific, non-obvious Buddhist meditation lineage, not "try Headspace."
 
-### 3d. Pre-Palantir biography that almost nobody surfaces
+#### 3d. Pre-Palantir biography that almost nobody surfaces
 From `https://nabeelqu.co/` ("More about me"), verbatim:
 > "I interned at the Bank of England in the summer of '08 (!) which was a dramatic introduction to central banking, quantitative easing, and financial crises."
 
@@ -802,16 +908,16 @@ From `https://nabeelqu.co/` ("More about me"), verbatim:
 
 Also: "most recently spent a year fully nomadic"; a one-year stint in France; at Oxford he "specialized in Development Economics, Derek Parfit's philosophy, and the later philosophy of Wittgenstein."
 
-### 3e. A COVID-era computational-genomics notebook, and a semantic-search side project
+#### 3e. A COVID-era computational-genomics notebook, and a semantic-search side project
 `https://github.com/nqureshi/sars-cov-2` — "Analysis of the SARS-CoV-2 genome", a Jupyter notebook, **59 stars**. Described on his own site verbatim as "A fun iPython adventure into computational genomics." And `https://evwinners.org/` / `https://github.com/nqureshi/ev-winners` — "Semantic search over every Emergent Ventures winner" (33 stars, TypeScript), which he still actively commits to (10 commits in Sept 2026). He is himself an Emergent Ventures awardee (27th cohort, `https://marginalrevolution.com/marginalrevolution/2023/07/emergent-ventures-winners-27th-cohort.html`).
 
-### 3f. He curates other people's reading lists
+#### 3f. He curates other people's reading lists
 `https://nabeelqu.co/reading-lists`, verbatim header:
 > "I'm always after reading recommendations, particularly for books that aren't commonly read. Here are some good reading lists from around the internet. If have one you think I should include, please DM me on Twitter!"
 
 (Typo "If have one" is his, preserved.) The list includes **"Peter Thiel's German 270 syllabus"**, **"Hannah Arendt's 'Thinking' syllabus"**, **"Auden's English syllabus"**, **"Borges's personal library"**, and **"Ray Carney's favorite movies"**. His `/books` page runs Homer → Knausgaard and includes **Basil Bunting's *Briggflatts***, **Geoffrey Hill's *Mercian Hymns***, **William Empson's *7 Types of Ambiguity***, and **Keith Johnstone's *Impro***.
 
-## 4. What is NOT retrievable
+### 4. What is NOT retrievable
 
 Everything below is what I **actually observed**, not inference.
 
@@ -828,7 +934,7 @@ Everything below is what I **actually observed**, not inference.
 | **The stealth startup** | **Nothing retrievable.** No company site, no newsroom, no funding record found. Self-declared as stealth. |
 | **Full essay bodies via his own RSS** | His `/rss` is **title+link+date only** — no `<description>`. To get bodies from a feed you must use the **Substack** feed, which is full-text. |
 
-## 5. Voice sample
+### 5. Voice sample
 
 From `https://nabeelqu.co/what-makes-art-great` (May 2, 2026) — analytical, compressive, fond of numbering his claims:
 > "One of the things that so offends us about AI 'slop' images is a sense that the details don't matter. The cup is green, but it may as well have been blue. In good human works, every detail feels carefully chosen. Arbitrarily changing a color in a Hopper painting would make it worse."
@@ -844,18 +950,16 @@ From `https://nabeelqu.co/education` (June 21, 2020) — the self-deprecating pa
 **Spoken register**, from the Dialectic #50 transcript (`https://dialectic.fm/tyler-nabeel`, 29 Jun 2026) — note he reaches for an aphorism and then immediately mutates it, which is very much his move:
 > "Yeah, I think of the saying—I think it's "everything is about sex except sex, which is about power." I feel like the modern equivalent of that is "everything is about AI except AI, which is about power.""
 
----
-
-# Melanie Perkins — public footprint measurement audit
+## Melanie Perkins — public footprint measurement audit
 
 Audit date: 2026-09-03. Subject: Melanie Perkins, co-founder & CEO, Canva, Sydney AU.
 Method: `curl` for honest HTTP status codes (incl. redirect chains), WebFetch for page text, WebSearch for discovery only. Search snippets are **never** cited as sources below — everything quoted was fetched.
 
 ---
 
-## 1. Source inventory
+### 1. Source inventory
 
-### 1.1 The headline finding: canva.com is 403 to every automated client tested
+#### 1.1 The headline finding: canva.com is 403 to every automated client tested
 
 Every canva.com path returns **403 Forbidden** — to plain curl, to curl with a full desktop Chrome User-Agent, and to WebFetch. This is not a paywall, it is blanket bot denial at the edge.
 
@@ -891,7 +995,7 @@ The archived newsroom index shows the site's own subscription mechanism is **ema
 
 **Newsroom volume/cadence** (from the archived index, 2026-08-25 snapshot — headline items, most recent first): "One million nonprofits now have Canva Pro for free"; "More of you, powered by AI: key takeaways from AI Vision Sydney 2026"; "Marvel Studios' Spider-Man: Brand New Day template collection is here"; "Canva launches Goals Platform to find where our hopes overlap"; "Canva expands design creation inside Google Gemini and AI Search"; "Vibe coding that matches your vision: Canva Code 2.0 is now available to all"; "Your Back to School toolkit"; "What we learned at ISTE 2026"; four "Day 1–4 at Cannes" Perspectives posts; "Introducing Canva Grow 2.0". Categories are: All Stories / AI + Product / AI Research / Canva for Work / Company Updates / Education / People + Culture / Perspectives / Step Two. Cadence looks like roughly 2–5 posts a week, **almost none of it bylined to Perkins** — the AI Vision recap is bylined to Cameron Adams, the Cannes series to Canva's Executive Creative Director. Press contact listed verbatim: "For general press inquiries or media requests, please get in touch at comms@canva.com."
 
-### 1.2 Personal site or blog — does not exist
+#### 1.2 Personal site or blog — does not exist
 
 | Candidate URL requested | Result |
 |---|---|
@@ -901,7 +1005,7 @@ The archived newsroom index shows the site's own subscription mechanism is **ema
 
 **Conclusion: Melanie Perkins has no personal website or personal blog.** Her long-form first-person writing lives inside the Canva newsroom (see §3), which is the very thing that is 403-walled. This is the single biggest structural fact about her footprint.
 
-### 1.3 X / Twitter — handle verified, content not machine-readable
+#### 1.3 X / Twitter — handle verified, content not machine-readable
 
 Real handle is **`@MelanieCanva`** (capitalised; `x.com/melaniecanva` 200s and resolves to the same account). Fetched `https://x.com/MelanieCanva` → **200, 288,137 bytes**. The HTML shell is server-rendered enough to give the profile card verbatim:
 
@@ -912,7 +1016,7 @@ Hard numbers: **1,314 posts, 246 following, 56.5K followers, joined June 2011.**
 
 **No tweet text is retrievable.** The 288KB response contains zero rendered post bodies and no `og:description`; the page ends in a login interstitial: "Log in or sign up for X / See what's happening and join the conversation". `https://syndication.twitter.com/srv/timeline-profile/screen-name/MelanieCanva` → **429 Too Many Requests** (rate-limited, not usable). **No RSS.** Cadence is therefore **unmeasurable without an authenticated session or paid API** — 1,314 posts over ~15 years is an average of ~7/month, but the distribution is unknown.
 
-### 1.4 LinkedIn — profile blocked, individual post permalinks partially readable
+#### 1.4 LinkedIn — profile blocked, individual post permalinks partially readable
 
 | URL fetched | Status |
 |---|---|
@@ -926,7 +1030,7 @@ Post permalinks are the exception: the `og:description` carries the **full post 
 
 Page furniture confirms she is a LinkedIn **"Influencer"**, the post is dated "1y" and carries "1,225" reactions and "77 Comments". **Caveat worth flagging: the URL slug says `canva-create-2026` and the page `<title>` says "Canva Create 2026 | Melanie Perkins | 77 comments", but the actual post body says "Canva Create 2025".** The slug is not a reliable date signal. **Her activity feed / post list is not enumerable logged-out** — only individual permalinks you already know. No RSS.
 
-### 1.5 Podcasts — verified vs. not
+#### 1.5 Podcasts — verified vs. not
 
 **VERIFIED to exist (fetched, 200):**
 - *How I Built This with Guy Raz* (NPR), "Canva: Melanie Perkins" — `https://www.npr.org/2019/01/24/688299882/canva-melanie-perkins` → **200**. Note: my WebFetch of the page body **timed out at 60s**; I confirmed the status code by curl only, so I have **not** verified whether NPR carries a full transcript. Apple Podcasts mirror `https://podcasts.apple.com/us/podcast/canva-melanie-perkins/id1150510297?i=1000428595833` → **200**.
@@ -938,7 +1042,7 @@ Page furniture confirms she is a LinkedIn **"Influencer"**, the post is dated "1
 - **Lex Fridman — no evidence found. Treat as not existing unless someone produces a URL.** I found nothing in any fetched page.
 - **Transcripts: none confirmed.** I did not successfully fetch a full transcript of any Perkins podcast appearance. Marking podcast transcripts as **UNVERIFIED / likely unavailable**.
 
-### 1.6 YouTube — a real trap here
+#### 1.6 YouTube — a real trap here
 
 **Do not use `?user=canva`.** `https://www.youtube.com/feeds/videos.xml?user=canva` returns **200** and looks valid, but it resolves to `yt:channel:L1lwOrUwiYYFu66rSTYInQ` — a **completely unrelated personal channel** whose entries are Hong Kong smog and office videos from 2013–2015 ("無聊", "香港的严重雾霾天气", "The Apple shop in IFC Hong Kong"), created 2007-02-22. A silent wrong-channel failure.
 
@@ -955,7 +1059,7 @@ Volume/cadence measured from that feed — **near-daily publishing**: 2026-09-03
 
 Other sessions listed: Issa Rae & Aurora James ("Building Creative Empires for Social Good", 49m); Refik Anadol & Cameron Adams ("Prompted: AI and Dreaming with Machines", 42m); a PayPal-presented creator monetisation panel; a LinkedIn/Stripe live-campaign session. The page also shows "Register for 2027" — so the 2026 event is done and the next is open. **The videos themselves sit behind canva.com (403).**
 
-### 1.7 Reference profiles
+#### 1.7 Reference profiles
 
 | Source | URL fetched | Status | Notes |
 |---|---|---|---|
@@ -969,7 +1073,7 @@ Other sessions listed: Issa Rae & Aurora James ("Building Creative Empires for S
 
 Forbes profile, fetched verbatim: net worth **$7.6 billion**, "#530 in the world", figure timestamped **"September 3, 2026 ... updated Mar 10, 2026"**. Bio quote carried on the profile: **"If the whole thing was about building wealth, that would be the most uninspiring thing I could possibly imagine."** Wikipedia (fetched) gives net worth as US$7.6bn as of August 2026 — consistent.
 
-### 1.8 Australian press — tested honestly
+#### 1.8 Australian press — tested honestly
 
 | Outlet | URL fetched | Status | Verdict |
 |---|---|---|---|
@@ -1005,13 +1109,13 @@ AFR routes purely on the **trailing article ID** (`p5n2ab`) and rewrites the res
 
 Other guessed AU URLs that **404'd** (recorded as negative findings): `https://www.abc.net.au/news/2026-04-17/canva-create-2026-melanie-perkins/`, `https://www.abc.net.au/news/2021-09-15/canva-founders-giving-pledge/100463364`, `https://www.capitalbrief.com/article/canva-melanie-perkins/`.
 
-### 1.9 Philanthropy
+#### 1.9 Philanthropy
 
 - **Giving Pledge letter** — `https://www.givingpledge.org/pledger/melanie-perkins-and-cliff-obrecht/` → **200, fully readable.** Joined 2021; the letter itself carries **no date** on the page. This is the single best primary source of her own written voice that is *not* behind the canva.com 403.
 - **GiveDirectly** — `https://www.givedirectly.org/canva` → **200.** Verbatim: "a $10 million pilot that is sending a basic income through mobile money payments to people in extreme poverty in Khongoni, Malawi." Details fetched: ~**$50/month for 12 months to 12,800 adults**. The page credits "hard work from the entire Canva community in building one of the most valuable companies" and a "commitment to do the most good that it possibly can." **The page does not mention the Canva Foundation and contains no Perkins quote.**
 - **Canva Foundation** — has **no fetchable standalone page**. `canva.com/foundation/` → 403 *and* has **zero Wayback snapshots** (strong evidence that path never existed). `canva.com/canva-foundation/` → 403. `canva.com/newsroom/news/canva-foundation/` → 403. The Foundation is referenced only second-hand through Forbes/Wikipedia. **Scale figures (30% stake / >80% of wealth / $150m Malawi) are from Wikipedia and Forbes, not from any Canva-published page I could fetch.**
 
-### 1.10 Timezone and geography as a genuine retrievability variable
+#### 1.10 Timezone and geography as a genuine retrievability variable
 
 This is not a platitude — it showed up as measurable artefacts in this audit:
 
@@ -1023,7 +1127,7 @@ This is not a platitude — it showed up as measurable artefacts in this audit:
 
 ---
 
-## 2. Recency probe — Mar–Sep 2026
+### 2. Recency probe — Mar–Sep 2026
 
 **Not stale. She has been substantially active and quotable in this window.** Four dated, fetched items:
 
@@ -1063,11 +1167,11 @@ Reported figures: Blackbird and Airtree marked Canva down **17% to US$34.9bn**; 
 
 ---
 
-## 3. The deep cut
+### 3. The deep cut
 
 Both come from `canva.com/newsroom/news/melanie-perkins-21-questions-part-1/` — a ~64,000-character, first-person, primary-source memoir she wrote herself. **It is currently 403 on the live web** and only reachable via `http://web.archive.org/web/20250729222616/https://www.canva.com/newsroom/news/melanie-perkins-21-questions-part-1/` (fetched by curl, 200, 611,472 bytes). A Part 2 also exists at `web.archive.org/web/20251031134619/https://www.canva.com/newsroom/news/melanie-perkins-21-questions-part-2/`.
 
-### Deep cut 1 — she says outright that she learned to kitesurf *as an instrument to reach Bill Tai*, and she hated it
+#### Deep cut 1 — she says outright that she learned to kitesurf *as an instrument to reach Bill Tai*, and she hated it
 
 This is the primary source for the kitesurfing legend, in her own words, including the actual text of the email she sent Tai. Verbatim:
 
@@ -1092,7 +1196,7 @@ Independent corroboration from a **2013** contemporaneous source (SmartCompany, 
 
 > "[MaiTai Global] was an amazing experience… The key ingredient is they bring together influential investors, journalists, successful entrepreneurs and start-up entrepreneurs. Everyone is learning to kitesurf, so it's about getting people out of their comfort zone. It helps people to bond in a way you can't do in a boardroom."
 
-### Deep cut 2 — the Fusion Books origin in granular, unflattering detail, plus the Cameron Adams rejection email
+#### Deep cut 2 — the Fusion Books origin in granular, unflattering detail, plus the Cameron Adams rejection email
 
 The "mum's living room" story is usually told as a one-liner. The actual post has the texture. Verbatim:
 
@@ -1116,7 +1220,7 @@ then his reversal, subject line "The Answer…":
 
 > "…is YES :) We should jump on Skype to figure out a few of the loose details, let me know when you're free. (btw, that's "yes" to you guys, just to be clear)"
 
-### Deep cut 2b — the rejection era, in her own words (bonus, same source)
+#### Deep cut 2b — the rejection era, in her own words (bonus, same source)
 
 The "100+ investor rejections" figure circulates without a primary source. What she actually wrote:
 
@@ -1128,7 +1232,7 @@ The "100+ investor rejections" figure circulates without a primary source. What 
 
 She also quotes a real rejection email verbatim: *"Regarding stage and timing, unfortunately right now I do not think that it is quite the right fit just now. This is mostly because of geography an[d]…"* — i.e. **rejected explicitly for being Australian**. And on the sleep-deprivation period: *"My eyesight started to go fuzzy — looking in the mirror I could hardly see myself. It scared the hell out of me."*
 
-### Deep cut 3 — fusionbooks.com.au is dead and now redirects into the 403 wall
+#### Deep cut 3 — fusionbooks.com.au is dead and now redirects into the 403 wall
 
 | URL requested | Result |
 |---|---|
@@ -1146,7 +1250,7 @@ Her first company's domain has been absorbed into Canva's root and then bot-bloc
 
 ---
 
-## 4. What is not retrievable
+### 4. What is not retrievable
 
 Observed, with actual statuses:
 
@@ -1172,7 +1276,7 @@ Observed, with actual statuses:
 
 ---
 
-## 5. Voice sample
+### 5. Voice sample
 
 Her register is disarmingly plain, self-deprecating, concrete about money and embarrassment, and switches without warning into very large ambition. Three sources, all fetched.
 
@@ -1200,7 +1304,7 @@ Her register is disarmingly plain, self-deprecating, concrete about money and em
 
 ---
 
-## Confidence notes
+### Confidence notes
 
 - Everything in quotation marks above was extracted from a page I fetched. Nothing is from a search snippet.
 - Explicitly marked **UNVERIFIED**: Instagram existence/privacy; the "100+ investor rejections" number; the 2021 wedding (Wikipedia-only); podcast transcript availability; the Lenny's Podcast episode URL; Lex Fridman appearance (**no evidence found — assume it does not exist**); Canva "Vision" internal culture docs (**no fetchable source**); `fusionbooks.com` (.com) identity.

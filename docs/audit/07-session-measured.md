@@ -64,3 +64,81 @@ method". This is the same class of trap as audit 04's YouTube `timedtext` decoy.
 ## Still RED regardless of login
 - **Dating apps** — no access path at any login state; special-category data. Unchanged.
 - **Captcha / bot-detection evasion** — not built, at any tier. TikTok's 25 captcha references stand.
+
+---
+
+# Instagram — measured 2026-09-03 (logged in)
+
+Retested after the operator logged in. The earlier "Profile isn't available" was a logged-out
+artifact, exactly as predicted. **Instagram is SESSION-GREEN and it is the richest source yet for
+the life-context signal (S4).**
+
+Target: `instagram.com/fredwilson/` — verified as the VC (bio "I am a vc", link `avc.com`).
+
+## What renders
+
+| Field | Value observed |
+|---|---|
+| posts / followers / following | 414 / 7,064 / 110 |
+| bio, external link | "I am a vc", `avc.com` |
+| **Threads account** | `threads.com/@fredwilson` — a linked platform not previously catalogued |
+| post grid | 12 posts, each carrying its **caption as image alt text** |
+| **`/tagged/` tab** | present and populated — 11 posts |
+
+`get_page_text` returns the header ONLY. The grid requires the accessibility tree or a DOM query.
+Confirms AUD-07-5: an implementation built on text extraction silently returns empty.
+
+## AUD-07-6 — Captions carry places and people. S4 becomes real.
+
+Verbatim captions from the grid, unedited:
+- "Greenwich Village, NYC"
+- "View of the Williamsburg Bridge from inside the Domino Sugar Refinery"
+- "In France on our way to Berlin"  ·  "In Venice this week"
+- "Leaving LA today. I will miss these palm trees in front of our house. And freshly made corn tortilla"
+- "Abbott Kinney at dawn"  ·  "The old school receiver and turntable at Menotti's is awesome"
+- "Sunrise bike ride"  ·  "Beach Sand Selfie"  ·  "Uzi"
+- **"Spesh giving Josh a putting lesson on eight"**
+
+This is exactly the user's proposed location signal (sketch point 8) and it is retrievable.
+Wilson's contexts extract as: Greenwich Village NYC, a house in LA, Venice CA (Abbott Kinney,
+Menotti's), Venice Italy, France, Berlin. Plus pursuits: cycling, golf.
+The last caption also names two people by first name — a candidate person-edge.
+
+**Caveat that must survive into the spec:** these are captions, not verified locations. "In Venice
+this week" is ambiguous between Venice CA and Venice Italy, and the same profile contains evidence
+for both. A caption is a claim by the subject, not a geotag. Store as `self_published` context with
+the caption as its own evidence; never resolve an ambiguous place silently.
+
+## AUD-07-7 — THE TAGGED TAB IS ADVERSARIAL INPUT. This is the sharpest finding of the audit.
+
+The first post in `fredwilson/tagged/` is about a World Cup public-art installation, and its caption
+names the participating artists: "Katherine Bernhardt, Hank Willis Thomas, Eddie Martinez, Bony
+Ramirez, Tomokazu Matsuyama, Futura 2000 and **Fred Wilson**."
+
+That Fred Wilson is **the conceptual artist** — a different person entirely from the VC whose
+profile this is. It is sitting in the VC's tagged tab.
+
+The structural point generalises past this one error:
+1. **The tagged tab is written by other people.** Anyone on the platform can tag any account in any
+   post. It is the only surface in the entire source inventory whose contents are controlled by
+   third parties rather than by the subject or by a publisher.
+2. **So it is an injection surface, not just an accuracy risk.** A stranger can place arbitrary text
+   into a member's profile by tagging them. If tagged captions flow into facts, into the narrator's
+   context, or onto the card, an outsider is writing what a host reads aloud in the lobby.
+3. **And it is already wrong here, on the very first item, for the most obvious reason** — a common
+   name. This is the same failure class as `@spez` (R-013), now on a surface where the collision is
+   introduced by someone else rather than by our resolver.
+
+**Rule required:** tagged content is `third_party` provenance at its best, is never attributed to
+the member without independent corroboration, and its text is treated as untrusted data — never
+concatenated into a model prompt as though it were a fact about the member. Same posture as
+audit 04's rule about EDGAR N-PX co-occurrence, but with an active adversary rather than a noisy
+table.
+
+## AUD-07-8 — Operator leak confirmed on a third platform
+The logged-in navigation exposes the operator's own account (`/kitty_kels/`) in the page tree,
+alongside Messages and Notifications links. DEC-7's whitelist stripping is not optional; it is the
+only thing keeping the operator's identity out of member profiles. Note also that the logged-in
+session exposes WRITE surfaces (Follow button, New post, Messages) on every page — DEC-6's
+structural read-only constraint (no write operation declared in the adapter interface) is what
+prevents these being reachable, and G-028 is the fixture that holds it.
