@@ -220,9 +220,15 @@ R-037 `[proposal]` The card is a **staff instrument** and is never member-visibl
 charter already forbids members using presence features to surveil each other; the moment this
 becomes member-visible it violates a rule members have been given.
 
-R-038 `[proposal]` Facts about family or intimates may **inform a match** via graph traversal but
-never appear as a sentence on the card. In both Target and Meyer, the person harmed was not the
-subject of record.
+R-038 `[decided, DEC-9]` Facts about family or intimates are governed by a **write-time judgement
+in the narrator prompt (the leak test), not by a gate.** Family-derived facts about *organisations*
+and inherited context may render — G-024's Kopelman Foundation fact is legitimate output.
+Spec-review P0-3 argued for a structural rule (`derived_from_edges[]`, rejected in
+`select_renderable_facts`, the same treatment that makes writes unreachable in R-010); I recommended
+it and the user chose write-time judgement instead. **There is therefore no fixture that can fail
+when a family fact reaches a card, because there is no rule to violate.** Recorded so this reads as
+a decision, not an oversight. Evidence of where the harm lands if it does: AUD-LINE-6 — in both
+Target and Meyer the person harmed was not the subject of record.
 
 ---
 
@@ -296,16 +302,44 @@ the live URL ends up trying to open a browser it does not have. *(G-015)*
 | K-1 | Session adapters violate platform ToS; enforcement is **account-level on the operator's own account**. Meta §3.2(3) covers logged-in collection; LinkedIn "Don'ts" cl.2 bans it; *hiQ* lost on breach of contract and ate a permanent injunction. | Raised, user accepted (DEC-6) |
 | K-2 | Instagram, Facebook, TikTok session yields are **UNVERIFIED**. | Must be measured before they are claimed |
 | K-3 | Session data is **not reproducible** by Arena Hall — they cannot re-derive it from a different account. | Mitigated by DEC-7 stripping; residual |
-| K-4 | RUBRIC-4 pressure. DEC-4 takes the widest sourcing policy; the defence rests entirely on visible provenance and on family facts never rendering. | Mitigated by R-033/R-034/R-038 |
+| K-4 | RUBRIC-4 pressure. DEC-4 takes the widest sourcing policy. Provenance is enforced structurally (R-034). **The family half is a prompt instruction, not a mechanism** (DEC-9) — a prompt is not enforcement, and this is the half that defends the widest-sourcing decision. | Provenance mitigated; family risk **accepted by decision** |
 | K-5 | The live re-run fails on stage. | Mitigated by R-050/R-051 |
 | K-6 | AUD-EDGES is **incomplete** — Kopelman has no retrievable first-person archive, Tavel's 2006–15 blog was not enumerated, firm-level co-investment could not be scraped. | Named as a corpus gap; `no_edge_confirmed` must not be asserted where the corpus was never searched |
 
 ---
 
-## 11. Requirement index
+## 11. Open defects — read before implementing
+
+`docs/spec-review-01.md` (715 lines) is an adversarial review of this document. It re-ran both
+checkers (green) and then found what passing checkers cannot. **8 P0 / 15 P1 / 11 P2 are open.**
+Six of its findings were dropped on re-verification and are listed there so they are not re-raised.
+
+The eight P0s, unfixed at time of writing. Fix these first:
+
+| id | defect |
+|---|---|
+| P0-1 | **R-025's genericity gate never fires on its own justifying case.** `venture-capital-craft` is 5 of 10 = *exactly* 50%; the predicate is `>50%`. Kopelman↔Tavel — the pair the rule exists to prevent — surfaces at 7 in the demo room. Mutation: `max_share` 0.6/0.7/0.8/0.99 all pass all fixtures. **Agreed fix: genericity is a property of the VOCABULARY, not of the room** — mark a tag `discriminating: false` once, from the corpus, room-independent. This also resolves P1-3 and P1-4. |
+| P0-2 | **R-024 is false: S8 can create matches.** The substrate set {S2,S3,S5,S7} ≠ the surfacing set {S3,S5,S7}. G-008's own pair sits at 5; raising the other party's fame makes it 6 and it surfaces. **Fix: evaluate the surfacing threshold on the score EXCLUDING S8.** S8 then affects display and ranking only, which is what R-024 claims. |
+| P0-3 | R-038 vs G-024 — **resolved by DEC-9**, not by fix. See R-038. |
+| P0-4 | **R-052 contradicts G-015.** R-052 says SESSION adapters are "absent from the runtime registry"; G-015 hands one an `enabled, session_present` adapter in `deployed_runtime`. The architecture has no runtime/registry node at all. Pick one: structural absence, or a runtime check with the fixture as defence-in-depth. |
+| P0-5 | **R-037 "never member-visible" has no enforcement surface.** No auth (excluded by the brief) + a public live URL + ten real named people = the cards are publicly readable. Absent from the risk table. |
+| P0-6 | **R-020's controlled vocabulary does not exist.** 16 topic and 6 industry slugs are used across fixtures and never enumerated, including the inconsistent pair `seed-stage-financing` / `seed-stage-investing`. `prominence_tier` and `seniority_tier` have zero audit backing. |
+| P0-7 | **`word_count` is handed in, not derived** (fixture-contract rule 5, circularity). G-010's five blocks are literally `"..."` and it asserts 351 words. The 250 floor is unpinned in every direction; tokenization is undefined. |
+| P0-8 | **Fixtures assign contradictory attributes to the same member ids** — `m_wilson` prominence 3 and 4; `m_shear` 3 and 4. G-004 and G-017 cannot both load from one cache. Needs a canonical cast, asserted by the verifier. |
+
+Six further changes are queued in `scratchpad/PENDING-PRD-CHANGES.md` and are **not yet in this
+document**: P-1 phonetic pronouncer in the Who block · P-2 merge NPR/announce-card audit material ·
+P-3 **"Do Not Brief" opt-out and real deletion** · P-4 **`recency_state` must distinguish `quiet`
+from `unknown`** (Ries looked dormant and was not — staleness was a retrieval artifact) ·
+P-5 **tagged content is an injection surface** (`trust_class`) · P-6 Instagram captions make S4 real.
+
+P-3 and P-4 are the two most valuable additions; P-5 is the most urgent correctness fix.
+
+## 12. Requirement index
 
 Data R-007…R-015 · Graph R-016…R-020 · Scoring R-021…R-027 · Digest R-028…R-038 ·
 Surfaces R-039…R-044 · Evaluation R-045…R-048 · Demo R-049…R-052 · Problem R-001…R-006.
+Open defects: 8 P0 / 15 P1 / 11 P2 in `docs/spec-review-01.md`; 6 queued changes in the scratchpad.
 
 **Fixture coverage:** every behavior in `eval/golden-manifest.json` (19) is covered by at least one
 of the 30 fixtures; both `validate_golden.py` and `verify_fixtures.py` pass (197 arithmetic checks).
