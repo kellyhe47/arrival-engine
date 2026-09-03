@@ -1,0 +1,201 @@
+-- THE ARRIVAL ENGINE — storage schema (SQLite)
+--
+-- Graph SHAPE, relational STORE. No operation in eval/golden/*.json traverses more than one hop,
+-- so query-time graph traversal is never needed. Inner-circle expansion is an INGEST-time walk that
+-- writes facts back onto the member; by render time everything is a point lookup.
+--
+-- The file IS the cache required by DEC-3 / R-052: ingestion writes it on the operator's machine,
+-- the deployed app opens it read-only. That split becomes a file copy rather than architecture.
+
+PRAGMA foreign_keys = ON;
+
+-- ── Provenance of the ingestion run itself ────────────────────────────────────
+-- Every row that enters the store names the run that produced it, so a re-scrape is diffable and
+-- "what did the card say on Friday, and why" is answerable. Facts are APPEND-ONLY; nothing is
+-- UPDATEd in place.
+CREATE TABLE run (
+  id            TEXT PRIMARY KEY,
+  started_at    TEXT NOT NULL,
+  finished_at   TEXT,
+  execution_ctx TEXT NOT NULL CHECK (execution_ctx IN ('operator_machine','deployed_runtime')),
+  notes         TEXT
+);
+
+-- ── People ────────────────────────────────────────────────────────────────────
+-- is_member = 0 covers the inner circle (co-founders, colleagues, tagged associates). They exist so
+-- their edges are traversable at ingest. They are NEVER scored and NEVER surfaced (R-018).
+CREATE TABLE person (
+  id                  TEXT PRIMARY KEY,
+  is_member           INTEGER NOT NULL CHECK (is_member IN (0,1)),
+  display_name        TEXT NOT NULL,
+  name_respelling     TEXT,            -- P-1: "[EL-suh]", NPR convention, NULL when obvious
+  seniority_tier      TEXT REFERENCES seniority_tier(slug),
+  career_start_decade TEXT,            -- '1980s' … '2010s'
+  prominence_tier     INTEGER CHECK (prominence_tier BETWEEN 1 AND 4),
+  prominence_basis    TEXT,            -- the measured figure the tier was derived from. See vocabulary.sql.
+  created_run         TEXT NOT NULL REFERENCES run(id)
+);
+
+-- P-3: the opt-out. Honoured at SCORING time, not render time, so no digest is ever built and then
+-- discarded, and the member also disappears from OTHER members' Room blocks.
+CREATE TABLE member_flags (
+  person_id    TEXT PRIMARY KEY REFERENCES person(id) ON DELETE CASCADE,
+  do_not_brief INTEGER NOT NULL DEFAULT 0 CHECK (do_not_brief IN (0,1)),
+  set_at       TEXT NOT NULL,
+  set_by       TEXT
+);
+
+-- ── Facts ─────────────────────────────────────────────────────────────────────
+-- provenance_class = who published it.  trust_class = who could have WRITTEN it (P-5/R-056).
+-- The two are independent: a fact can be public, sourced, and still authored by a stranger.
+CREATE TABLE fact (
+  id               TEXT PRIMARY KEY,
+  subject_id       TEXT NOT NULL REFERENCES person(id),
+  text             TEXT NOT NULL,
+  provenance_class TEXT NOT NULL CHECK (provenance_class IN
+                     ('self_published','on_record','third_party','inferred')),
+  trust_class      TEXT NOT NULL CHECK (trust_class IN
+                     ('subject_authored','publisher','third_party_open')),
+  source_url       TEXT,              -- NULL is legal in the store, but see v_renderable_fact
+  source_host      TEXT,
+  source_date      TEXT,
+  observed_at      TEXT NOT NULL,
+  composed_from    TEXT,              -- JSON array of fact ids; required when provenance='inferred'
+  search_first_page INTEGER DEFAULT 0 CHECK (search_first_page IN (0,1)),
+  superseded_by    TEXT REFERENCES fact(id),   -- append-only: correct by superseding, never by UPDATE
+  run_id           TEXT NOT NULL REFERENCES run(id)
+);
+CREATE INDEX fact_subject ON fact(subject_id, source_date DESC);
+CREATE INDEX fact_live    ON fact(subject_id) WHERE superseded_by IS NULL;
+
+-- The render gate as a view, so G-011/G-012/R-056 are enforced by the store rather than by care.
+CREATE VIEW v_renderable_fact AS
+  SELECT * FROM fact
+   WHERE superseded_by IS NULL
+     AND source_url IS NOT NULL                                    -- G-011
+     AND NOT (provenance_class = 'inferred'
+              AND (composed_from IS NULL OR json_array_length(composed_from) = 0))  -- G-012
+     AND trust_class <> 'third_party_open';                        -- P-5 / R-056
+
+-- Full-text over fact bodies. This is the deep-cut mining surface.
+CREATE VIRTUAL TABLE fact_fts USING fts5(text, content='fact', content_rowid='rowid');
+
+-- ── Controlled vocabulary (P0-6) ──────────────────────────────────────────────
+CREATE TABLE seniority_tier (slug TEXT PRIMARY KEY, rank INTEGER NOT NULL, label TEXT NOT NULL);
+CREATE TABLE industry       (slug TEXT PRIMARY KEY, label TEXT NOT NULL);
+
+-- discriminating = 0 is the P0-1 fix. Genericity is a property of the TAG, measured once from the
+-- member base, room-independent. It is NOT a room statistic — that version was non-monotonic,
+-- room-size-inverted, and failed on its own justifying case (5 of 10 is exactly 50%).
+CREATE TABLE topic (
+  slug            TEXT PRIMARY KEY,
+  kind            TEXT NOT NULL CHECK (kind IN ('professional','personal')),
+  label           TEXT NOT NULL,
+  discriminating  INTEGER NOT NULL CHECK (discriminating IN (0,1)),
+  holder_count    INTEGER,      -- measured over the member base
+  base_size       INTEGER,      -- the denominator, so the flag is recomputable and auditable
+  basis           TEXT
+);
+CREATE TABLE topic_alias (alias TEXT PRIMARY KEY, canonical TEXT NOT NULL REFERENCES topic(slug));
+
+CREATE TABLE person_topic (
+  person_id        TEXT NOT NULL REFERENCES person(id) ON DELETE CASCADE,
+  topic_slug       TEXT NOT NULL REFERENCES topic(slug),
+  evidence_fact_id TEXT REFERENCES fact(id),
+  PRIMARY KEY (person_id, topic_slug)
+);
+CREATE TABLE person_industry (
+  person_id     TEXT NOT NULL REFERENCES person(id) ON DELETE CASCADE,
+  industry_slug TEXT NOT NULL REFERENCES industry(slug),
+  PRIMARY KEY (person_id, industry_slug)
+);
+
+-- S4. A caption is a CLAIM, not a geotag (AUD-07-6): "In Venice this week" is ambiguous between
+-- Venice CA and Venice Italy and the same profile supports both. resolved=0 means do not match on it.
+CREATE TABLE context (
+  person_id        TEXT NOT NULL REFERENCES person(id) ON DELETE CASCADE,
+  type             TEXT NOT NULL CHECK (type IN ('place','institution','life_event','pursuit')),
+  value            TEXT NOT NULL,
+  resolved         INTEGER NOT NULL DEFAULT 1 CHECK (resolved IN (0,1)),
+  evidence_fact_id TEXT REFERENCES fact(id),
+  PRIMARY KEY (person_id, type, value)
+);
+
+-- ── Edges ─────────────────────────────────────────────────────────────────────
+-- Directed. 'no_edge_confirmed' records a MEASURED ABSENCE so topical similarity can never be
+-- dressed up as a relationship (R-019). An absence is only assertable if the corpus was searched —
+-- see source_status.
+CREATE TABLE edge (
+  from_id          TEXT NOT NULL REFERENCES person(id) ON DELETE CASCADE,
+  to_id            TEXT NOT NULL REFERENCES person(id) ON DELETE CASCADE,
+  type             TEXT NOT NULL CHECK (type IN (
+                     'follows','cited_in_own_writing','co_mention','repost',
+                     'co_investment','board_together','employer_history','shared_org',
+                     'family_or_partner','co_appearance','no_edge_confirmed')),
+  evidence_fact_id TEXT REFERENCES fact(id),
+  observed_at      TEXT,
+  strength         TEXT CHECK (strength IN ('STRONG','MEDIUM','WEAK')),
+  run_id           TEXT NOT NULL REFERENCES run(id),
+  PRIMARY KEY (from_id, to_id, type)
+);
+CREATE INDEX edge_out ON edge(from_id, type);
+
+-- ── Source attempts ───────────────────────────────────────────────────────────
+-- P-4. This table is what makes "quiet" distinguishable from "unknown". You cannot answer
+-- "did we look?" unless you wrote down what you attempted. Without it, "Eric Ries is dormant" and
+-- "archive.org returned 503" are the same row — which is exactly the error the audit caught.
+CREATE TABLE source_status (
+  person_id  TEXT NOT NULL REFERENCES person(id) ON DELETE CASCADE,
+  source_id  TEXT NOT NULL,
+  tier       TEXT NOT NULL CHECK (tier IN ('GREEN','METERED','SESSION')),
+  status     TEXT NOT NULL CHECK (status IN ('ok','unavailable','skipped')),
+  reason     TEXT,
+  http_code  INTEGER,
+  fact_count INTEGER NOT NULL DEFAULT 0,
+  checked_at TEXT NOT NULL,
+  run_id     TEXT NOT NULL REFERENCES run(id),
+  PRIMARY KEY (person_id, source_id, run_id)
+);
+
+-- A profile is only 'quiet' if EVERY source was reached. One unreachable source makes it 'unknown'.
+-- Unreachability is contagious: absence of evidence from a source you could not read is not
+-- evidence of absence.
+CREATE VIEW v_recency_state AS
+  SELECT s.person_id,
+         CASE WHEN SUM(s.status <> 'ok') > 0 THEN 'unknown' ELSE 'reached' END AS coverage,
+         SUM(s.status <> 'ok')                                                AS unreached_sources
+    FROM source_status s
+   GROUP BY s.person_id;
+
+-- ── Presence ──────────────────────────────────────────────────────────────────
+CREATE TABLE roster (
+  person_id   TEXT NOT NULL REFERENCES person(id),
+  arrived_at  TEXT NOT NULL,
+  departed_at TEXT,
+  PRIMARY KEY (person_id, arrived_at)
+);
+CREATE VIEW v_present AS
+  SELECT r.person_id FROM roster r
+    LEFT JOIN member_flags f ON f.person_id = r.person_id
+   WHERE r.departed_at IS NULL
+     AND COALESCE(f.do_not_brief, 0) = 0;      -- P-3: opt-out removes you from OTHERS' rooms too
+
+-- ── Emitted cards, kept ───────────────────────────────────────────────────────
+-- Not an audit-trail nicety: if a member ever asks what was said about them, this is the answer.
+CREATE TABLE card (
+  id             TEXT PRIMARY KEY,
+  subject_id     TEXT NOT NULL REFERENCES person(id),
+  rendered_at    TEXT NOT NULL,
+  word_count     INTEGER NOT NULL,
+  gates_passed   INTEGER NOT NULL CHECK (gates_passed IN (0,1)),
+  gate_failures  TEXT,   -- JSON
+  body           TEXT,
+  fact_ids       TEXT,   -- JSON array: exactly which facts were rendered
+  run_id         TEXT NOT NULL REFERENCES run(id)
+);
+
+-- ── Deletion (P-3 / R-055) ────────────────────────────────────────────────────
+-- ON DELETE CASCADE above makes `DELETE FROM person WHERE id=?` a real purge: facts, topics,
+-- contexts, edges, source attempts and flags all go. Explicitly the opposite of OpenTable's
+-- "no way for a restaurant to permanently delete a guest", where hidden profiles auto-reinstate
+-- with notes intact.
