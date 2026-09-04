@@ -275,9 +275,11 @@ def why_view(arriving: dict, other: dict, *, forward, reverse, excluded_topics, 
 
 def _intent_line(forward, arriving: dict, other: dict, names: dict) -> str:
     """One sentence naming the pair's intent class in the host's words."""
-    from .scoring import INTENTS
-    a = arriving.get("intent") or "I0"
-    b = other.get("intent") or "I0"
+    from .scoring import INTENTS, member_intents
+    a = (forward.s9.detail.get("a_intent") if forward.s9 else None) \
+        or (member_intents(arriving) or ["I0"])[0]
+    b = (forward.s9.detail.get("b_intent") if forward.s9 else None) \
+        or (member_intents(other) or ["I0"])[0]
     a_name = names.get(arriving["id"], arriving["id"])
     b_name = names.get(other["id"], other["id"])
     klass = forward.intent_class
@@ -285,7 +287,9 @@ def _intent_line(forward, arriving: dict, other: dict, names: dict) -> str:
         return (f"Complement — {b_name} has done what {a_name} is trying to do "
                 f"({INTENTS.get(b, b)} meets {INTENTS.get(a, a)}). S9 fires.")
     if klass == "parallel":
-        return f"Parallel — both are {INTENTS.get(a, a)}. Same pursuit, so S9 stays quiet."
+        shared = next((i for i in member_intents(arriving) if i in member_intents(other)), a)
+        return (f"Parallel — both are {INTENTS.get(shared, shared)}. "
+                f"Same pursuit, so S9 stays quiet.")
     if klass == "open":
         return "Open — at least one side is here to be social. Ranked on score alone."
     if klass == "unknown":

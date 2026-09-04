@@ -6,7 +6,10 @@ behaviours they explicitly cover. For the same behaviour, precedence is: an expl
 exception → a covering golden fixture → the named domain authority → this PRD's summary. A fixture
 does not override an unrelated numbered requirement.
 
-> **Re-baseline (2026-09-04).** The clickable prototype `Arrival-Engine-Prototype.html` (repo root)
+> **Re-baseline (2026-09-04).** The clickable prototype `Arrival-Engine-Prototype.html` (repo
+> root) and its **full export in `designs/prototype/`** — twelve surface templates plus the real
+> stylesheet (`handback/render/*`, `handback/static/arena.css`), which are the drop-in markup and
+> design ground truth —
 > supersedes the previous §4 scoring model and the §6/§7 card and surface behaviour. It changes
 > requirements, not just design: a new signal set with S9 and an intent taxonomy, a restructured
 > card with outcome logging, table seating on Room, and a How-the-score-works reference screen.
@@ -20,6 +23,7 @@ does not override an unrelated numbered requirement.
 |---|---|---|
 | `eval/golden/*.json` | executable acceptance examples for the behaviours they cover | implementing or changing covered behaviour |
 | **`Arrival-Engine-Prototype.html`** | **the clickable prototype this PRD was re-baselined against (2026-09-04)** | **any surface, card or scoring work** |
+| **`designs/prototype/handback/`** | **the drop-in surface markup and stylesheet — design ground truth for every screen** | **any template or CSS work** |
 | `docs/scoring-model.md` | the scoring oracle: signals, buckets, gates, threshold, ties — **stale, pending re-sync to §4** | scoring, ranking, Room |
 | **`docs/ingest-spec.md`** | **the fetch contract: who may be collected, from where, how identity is confirmed, what a run must write** | **any scraper, adapter or ingest prompt** |
 | **`docs/IMPLEMENTATION-PROMPT.md`** | **the ordered build brief: stack decision, build order, defects to close, definition of done** | **building the application** |
@@ -174,13 +178,30 @@ not as backup.
 
 **R-021** Ties break by LARGE-signal count, then evidence recency, then id. *(G-017)*
 
-**R-022** **Intent.** Every member carries one intent for the evening, measured from evidence,
-never assumed:
+**R-022** **Intent.** Intent is what a member is currently trying to do, derived from their own
+first-person material — and it is the north star: among candidates that already clear the floor,
+intent decides who is surfaced.
 
 `I1` deploying capital · `I2` raising or being backed · `I3` building an institution ·
 `I4` publishing a body of work · `I5` learning a domain · `I6` giving access ·
 `I7` stepping back · `I8` being social — attendance without an agenda, **a finding, never a
 residual** · `I0` unknown — coverage incomplete, **never read as I8**.
+
+**R-022b** `[design 2026-09-04]` **The intent evidence bar.** An intent needs **at least two
+corroborating items, each with a source and a date**, or it is I0. Evidence lives inside a
+**rolling 180-day window**, and an intent decays out of the window rather than being carried
+forward. I8 needs its own evidence like any other value — repeat visits, RSVPs, a standing
+invitation to be approached; a member the engine knows nothing about is I0, never I8. **A member
+may hold two intents; a third is treated as none**, because a person doing three things is not
+doing any of them legibly. Per-intent derivation rules are on the How-the-score-works reference.
+
+**R-022c** `[design 2026-09-04]` **What intent must never do.** Never rendered as a need ("he
+announced a new company in March" is sayable; "he is looking for funding" is not). Never inferred
+from a role or a title — a partner is not necessarily deploying, a founder not necessarily
+raising. Never inferred from silence — I7 requires a measured fall against the member's own
+baseline, and unreached sources make it I0. Never carried across a suppression — withheld
+evidence suppresses the intent it would imply. Never used as a residual. Never shown to the
+member's face: it survives the over-the-shoulder test only when it reads as what they published.
 
 Every above-floor pair then takes an **intent class**, which drives ranking and the written
 reason: **complement** (B has done what A is trying to do; S9 fires) · **parallel** (same pursuit;
@@ -198,10 +219,16 @@ ranked last, and the card names the asymmetry — **never suppressed**).
 5. Add S9 to the displayed score where the class is complement. The floor excludes it.
 6. Write the reason from the intent, not the overlap.
 
-The former `mutual` / `broker` / `light_touch` brokering machinery is retired. What the host
-physically does is carried in card prose instead: `Who's here` states mutuality or its absence in
-words backed by edges — *"Wilson cites him in public; no reverse edge was found across two
-passes"*, *"Neither needs introducing to the other, so the host can leave them to it."*
+A complement at 7 beats a neutral at 11 — that is the point, and the part to argue with: the
+surfaced name is no longer always the highest-scoring one. With two intents per side (R-022b),
+I0 and I8 are checked first as whole-member states; then the class is the best available across
+the intent combinations, in the order complement → guarded → parallel → neutral.
+
+The `light_touch` mode is retired. What survives of brokering is a **reading, not a mode**:
+Why-this-score states `mutual` (both directions clear the floor — introduce and step away) or
+`broker` (one direction clears it — stay and carry the reason across), and `Who's here` carries
+the same fact in words backed by edges — *"Wilson reads Kopelman in public and cites him; no
+reverse edge was found across two passes."*
 
 **R-023** Every fired signal carries a one-line `evidence` string naming why it fired — and every
 signal that did *not* fire carries a one-line reason why not, rendered on Why-this-score. That is
@@ -280,16 +307,24 @@ are exempt from the band; they are never padded. A thin profile attempts a full 
 fabrication and falls back to its withheld greeting when the available evidence cannot support one.
 
 **R-034** A full card renders in **two layers**, bare-noun labels, no summary, no transitions.
-The reading layer is three ordered blocks: `Who they are` (name + one borrowed attributed line,
-plus `person.name_respelling` when present — the narrator never invents a pronunciation; the R-015
-label correction renders here: *"The door said Foundry Group, Techstars, Boulder — Foundry is
-right, the Techstars half is older than it reads"*) · `Who's here` (the match, then the rest of
-the room answered in one or two short sentences — other above-floor pairings counted but never
-named, everyone else in aggregate with the honest zero called out; never a roll call) ·
-`Say this`. The rest of the brief collapses behind a single
-control, in order: `The match` (one candidate and the score, the score itself a one-tap link to
-Why-this-score) · `Sources` · `Recent activity` · `Personal detail` (the deep cut). The R-033 word
-band is measured over the whole brief.
+The reading layer is three ordered blocks, and its two acted-on blocks are **scanned, not read —
+they render as short bullet lines** (a hanging bronze rule, never a disc):
+
+- `Who they are` — up to three bullets: the identity line; the one borrowed attributed line (plus
+  `person.name_respelling` when present — the narrator never invents a pronunciation); and the
+  **door-label check, always present**, stale or not: *"The door said Foundry Group, Techstars,
+  Boulder — Foundry is right, the Techstars half is older than it reads."* (R-015)
+- `Who's here` — bullets: the match, with the **name set off from its reason**; the mutuality or
+  hosting line, in words backed by edges; then the rest of the room in one line — other
+  above-floor pairings counted but never named, everyone else in aggregate with the honest zero
+  called out; never a roll call.
+- `Say this` — prose, the aloud device.
+
+The rest of the brief collapses behind a single control, in order: `The match` (one candidate and
+the score, the score a one-tap link to Why-this-score) · `Sources` (a **ledger** — which block,
+then its source, two columns, so the eye finds a block rather than a URL) · `Recent activity` ·
+`Personal detail` (the deep cut; the R-028 suppression counter renders here as a meta line —
+*"2 withheld: family, finance"*). The R-033 word band is measured over the whole brief.
 
 **R-035** The reading layer **ends on a sayable line, not a fact** — SBAR's Recommendation slot.
 While the `Say this` block is less than ~40% visible in the scroll viewport, a one-line **Say
@@ -330,11 +365,12 @@ anyone out. This is the accepted P0-5 risk in §10. The Battery's charter alread
 forbids members using presence features to watch each other.
 
 **R-060** `[new, prototype 2026-09-04]` **The card closes the loop.** Every card ends with an
-outcome capture: a free-text observation field (*"what did you observe about the interaction?"*)
-and five outcome chips — `Never introduced` · `Brief hello` · `Talked a while` · `Together all
-night` · `Swapped details` — with a single log action. The outcome is stored append-only against
-that introduction (pair, direction, run), because the only proof the introduction worked is what
-happened next. Logging is optional and never blocks any other behaviour.
+outcome capture: a free-text observation field (*"What did you observe about the interaction?"*,
+with the hint that the only proof the introduction worked is what happened next) and five outcome
+tags — `Never introduced` · `Brief hello` · `Talked a while` · `Together all night` · `Swapped
+details` — with a single log action. **A log needs the observation or a tag, not both**; either
+alone is worth keeping. The outcome is stored append-only against that introduction (pair,
+direction, run). Logging is optional and never blocks any other behaviour.
 
 **R-061** `[new, prototype 2026-09-04]` **A degraded state is an answer, not a shortened happy
 path.** The withheld card emits exactly: `Who they are` as a single line, the failure notice
@@ -378,6 +414,25 @@ between these four. A host should stay."* Seating reuses scored edges; it never 
 no-strong-match · cold trail · **unknown coverage** · empty room · **first arrival** · ingesting ·
 withheld · ambiguous · not-found · thin profile. `docs/ui-states.md` assigns each state to its
 surfaces and defines its trigger, content, actions and exit.
+
+**R-063** `[design 2026-09-04]` **The ambiguous chooser shows its work.** Each candidate renders
+with a source count and a one-line corroboration summary in plain words (*"Handle, display name
+and a backlink from firstround.com, plus three independent citations"*), a `Bind for this
+arrival` action, and **no default selection** — a default is the engine guessing identity. The
+screen carries its own Say line: *"Welcome them in, ask which one they are, and let the card
+catch up."* Binding applies to this arrival only and never writes to the profile store.
+
+**R-064** `[design 2026-09-04]` **The ingesting surface is the quiet/unknown ledger, live.** It
+opens with the coverage count (*"Reached 3 of 6"*) and the missed sources with their failure
+codes and tiers; then one stacked row per adapter — source, tier · status · fact count, and the
+reason on its own line (a 200 with zero items reads *"reached and genuinely empty — this is
+quiet, not unknown"*; an absent SESSION adapter reads as absent from the registry, not disabled);
+then the outcome — a partial profile is marked partial and said so. Every attempt is recorded,
+not every success (R-058).
+
+**R-065** `[design 2026-09-04]` **Every leaf surface carries a `← Room` crumb** in the banner —
+every surface is a leaf reachable from Room, so every surface needs the way out. Room itself ends
+in a quiet page footer carrying the How-the-score-works link.
 
 **R-046** **Why-this-score** shows, for one directed pair, four sections: signals that fired with
 weights and evidence; signals that did *not* fire, each with the one-line reason it did not
@@ -500,7 +555,7 @@ this spec claims. *(P0-5 stays accepted, and is now accepted with less in front 
 
 ## 12. Index
 
-Thesis R-001–004 · Sourcing R-005–011 · Identity R-012–015 · Scoring R-016–023 (incl. R-022a) ·
-Disclosure R-024–032 (incl. R-027a) · Card R-033–042 + R-060–061 · Surfaces R-043–047 + R-062 ·
+Thesis R-001–004 · Sourcing R-005–011 · Identity R-012–015 · Scoring R-016–023 (incl. R-022a–c) ·
+Disclosure R-024–032 (incl. R-027a) · Card R-033–042 + R-060–061 · Surfaces R-043–047 + R-062–065 ·
 Architecture R-048–051 · Demo R-052–054 · **Implementation R-055–059 (§11)**. Risks are K-1–K-11,
 not R-numbered. R-060–062 were added by the 2026-09-04 prototype re-baseline.

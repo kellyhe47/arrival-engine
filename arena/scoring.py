@@ -83,7 +83,7 @@ _ASKS = frozenset({"I2", "I5"})
 
 
 def intent_class(a_intent: str | None, b_intent: str | None) -> str:
-    """R-022. The pair's intent class, for `score(A -> B)`. Deterministic given stored intents.
+    """R-022. The pair's intent class for one intent per side. Deterministic given stored intents.
 
     Precedence: unknown (I0 on either side, never read as I8) > open (I8 on either side) >
     complement > guarded > parallel > neutral.
@@ -100,6 +100,29 @@ def intent_class(a_intent: str | None, b_intent: str | None) -> str:
         return "guarded"
     if a == b:
         return "parallel"
+    return "neutral"
+
+
+def member_intents(m: dict) -> list[str]:
+    """The member's measured intents — at most two (R-022b). Empty reads as I0."""
+    return [i for i in (m.get("intent"), m.get("intent_secondary")) if i]
+
+
+#: R-022a: with two intents per side, I0 and I8 are whole-member states checked first; then the
+#: class is the best available across the combinations, in this order.
+_CLASS_BEST = ("complement", "guarded", "parallel", "neutral")
+
+
+def pair_intent_class(a_intents: list[str], b_intents: list[str]) -> str:
+    """The pair's class across up to two intents per side."""
+    if not a_intents or not b_intents or "I0" in a_intents or "I0" in b_intents:
+        return "unknown"
+    if "I8" in a_intents or "I8" in b_intents:
+        return "open"
+    found = {intent_class(ai, bi) for ai in a_intents for bi in b_intents}
+    for klass in _CLASS_BEST:
+        if klass in found:
+            return klass
     return "neutral"
 
 
@@ -321,27 +344,31 @@ def score_pair(
                             {"from": pa, "to": pb}))
 
     # S9 — intent complement. Directed, display-only, and carried beside the base score so the
-    # floor can never read it (R-017/R-022a.5).
-    a_intent = a.get("intent") or "I0"
-    b_intent = b.get("intent") or "I0"
-    klass = intent_class(a_intent, b_intent)
+    # floor can never read it (R-017/R-022a.5). Each side may hold two intents (R-022b).
+    a_intents = member_intents(a)
+    b_intents = member_intents(b)
+    klass = pair_intent_class(a_intents, b_intents)
     s9 = None
     if klass == "complement":
+        a_i, b_i = next((ai, bi) for ai in a_intents for bi in b_intents
+                        if intent_class(ai, bi) == "complement")
         s9 = Signal("S9", WEIGHTS["S9"],
-                    f"{INTENTS.get(b_intent, b_intent)} meets {INTENTS.get(a_intent, a_intent)}",
-                    {"a_intent": a_intent, "b_intent": b_intent})
+                    f"{INTENTS.get(b_i, b_i)} meets {INTENTS.get(a_i, a_i)}",
+                    {"a_intent": a_i, "b_intent": b_i})
     elif klass == "unknown":
         miss("S9", "intent is unknown (I0) on at least one side; never read as being social")
     elif klass == "open":
         miss("S9", "one side is here to be social (I8); ranked on score alone")
     elif klass == "parallel":
-        miss("S9", f"both hold {a_intent}, {INTENTS.get(a_intent, a_intent)} — "
+        shared = next((i for i in a_intents if i in b_intents), a_intents[0])
+        miss("S9", f"both hold {shared}, {INTENTS.get(shared, shared)} — "
                    f"parallel, not complement")
     elif klass == "guarded":
         miss("S9", "the intents pull one way — an ask pointed at someone stepping back; "
                    "ranked last, and the card names the asymmetry")
     else:
-        miss("S9", f"no intent relation ({a_intent} against {b_intent})")
+        miss("S9", f"no intent relation ({' / '.join(a_intents)} against "
+                   f"{' / '.join(b_intents)})")
 
     total = sum(s.weight for s in fired)
     return PairScore(score=total, fired=tuple(fired), not_fired=tuple(not_fired),

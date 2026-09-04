@@ -55,6 +55,7 @@ class CardPlan:
     name_respelling: str | None = None
     label: str = ""
     correction_line: str | None = None
+    door_line: str | None = None
     borrowed: Line | None = None
     recency: dict = field(default_factory=dict)
     recent: list[Line] = field(default_factory=list)
@@ -130,12 +131,18 @@ class TemplateNarrator:
         pool = list(plan.recent) + list(plan.supporting)
 
         def build(who_lines, now_lines):
+            # R-034: the two acted-on blocks are SCANNED, not read, so they carry `lines` — the
+            # bullets the template renders — beside `text`, which is the same words joined so
+            # every word-count and prose gate sees one string.
+            who = self._who_lines(plan, extra=who_lines)
+            room = self._room_lines(plan)
             return [
                 {"order": 1, "label": "Who", "kind": "identity",
-                 "text": self._who(plan, extra=who_lines)},
+                 "text": " ".join(who), "lines": who},
                 {"order": 2, "label": "Now", "kind": "recency",
                  "text": self._now(plan, extra=now_lines)},
-                {"order": 3, "label": "Room", "kind": "match", "text": self._room(plan),
+                {"order": 3, "label": "Room", "kind": "match",
+                 "text": " ".join(room), "lines": room,
                  "cited_signal_ids": plan.room.get("cited_signal_ids", [])},
                 {"order": 4, "label": "Notice", "kind": "deep_cut", "text": self._notice(plan),
                  "fact_id": plan.deep_cut.fact_id if plan.deep_cut else None},
@@ -161,16 +168,39 @@ class TemplateNarrator:
         return blocks
 
     # ── blocks ────────────────────────────────────────────────────────────────
-    def _who(self, plan: CardPlan, extra: list[Line] | None = None) -> str:
+    def _who_lines(self, plan: CardPlan, extra: list[Line] | None = None) -> list[str]:
+        """R-034: identity · the borrowed line · the door check, one bullet each."""
         name = plan.display_name
         if plan.name_respelling:
             name = f"{name} [{plan.name_respelling}]"
-        parts = [f"{name}. {plan.label}." if plan.label else f"{name}."]
-        if plan.correction_line:
-            parts.append(f"Worth knowing before you open: {plan.correction_line}.")
+        lines = [f"{name}. {plan.label}." if plan.label else f"{name}."]
+        if plan.borrowed:
+            lines.append(f"In their own words: “{plan.borrowed.text}”")
+        if plan.door_line:
+            lines.append(plan.door_line)
+        elif plan.correction_line:
+            lines.append(f"Worth knowing before you open: {plan.correction_line}.")
         for line in extra or []:
-            parts.append(f"In their own words: “{line.text}”")
-        return " ".join(parts)
+            if plan.borrowed and line.fact_id == plan.borrowed.fact_id:
+                continue
+            lines.append(f"In their own words: “{line.text}”")
+        return lines
+
+    def _room_lines(self, plan: CardPlan) -> list[str]:
+        """R-034: the match, the hosting line, the rest of the room — one bullet each."""
+        room = plan.room or {}
+        if room.get("kind") == "empty":
+            return ["First one here.",
+                    "Nobody has been scored, because there is nobody in the building to score.",
+                    "Nobody outside it is offered either — the engine does not reach past "
+                    "the roster."]
+        if room.get("kind") == "no_strong_match":
+            return [f"Nobody present clears the floor — the closest pairing scored "
+                    f"{room.get('top_score')} and needs {room.get('floor')}.",
+                    "No name is offered; a weak introduction spends credibility a strong "
+                    "one will need."]
+        return [l for l in (room.get("primary_sentence"), room.get("hosting_sentence"),
+                            room.get("others_sentence")) if l]
 
     def _now(self, plan: CardPlan, extra: list[Line] | None = None) -> str:
         r = plan.recency or {}

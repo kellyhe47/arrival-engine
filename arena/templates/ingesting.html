@@ -2,12 +2,26 @@
 {% block title %}Ingesting{% endblock %}
 {% block banner %}
 <div class="banner"><div class="inner">
+  <a class="crumb" href="{{ base }}/">&larr; Room</a>
   <p class="eyebrow">Ingesting</p>
   <h1>Live re-run</h1>
   <p>GREEN adapters only. Unavailable sources are named, not hidden.</p>
 </div></div>
 {% endblock %}
 {% block content %}
+{# R-064: the coverage count first — the quiet/unknown ledger, live. #}
+<section class="blk">
+  <p class="lbl">Coverage</p>
+  {% set missed = result.source_status | rejectattr('status', 'equalto', 'ok') | list %}
+  <p class="match"><span class="who">Reached</span>
+     <span class="figure">{{ result.source_status|length - missed|length }} of
+       {{ result.source_status|length }}</span></p>
+  {% for s in missed %}
+  <p class="match miss"><span class="who">{{ s.source_id }}{% if s.http_code %} —
+       http_{{ s.http_code }}{% elif s.reason %} — {{ s.reason.replace('_', ' ') }}{% endif %}</span>
+     <span class="figure">{{ s.tier }}</span></p>
+  {% endfor %}
+</section>
 <section class="blk">
   <p class="lbl">Per adapter</p>
   {# A-8. Five 13px Inter columns do not fit 390 minus a 20px gutter, and the column that gets

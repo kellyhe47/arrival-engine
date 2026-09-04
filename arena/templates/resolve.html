@@ -2,8 +2,9 @@
 {% block title %}Resolve{% endblock %}
 {% block banner %}
 <div class="banner"><div class="inner">
+  <a class="crumb" href="{{ base }}/">&larr; Room</a>
   <p class="eyebrow">{{ copy[0] }}</p>
-  <h1>Who arrived?</h1>
+  <h1>{% if candidates|length > 1 %}{{ candidates|length }} candidates{% else %}Who arrived?{% endif %}</h1>
   <p>{{ copy[1] }}</p>
 </div></div>
 {% endblock %}
@@ -14,17 +15,29 @@
 </section>
 {% if candidates %}
 <section class="blk">
-  <p class="lbl">Corroborated candidates</p>
-  <p>The engine does not guess identity. Picking one binds it for this arrival only; it does not
-     write to the profile store.</p>
+  <p class="lbl">Candidates</p>
+  {# R-063: the chooser shows its work, and nothing is pre-selected. #}
+  <p>The engine does not guess identity and does not rank these. Binding a candidate applies to
+     this arrival only and does not write to the profile store.</p>
   {% for c in candidates %}
   <div class="row">
-    {# The tier is internal vocabulary; the tell-them-apart line a host needs is the
-       measured affiliation. #}
-    <span class="name"><a href="{{ base }}/card/{{ token_for(c.id) }}">{{ c.display_name }}</a></span>
-    <span class="meta">{{ affiliation(labels.get(c.id, '')) or "no measured affiliation" }}</span>
+    <span class="name">{{ c.display_name }}</span>
+    <span class="meta num">{{ evidence[c.id].sources }} source{{ '' if evidence[c.id].sources == 1 else 's' }}</span>
+    <span class="actions stack">
+      <p class="meta">{% if labels.get(c.id) %}{{ affiliation(labels[c.id]) }}.
+         {% endif %}{{ evidence[c.id].line }}</p>
+      <a class="btn quiet" href="{{ base }}/card/{{ token_for(c.id) }}">Bind for this arrival</a>
+    </span>
   </div>
   {% endfor %}
+  {% if candidates|length > 1 %}
+  <p class="meta">Neither is pre-selected. A default here is the engine guessing identity.</p>
+  {% endif %}
+</section>
+<section class="blk">
+  <p class="lbl">{{ block_title('Say') }}</p>
+  <p class="aloud">{% if candidates|length > 1 %}Welcome them in, ask which one they are, and let
+     the card catch up.{% else %}Welcome them in by name; the card is one tap away.{% endif %}</p>
 </section>
 {% else %}
 <section class="blk">

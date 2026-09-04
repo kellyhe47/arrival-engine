@@ -28,7 +28,7 @@ from .card import generate_digest
 from .config import Settings, card_path_secret, public_root, store_path
 from .ingest import run_ingestion
 from .narrator import close_live_narrator, live_narrator
-from .ranking import seat_tables
+from .ranking import mutuality, seat_tables
 from .scoring import CEILING, INTENTS, score_pair
 from .store import Store, StoreUnavailable
 from .view import (STATE_COPY, affiliation_line, block_title, card_banner, card_state,
@@ -263,6 +263,10 @@ def why(request: Request, token: str, other: str):
     names = {a_id: a["display_name"], b_id: b["display_name"]}
     view = why_view(a, b, forward=forward, reverse=reverse,
                     excluded_topics=excluded_topic_records(vocabulary), names=names)
+    # R-022a: brokering survives as a READING on this page — mutual or broker, from which
+    # directions clear the floor. Nothing below the floor earns the line at all.
+    mode = mutuality(forward, reverse)
+    view["brokering"] = {"mutual": "mutual", "one_way": "broker"}.get(mode)
     return templates.TemplateResponse(request, "why.html", _ctx(
         store, request, why=view, token=token, other=other, floor=6))
 
@@ -270,53 +274,13 @@ def why(request: Request, token: str, other: str):
 # ── How the score works (R-043) ───────────────────────────────────────────────
 @app.get("/" + SECRET + "/score", response_class=HTMLResponse)
 def score(request: Request):
-    """The staff reference screen: the signal table, the intent taxonomy, the intent classes and
-    the order of operations, verbatim from the PRD. Reached from Room's footer and from
-    Why-this-score. Reference, not per-pair — Why-this-score is the per-pair surface."""
+    """The staff rulebook: signals, intent taxonomy and derivation, classes, order of operations,
+    the floor, and the live generic-topic exclusions. Reached from Room's footer and from
+    Why-this-score. Per-pair questions belong on Why-this-score."""
     store = _store()
-    signals = [
-        {"id": "S1", "text": "Same industry, bucketed. Weight 2. Establishes context; "
-                             "does not carry a match."},
-        {"id": "S2", "text": "Comparable seniority and a career starting in the same decade. "
-                             "Weight 2."},
-        {"id": "S3", "text": "A shared context — city, institution, programme. Weight 3."},
-        {"id": "S4", "text": "Overlapping organisation history. Weight 1."},
-        {"id": "S5", "text": "A specific professional topic held by both, generics excluded. "
-                             "Weight 3."},
-        {"id": "S6", "text": "A personal topic in common. Weight 2."},
-        {"id": "S7", "text": "A declared link — one cites, follows or has written about the "
-                             "other. Weight 3."},
-        {"id": "S8", "text": "Status gradient. Weight 1. Breaks ties, never creates a match."},
-        {"id": "S9", "text": "Intent complement — B has done what A is trying to do. "
-                             "Weight 3, one-way."},
-    ]
-    intents = [{"id": i, "text": INTENTS[i][0].upper() + INTENTS[i][1:] + "."}
-               for i in ("I1", "I2", "I3", "I4", "I5", "I6", "I7")]
-    intents.append({"id": "I8", "text": "Being social — attendance without an agenda. "
-                                        "A finding, never a residual."})
-    intents.append({"id": "I0", "text": "Unknown. Coverage incomplete. Never read as I8."})
-    classes = [
-        {"id": "1", "text": "Complement — surfaced first. S9 fires."},
-        {"id": "2", "text": "Parallel — after complements. S9 does not fire."},
-        {"id": "3", "text": "Open — either side is I8. Ranked on score alone."},
-        {"id": "4", "text": "Neutral — no relation. Score alone."},
-        {"id": "5", "text": "Unknown — either side is I0. Score alone."},
-        {"id": "6", "text": "Guarded — ranked last, and the card names the asymmetry. "
-                            "Not suppressed."},
-    ]
-    steps = [
-        {"id": "1", "text": "Score every pair in the room, both directions, S1–S8."},
-        {"id": "2", "text": "Drop everything below the floor."},
-        {"id": "3", "text": "Class every survivor. I8 on either side means Open."},
-        {"id": "4", "text": "Rank: complement, then parallel, then open / neutral / unknown on "
-                            "score, guarded last."},
-        {"id": "5", "text": "Add S9 to the displayed score where the class is complement. "
-                            "The floor excludes it."},
-        {"id": "6", "text": "Write the reason from the intent, not the overlap."},
-    ]
+    from .scoring import excluded_topic_records
     return templates.TemplateResponse(request, "score.html", _ctx(
-        store, request, signals=signals, intents=intents, classes=classes, steps=steps,
-        ceiling=CEILING))
+        store, request, excluded=excluded_topic_records(store.vocabulary()), ceiling=CEILING))
 
 
 # ── Outcome logging (R-060) ───────────────────────────────────────────────────
@@ -330,13 +294,16 @@ OUTCOMES = (
 
 
 @app.post("/" + SECRET + "/outcome")
-def outcome(request: Request, token: str = Form(...), outcome: str = Form(...),
+def outcome(request: Request, token: str = Form(...), outcome: str = Form(default=""),
             matched_id: str = Form(default=""), observation: str = Form(default="")):
-    """R-060: the card closes the loop. Append-only; logging is optional and blocks nothing."""
+    """R-060: the card closes the loop. A log needs the observation OR a tag — either alone is
+    worth keeping. Append-only; logging is optional and blocks nothing."""
     store = _store()
     member_id = resolve_token(token, store.member_ids(), SECRET)
-    if member_id is None or outcome not in {slug for slug, _ in OUTCOMES}:
+    valid_tag = outcome in {slug for slug, _ in OUTCOMES}
+    if member_id is None or (not valid_tag and not observation.strip()):
         raise HTTPException(status_code=400)
+    outcome = outcome if valid_tag else None
     matched = matched_id if matched_id in store.member_ids() else None
     writable = _store(writable=True)
     writable.record_outcome(
@@ -436,9 +403,29 @@ def resolve(request: Request, name: str = ""):
     state = result["resolution"]
     labels = {c["id"]: (store.label(c["id"]) or {}).get("current_label", "")
               for c in result["candidates"]}
+    # R-063: the chooser shows its work — a source count and the corroboration behind each
+    # candidate, in plain words. No default: a default is the engine guessing identity.
+    evidence = {c["id"]: _identity_summary(store, c["id"]) for c in result["candidates"]}
     return templates.TemplateResponse(request, "resolve.html", _ctx(
         store, request, state=state, copy=STATE_COPY[state], supplied=name,
-        candidates=result["candidates"], labels=labels))
+        candidates=result["candidates"], labels=labels, evidence=evidence))
+
+
+def _identity_summary(store: Store, person_id: str) -> dict:
+    """Source count and corroboration kinds for one candidate, said as one line."""
+    rows = store.conn.execute(
+        "SELECT source_id, corroboration FROM person_identity WHERE person_id = ?"
+        " AND role <> 'negative_probe'", (person_id,)).fetchall()
+    kinds: set[str] = set()
+    for r in rows:
+        try:
+            kinds |= set(json.loads(r["corroboration"] or "[]"))
+        except (ValueError, TypeError):
+            pass
+    said = sorted(k.replace("_", " ") for k in kinds)
+    line = (f"Corroborated by {', '.join(said)}." if said
+            else "No corroboration recorded beyond the handle itself.")
+    return {"sources": len({r["source_id"] for r in rows}), "line": line}
 
 
 # ── the root mount ────────────────────────────────────────────────────────────

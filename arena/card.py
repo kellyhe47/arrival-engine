@@ -126,7 +126,8 @@ def render_card(narration: dict, *, settings, facts: list[dict] | None = None,
         card = {
             "blocks": [
                 {k: v for k, v in b.items() if k in
-                 ("order", "label", "kind", "text", "fact_id", "fact_ids", "cited_signal_ids")}
+                 ("order", "label", "kind", "text", "lines", "fact_id", "fact_ids",
+                  "cited_signal_ids")}
                 for b in blocks
             ],
             "word_count": words,
@@ -353,6 +354,19 @@ def _build_plan(member_id, arriving, store, renderable, chips, recency, room, su
     if label_row and label_row.get("stale"):
         correction = (f"the door said {label_row['supplied_label']}; "
                       f"it is {label_row['current_label']} now")
+    # R-034: the door-label check is ALWAYS present, stale or not — the host may already have
+    # read the door, and "it holds" is as useful as a correction.
+    door_line = None
+    if label_row and label_row.get("supplied_label"):
+        supplied = label_row["supplied_label"]
+        current = label_row.get("current_label") or supplied
+        if label_row.get("stale"):
+            door_line = (f"The door said {supplied}; it is {current} now — worth knowing "
+                         f"before the handshake.")
+        elif supplied != current:
+            door_line = f"The door said {supplied}; the measured read is {current}."
+        else:
+            door_line = f"The door said {supplied}, and it holds."
 
     def line(fid) -> Line:
         f = renderable[fid]
@@ -407,6 +421,7 @@ def _build_plan(member_id, arriving, store, renderable, chips, recency, room, su
         name_respelling=(person or {}).get("name_respelling"),
         label=(label_row or {}).get("current_label", ""),
         correction_line=correction,
+        door_line=door_line,
         borrowed=borrowed,
         recency=recency,
         recent=recent,

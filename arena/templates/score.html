@@ -2,51 +2,142 @@
 {% block title %}How the score works{% endblock %}
 {% block banner %}
 <div class="banner"><div class="inner">
+  <a class="crumb" href="{{ base }}/">&larr; Room</a>
   <p class="eyebrow">Reference</p>
   <h1>How the score works</h1>
-  <p>Nine signals, one intent per member, six classes. Ceiling {{ ceiling }}, floor 6.</p>
 </div></div>
 {% endblock %}
 {% block content %}
 
-{# R-043: the staff reference screen — the signal table, the intent taxonomy, the intent classes
-   and the order of operations, verbatim from the PRD. Per-pair questions belong on
-   Why-this-score; this page is the rulebook. #}
+{# R-043: the staff rulebook — signals, intent, classes, order of operations, verbatim from the
+   PRD and the design reference. Per-pair questions belong on Why-this-score. #}
 <section class="blk">
   <p class="lbl">The signals</p>
-  <table class="ref">
-    {% for s in signals %}
-    <tr><td><span class="sig">{{ s.id }}</span></td><td>{{ s.text }}</td></tr>
-    {% endfor %}
+  <table class="rubric">
+    <tr><th>ID</th><th>W</th><th></th><th>Fires when</th></tr>
+    <tr><td class="id">S1</td><td class="wt">2</td><td class="bar"><span class="stack-bar" style="width:28px"></span></td><td>Both work in the same industry, bucketed. Broad by design — it establishes context, it does not carry a match.</td></tr>
+    <tr><td class="id">S2</td><td class="wt">2</td><td class="bar"><span class="stack-bar" style="width:28px"></span></td><td>Comparable seniority tier and a career starting in the same decade.</td></tr>
+    <tr><td class="id">S3</td><td class="wt">3</td><td class="bar"><span class="stack-bar" style="width:42px"></span></td><td>A shared context: same city, same institution, same programme.</td></tr>
+    <tr><td class="id">S4</td><td class="wt">1</td><td class="bar"><span class="stack-bar" style="width:14px"></span></td><td>Overlapping organisation history in the stored record.</td></tr>
+    <tr><td class="id">S5</td><td class="wt">3</td><td class="bar"><span class="stack-bar" style="width:42px"></span></td><td>A specific professional topic held by both, after generic topics are excluded.</td></tr>
+    <tr><td class="id">S6</td><td class="wt">2</td><td class="bar"><span class="stack-bar" style="width:28px"></span></td><td>A personal topic in common — a sport, a collection, a hobby on record.</td></tr>
+    <tr><td class="id">S7</td><td class="wt">3</td><td class="bar"><span class="stack-bar" style="width:42px"></span></td><td>A declared link: one cites, follows or has written about the other.</td></tr>
+    <tr><td class="id">S8</td><td class="wt">1</td><td class="bar"><span class="stack-bar" style="width:14px"></span></td><td>Status gradient — B's prominence tier strictly above A's. Breaks ties. Never creates a match.</td></tr>
+    <tr><td class="id">S9</td><td class="wt">3</td><td class="bar"><span class="stack-bar" style="width:42px"></span></td><td>Intent complement — B has done or is doing the thing A is currently trying to do. One-way, and it cannot fire on an unknown intent.</td></tr>
   </table>
 </section>
 
 <section class="blk">
   <p class="lbl">Intent</p>
-  <table class="ref">
-    {% for i in intents %}
-    <tr><td><span class="sig">{{ i.id }}</span></td><td>{{ i.text }}</td></tr>
-    {% endfor %}
+  <p>A score says two people have something in common. It does not say either of them needs
+     anything. Intent is what the member is currently trying to do, derived from their own
+     first-person material inside a rolling window &mdash; and it is the north star: among
+     candidates that already clear the floor, intent decides which one is surfaced.</p>
+  <table class="rubric">
+    <tr><th>ID</th><th>Intent</th><th>Derived from</th></tr>
+    <tr><td class="id">I1</td><td>Deploying capital</td><td>Investment announcements or thesis writing in the window; a firm role on record.</td></tr>
+    <tr><td class="id">I2</td><td>Raising or being backed</td><td>Fundraise language, a new entity, hiring posts for founding roles.</td></tr>
+    <tr><td class="id">I3</td><td>Building an institution</td><td>Governance, structure or long-horizon writing sustained across the window.</td></tr>
+    <tr><td class="id">I4</td><td>Publishing a body of work</td><td>Rising cadence on one subject; a serialised or long-form project in progress.</td></tr>
+    <tr><td class="id">I5</td><td>Learning a domain</td><td>A topic new to the record appearing in three or more items, none older than the window.</td></tr>
+    <tr><td class="id">I6</td><td>Giving access</td><td>Open office hours, mentoring, an explicit standing offer to strangers.</td></tr>
+    <tr><td class="id">I7</td><td>Stepping back</td><td>Sustained fall in first-person output against that member's own baseline.</td></tr>
+    <tr><td class="id">I8</td><td>Being social</td><td>Attendance without an agenda: repeat visits in the window, event RSVPs, an open invitation to be approached. A stated intent, not a residual.</td></tr>
+    <tr><td class="id">I0</td><td>Unknown</td><td>Coverage incomplete, or no item clears the evidence bar. Never inferred from a role, and never read as I8.</td></tr>
   </table>
+  <p class="meta">Two corroborating items minimum, each with a source and a date, or the intent is
+     I0. I8 needs its own evidence like any other value &mdash; a member the engine knows nothing
+     about is I0, never I8. A member may hold two intents; a third is treated as none, because a
+     person doing three things is not doing any of them legibly. Window: 180 days, and intent
+     decays out rather than being carried forward.</p>
 </section>
 
 <section class="blk">
   <p class="lbl">Intent classes</p>
-  <table class="ref">
-    {% for c in classes %}
-    <tr><td><span class="sig">{{ c.id }}</span></td><td>{{ c.text }}</td></tr>
-    {% endfor %}
+  <p>A pair's intent class is directional and decides rank, not points.</p>
+  <table class="rubric">
+    <tr><th>Class</th><th>Example</th><th>Effect on ranking</th></tr>
+    <tr><td>Complement</td><td>A is I2 raising, B is I1 deploying. A is I5 learning, B has done it.</td><td>Surfaced first. S9 fires.</td></tr>
+    <tr><td>Parallel</td><td>Both I3, building the same kind of thing.</td><td>Surfaced after complements. S9 does not fire.</td></tr>
+    <tr><td>Neutral</td><td>No relation between the two intents.</td><td>Ranked on score alone.</td></tr>
+    <tr><td>Open</td><td>Either side is I8, being social.</td><td>Ranked on score alone. An open member has said they are here to meet people, so the engine gets out of the way and lets the evidence pick.</td></tr>
+    <tr><td>Guarded</td><td>A is I2 raising, B is I7 stepping back &mdash; and B is not I8.</td><td>Ranked last, and the card names the asymmetry. Not suppressed.</td></tr>
+    <tr><td>Unknown</td><td>Either side is I0.</td><td>Ranked on score alone, and the card says coverage is incomplete.</td></tr>
   </table>
 </section>
 
 <section class="blk">
   <p class="lbl">Order of operations</p>
-  <table class="ref">
-    {% for s in steps %}
-    <tr><td><span class="sig">{{ s.id }}</span></td><td>{{ s.text }}</td></tr>
-    {% endfor %}
+  <table class="rubric">
+    <tr><th></th><th>Step</th><th>Why in this position</th></tr>
+    <tr><td class="id">1</td><td>Score every pair in the room, both directions, S1&ndash;S8.</td><td>Evidence first. Intent cannot invent a reason to say out loud.</td></tr>
+    <tr><td class="id">2</td><td>Drop everything below the floor.</td><td>Unchanged. Intent never rescues a pair with nothing measured.</td></tr>
+    <tr><td class="id">3</td><td>Class every surviving pair. I8 on either side means Open.</td><td>Openness overrides the asymmetry rules. A member who came to be social has already answered the question the guard was protecting.</td></tr>
+    <tr><td class="id">4</td><td>Rank by class, in this order: <strong>complement</strong>, then <strong>parallel</strong>, then <strong>open</strong>, <strong>neutral</strong> and <strong>unknown</strong> together on score alone, then <strong>guarded</strong> last.</td><td>The north star. A complement at 7 beats a neutral at 11; a guarded pair still appears if it is all the room has.</td></tr>
+    <tr><td class="id">5</td><td>Add S9 to the displayed score where the class is complement.</td><td>Display only. The floor is still evaluated without S9.</td></tr>
+    <tr><td class="id">6</td><td>Write the reason from the intent, not the overlap.</td><td>&ldquo;He is raising; she has funded four of these&rdquo; is a sentence a host can say.</td></tr>
+  </table>
+  <p class="meta">A complement at 7 beating a neutral at 11 is the whole point, and it is the part
+     to argue with: it means the surfaced name is no longer the highest-scoring one, and the score
+     on the card will sometimes look wrong to anyone reading it as a ranking.</p>
+</section>
+
+<section class="blk">
+  <p class="lbl">What intent must never do</p>
+  <table class="rubric">
+    <tr><th>Rule</th><th>Because</th></tr>
+    <tr><td>Never rendered as a need</td><td>&ldquo;He is looking for funding&rdquo; is a claim about a member's situation. &ldquo;He announced a new company in March&rdquo; is a sourced fact. The card says the second.</td></tr>
+    <tr><td>Never inferred from a role or a title</td><td>A partner at a firm is not necessarily deploying, and a founder is not necessarily raising. Role is not intent.</td></tr>
+    <tr><td>Never inferred from silence</td><td>I7 stepping back requires a measured fall against that member's own baseline, and unreached sources make it I0.</td></tr>
+    <tr><td>Never carried across a suppression</td><td>A withheld class cannot be laundered into an intent. If the evidence is suppressed, so is the intent it would imply.</td></tr>
+    <tr><td>Never used as a residual</td><td>Being social is a finding with its own evidence. Treating it as the default would collapse &ldquo;here to meet people&rdquo; into &ldquo;we do not know&rdquo; &mdash; the one distinction this product exists to keep.</td></tr>
+    <tr><td>Never shown to the member's face</td><td>Intent is the most inferential thing on the card. It survives the over-the-shoulder test only when it reads as what they published.</td></tr>
   </table>
 </section>
 
-<p><a class="btn" href="{{ base }}/">Room</a></p>
+<section class="blk">
+  <p class="lbl">The floor</p>
+  <table class="rubric">
+    <tr><th>Rule</th><th>Value</th></tr>
+    <tr><td>Threshold is evaluated on the score <strong>excluding S8</strong></td><td class="wt">yes</td></tr>
+    <tr><td>Displayed score includes S8</td><td class="wt">yes</td></tr>
+    <tr><td>Names surfaced per arrival, at most</td><td class="wt">1</td></tr>
+    <tr><td>Named candidates below the floor</td><td class="wt">0</td></tr>
+    <tr><td>Candidates named on a withheld card</td><td class="wt">0</td></tr>
+  </table>
+  <p class="meta">Nothing is suppressed for intent. The only path that withholds a card is a
+     failed hard gate, and it withholds the whole card rather than a candidate. The floor is set
+     so that clearing it requires at least one specific signal, not an accumulation of broad
+     ones. Below it the introduction has no reason the host can say out loud. The value is
+     tuning, so it lives in configuration and on the card that reports a miss — not here.</p>
+</section>
+
+<section class="blk">
+  <p class="lbl">Generic topics</p>
+  {% if excluded %}
+  <table class="rubric">
+    <tr><th>Topic</th><th>Held by</th><th>Share</th><th>Counts for S5</th></tr>
+    {% for t in excluded %}
+    <tr><td>{{ t.topic }}</td><td class="wt">{{ t.holder_count }} of {{ t.base_size }}</td>
+        <td class="wt">{{ '%.0f'|format(100 * t.holder_count / t.base_size) }}%</td><td>no</td></tr>
+    {% endfor %}
+  </table>
+  {% endif %}
+  <p class="meta">A topic held by 40% or more of the member base is excluded from the topic
+     signals. Genericity is measured once over the whole member base and stored — never recomputed
+     from who is in the room, which made the score depend on room size.</p>
+</section>
+
+<section class="blk">
+  <p class="lbl">Direction</p>
+  <p>Scoring is directional. A's interest in B is not B's interest in A, because S7, S8 and S9
+     are one-way: a citation has an author, a status gradient has a direction, and a complement
+     has a beneficiary. When both directions clear the floor the pair is mutual — introduce and
+     step away; when one does, broker — stay and carry the reason across.</p>
+</section>
+
+<div class="pagefoot">
+  <a href="{{ base }}/">Room</a>
+  <span>Reference only. Nothing on this page is member data.</span>
+</div>
 {% endblock %}

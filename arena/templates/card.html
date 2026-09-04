@@ -1,21 +1,14 @@
 {% extends "base.html" %}
 {% block title %}Arrival{% endblock %}
 
-{# The rail (A-5) is only earned when the body below it actually RENDERS the card. A digest can
-   carry a perfectly good card that this page then declines to show — a token that resolves to
-   nobody — and the rail must decline with it, rather than pinning an opening line to the bottom
-   of a screen that has no brief on it. #}
+{# The rail (A-5) is only earned when the body below it actually RENDERS the card. #}
 {% set renders_card = digest and digest.card and state != 'not_found' %}
 {% set say_block = (digest.card.blocks | selectattr('label', 'equalto', 'Say') | first)
                    if renders_card else None %}
 {% block body_class %}{% if say_block %} class="has-rail"{% endif %}{% endblock %}
 
-{# The identity line on a DEGRADED card. The stored label already carries its own punctuation
-   ("Softmax — CEO"), so pasting it after a dash produced "Emmett Shear — Softmax — CEO"; it goes
-   through the same normaliser the eyebrow uses, unabridged because prose can afford it.
-
-   R-015's correction rides along. A withheld card is still a card the host reads at the door, and
-   the door is exactly where they may already have heard the stale label. #}
+{# The identity line on a DEGRADED card. R-015's correction rides along — the door is exactly
+   where the host may already have heard the stale label. #}
 {% macro identity_line(member, label) %}
   <p>{{ member.display_name }}{% if label.current_label %}. {{ affiliation(label.current_label) }}{% endif %}.</p>
   {{ stale_note(label) }}
@@ -44,11 +37,49 @@
   {% endif %}
 {% endmacro %}
 
-{# The banner is about the PERSON, not about the render (docs/design-additions.md A-6):
-   `copy[0]` is the measured affiliation, `copy[1]` the derived one-line description. Neither is
-   the state name any more — a host reading "READY" over someone's name learned nothing. #}
+{# R-060: the outcome capture, on every card with a member — it grades the greeting when there
+   was no brief. Text OR a tag is enough; either alone is worth keeping. #}
+{% macro outcome_capture() %}
+<section class="fb">
+  <p class="lbl">What did you observe about the interaction?</p>
+  <p class="hint">The only proof the introduction worked is what happened next. How long did they
+     talk, and did it go anywhere — a nod on the way past, or still together at closing.</p>
+  {% if logged %}
+  <p class="sent">Logged against this introduction.</p>
+  {% endif %}
+  <form method="post" action="{{ base }}/outcome" id="fbform">
+    <input type="hidden" name="token" value="{{ token }}">
+    <input type="hidden" name="matched_id" value="{{ matched_id or '' }}">
+    <textarea name="observation" aria-label="What you observed"
+      placeholder="Twenty minutes by the bar, then he walked her over to his own table…"></textarea>
+    <div class="tags" role="group" aria-label="What you observed">
+      {% for slug, label_text in outcomes %}
+      <label class="tag"><input type="radio" name="outcome" value="{{ slug }}">
+        <span>{{ label_text }}</span></label>
+      {% endfor %}
+    </div>
+    <div class="send">
+      <button class="btn" type="submit">Log the outcome</button>
+    </div>
+  </form>
+  <script>
+    (function () {
+      var form = document.getElementById('fbform');
+      form.addEventListener('submit', function (e) {
+        var text = form.querySelector('textarea').value.trim();
+        var tag = form.querySelector('input[name="outcome"]:checked');
+        if (!text && !tag) { e.preventDefault(); form.querySelector('textarea').focus(); }
+      });
+    })();
+  </script>
+</section>
+{% endmacro %}
+
+{# The banner is about the PERSON, not about the render (A-6). Every leaf carries the way back
+   to Room (R-065). #}
 {% block banner %}
 <div class="banner"><div class="inner">
+  <a class="crumb" href="{{ base }}/">&larr; Room</a>
   <p class="eyebrow">{{ copy[0] }}</p>
   <h1>{% if member %}{{ member.display_name }}{% if member.name_respelling %}
         <span class="respell">[{{ member.name_respelling }}]</span>{% endif %}
@@ -81,164 +112,143 @@
     <p class="note warn">A hard gate failed, so the brief is withheld. This degrades to a greeting,
        never to a guess.</p>
     {% endif %}
+  </section>
+  <section class="blk">
     <p class="lbl">What failed</p>
     <table>
       <tr><th>Gate</th><th>Observed</th><th>Allowed</th></tr>
       {% for g in digest.gate_failures %}
       <tr><td>{{ g.gate.replace('_', ' ') }}</td>
           <td class="w">{{ g.observed if g.observed is not none else '—' }}</td>
-          <td class="w">{{ g.allowed or g.unfired_cited or '—' }}</td></tr>
+          <td class="w">{{ g.allowed or '—' }}</td></tr>
       {% endfor %}
     </table>
     <p class="meta">Retry re-runs render only. It does not re-ingest, and it does not lower a
        threshold — the obvious implementation of a retry button turns a hard gate into a retry
        loop.</p>
-    <p><a class="btn" href="{{ base }}/card/{{ token }}?retry={{ retry + 1 }}">Retry render</a></p>
+    <p><a class="btn quiet" href="{{ base }}/card/{{ token }}?retry={{ retry + 1 }}">Retry render</a></p>
+  </section>
+  <section class="blk">
     <p class="lbl">{{ block_title('Say') }}</p>
     <p class="aloud">Greet them by name and log the arrival.</p>
   </section>
+  {{ outcome_capture() }}
 
 {% else %}
-  {# R-034: two layers. The reading layer is Who they are · Who's here · Say this — what a host
-     can absorb in the walk from the desk to the door. Everything else collapses behind one
-     control. The word band is still measured over the whole brief. #}
+  {# R-034: two layers. The reading layer — Who they are · Who's here · Say this — is scanned,
+     not read: the two acted-on blocks render their `lines` as hanging-rule bullets. #}
   {% set by_label = {} %}
   {% for b in digest.card.blocks %}{% if by_label.update({b.label: b}) %}{% endif %}{% endfor %}
 
-  {% for label in ['Who', 'Room', 'Say'] %}{% set b = by_label.get(label) %}{% if b %}
-  <section class="blk{% if label == 'Say' %} say{% endif %}">
+  {% for label in ['Who', 'Room'] %}{% set b = by_label.get(label) %}{% if b %}
+  <section class="blk">
     <p class="lbl">{{ block_title(b.label) }}</p>
-
-    {% if b.label == 'Who' %}
-      {# R-034's borrowed attributed line is one of the two places the host reads ALOUD, so it
-         gets the italic-gold device inline. `mark_borrowed` escapes first and only then wraps
-         what is already inside curly quotes — a typographic pass, not a content one. The stale
-         note is not repeated here: the narrator's Who prose already carries the correction. #}
-      <p>{{ b.text | mark_borrowed }}</p>
-    {% elif b.label == 'Say' %}
-      <p class="aloud">{{ b.text }}</p>
+    {% if b.lines %}
+    <ul class="bullets">
+      {% for line in b.lines %}<li>{{ line | mark_borrowed }}</li>{% endfor %}
+    </ul>
     {% else %}
-      <p>{{ b.text }}</p>
+    <p>{{ b.text | mark_borrowed }}</p>
     {% endif %}
-
     {{ chips_for(b) }}
 
-    {% if b.label == 'Room' and not digest.surfaced_count %}
+    {% if b.label == 'Room' and not digest.surfaced_count and digest.ranked_matches %}
       {# R-038: below the floor NOBODY is named, and the miss is reported with the number. #}
-      {% set top = digest.ranked_matches[0] if digest.ranked_matches else None %}
-      {% if top %}
+      {% set top = digest.ranked_matches[0] %}
       <p class="match miss">
         <span class="who">Top score, no candidate named</span>
         <a class="score" href="{{ base }}/why/{{ token }}/{{ token_for(top.member_id) }}"
            >{{ top.score }} · needs {{ floor }}</a>
       </p>
-      {% endif %}
-      {# An empty room needs no extra row — the prose above already says they are first. #}
     {% endif %}
   </section>
   {% endif %}{% endfor %}
 
-  {# The rest of the brief — The match · Sources · Recent activity · Personal detail. #}
-  <details class="rest">
-    <summary><span class="lbl">The rest of the brief</span><span class="arrow">→</span></summary>
+  {% set b = by_label.get('Say') %}{% if b %}
+  <section class="blk" id="sayblock">
+    <p class="lbl">{{ block_title('Say') }}</p>
+    <p class="aloud">{{ b.text }}</p>
+  </section>
+  {% endif %}
 
-    <section class="blk">
-      <p class="lbl">The match</p>
-      {% if digest.surfaced_count %}
-        {% set m = (digest.ranked_matches | selectattr('surfaced') | first) %}
-        <p class="match">
-          <span class="who">{{ names.get(m.member_id, m.member_id) }}</span>
-          <a class="score" href="{{ base }}/why/{{ token }}/{{ token_for(m.member_id) }}"
-             >{{ m.score }}<span class="of">/{{ ceiling }} · why</span></a>
-        </p>
-      {% elif digest.ranked_matches %}
-        <p class="match miss">
-          <span class="who">Top score, no candidate named</span>
-          <a class="score" href="{{ base }}/why/{{ token }}/{{ token_for(digest.ranked_matches[0].member_id) }}"
-             >{{ digest.ranked_matches[0].score }} · needs {{ floor }}</a>
-        </p>
-      {% else %}
-        <p class="match miss"><span class="who">Nobody present to score</span>
-           <span class="figure">no pairs</span></p>
-      {% endif %}
-    </section>
+  {# The rest of the brief — The match · Sources (a ledger) · Recent activity · Personal detail. #}
+  <details class="brief">
+    <summary><span>The rest of the brief</span><span class="arw">&rarr;</span></summary>
+    <div class="inner">
 
-    <section class="blk">
-      <p class="lbl">Sources</p>
-      {% set seen = [] %}
-      <div class="chips">
-      {% for c in digest.provenance_chips %}
-        {% if c.source_host and c.source_host not in seen %}
-          {% if seen.append(c.source_host) %}{% endif %}
-          <span class="chip{% if chips.get(c.fact_id) and chips[c.fact_id].synthetic %} synthetic{% endif %}">
-            <span class="host">{{ c.source_host }}</span>
-            {% if c.source_date %} · {{ c.source_date }}{% endif %}
-          </span>
+      <section class="blk">
+        <p class="lbl">The match</p>
+        {% if digest.surfaced_count %}
+          {% set m = (digest.ranked_matches | selectattr('surfaced') | first) %}
+          <p class="match">
+            <span class="who">{{ names.get(m.member_id, m.member_id) }}</span>
+            <a class="score" href="{{ base }}/why/{{ token }}/{{ token_for(m.member_id) }}"
+               >{{ m.score }}<span class="of">/{{ ceiling }} · why</span></a>
+          </p>
+        {% elif digest.ranked_matches %}
+          <p class="match miss">
+            <span class="who">Top score, no candidate named</span>
+            <a class="score" href="{{ base }}/why/{{ token }}/{{ token_for(digest.ranked_matches[0].member_id) }}"
+               >{{ digest.ranked_matches[0].score }} · needs {{ floor }}</a>
+          </p>
+        {% else %}
+          <p class="match miss"><span class="who">Nobody present to score</span></p>
         {% endif %}
-      {% endfor %}
-      </div>
-    </section>
+      </section>
 
-    {% for label in ['Now', 'Notice'] %}{% set b = by_label.get(label) %}{% if b %}
-    <section class="blk">
-      <p class="lbl">{{ block_title(b.label) }}</p>
-      <p>{{ b.text }}</p>
-      {{ chips_for(b) }}
+      {# A-13: the ledger — which block, then its source, so the eye finds a block, not a URL. #}
+      <section class="blk">
+        <p class="lbl">Sources</p>
+        {% for label in ['Who', 'Now', 'Notice'] %}{% set b = by_label.get(label) %}
+          {% if b %}{% set ids = ([b.fact_id] if b.fact_id else []) + (b.fact_ids or []) %}
+            {% set c = chips.get(ids[0]) if ids else None %}
+            {% if c %}
+            <p class="ledger"><span class="for">{{ block_title(label) }}</span>
+              <span class="chip{% if c.synthetic %} synthetic{% endif %}">
+                <span class="host">{{ c.source_host }}</span>
+                {% if c.source_date %} · {{ c.source_date }}{% endif %}</span></p>
+            {% endif %}
+          {% endif %}
+        {% endfor %}
+      </section>
 
-      {% if b.label == 'Notice' and digest.withheld_count %}
-        <p class="meta">{{ digest.suppression_notice }}. Class and count only — the text of a
-           withheld fact never reaches this page.</p>
-      {% elif b.label == 'Now' and digest.recency.recency_state == 'unknown' %}
-        {# A-4. The one visual difference this product exists to protect. `unknown` gets a bronze
-           gutter and a COUNTED coverage line; `quiet` gets neither, because it is an answer. #}
-        <div class="coverage">
-          <span class="count">Reached {{ coverage.reached }} of {{ coverage.total }}</span>
-          <p>No claim is made about silence in either direction — absence of evidence from a
-             source you could not read is not evidence of absence.</p>
-          <p class="srcs">Not read: {% for s in coverage.out %}<span class="out">{{ s.id }} ·
-            {{ s.code }}</span>{% if not loop.last %} — {% endif %}{% endfor %}</p>
-        </div>
-      {% endif %}
-    </section>
-    {% endif %}{% endfor %}
+      {% for label in ['Now', 'Notice'] %}{% set b = by_label.get(label) %}{% if b %}
+      <section class="blk">
+        <p class="lbl">{{ block_title(b.label) }}</p>
+        <p>{{ b.text }}</p>
+        {{ chips_for(b) }}
+
+        {% if b.label == 'Now' and digest.recency.recency_state == 'unknown' %}
+          {# A-4. `unknown` gets a bronze gutter and a COUNTED coverage line; `quiet` gets
+             neither, because it is an answer. #}
+          <div class="coverage">
+            <span class="count">Reached {{ coverage.reached }} of {{ coverage.total }}</span>
+            <p>No claim is made about silence in either direction — absence of evidence from a
+               source you could not read is not evidence of absence.</p>
+            <p class="srcs">Not read: {% for s in coverage.out %}<span class="out">{{ s.id }} ·
+              {{ s.code }}</span>{% if not loop.last %} — {% endif %}{% endfor %}</p>
+          </div>
+        {% elif b.label == 'Notice' and digest.withheld_count %}
+          {# R-028: the suppression counter lives under Personal detail. #}
+          <p class="meta">{{ digest.suppression_notice }}. Class and count only — the text of a
+             withheld fact never reaches this page.</p>
+        {% endif %}
+      </section>
+      {% endif %}{% endfor %}
+    </div>
   </details>
 
   <p class="meta"><span class="num">{{ digest.card.word_count }}</span> words · band
      250–350 · gates passed · grade
      <span class="num">{{ digest.content_grade.scored }}/{{ digest.content_grade.possible }}</span>
      {% if digest.content_grade.failed %} ({{ digest.content_grade.failed|join(', ') }}){% endif %}</p>
-{% endif %}
 
-{# R-060: the card closes the loop. On every card with a member, even degraded ones. #}
-{% if member %}
-<section class="blk outcome">
-  <p class="lbl">What happened</p>
-  <p class="meta">The only proof the introduction worked is what came next. A line and a tap;
-     both optional.</p>
-  {% if logged %}
-  <p class="note">Logged against this introduction.</p>
-  {% endif %}
-  <form method="post" action="{{ base }}/outcome" class="stack">
-    <input type="hidden" name="token" value="{{ token }}">
-    <input type="hidden" name="matched_id" value="{{ matched_id or '' }}">
-    <textarea name="observation" rows="3"
-      placeholder="Twenty minutes by the bar, then he walked her over to his own table…"></textarea>
-    <div class="chips picks">
-      {% for slug, label_text in outcomes %}
-      <label class="pick"><input type="radio" name="outcome" value="{{ slug }}" required>
-        <span>{{ label_text }}</span></label>
-      {% endfor %}
-    </div>
-    <div><button class="btn" type="submit">Log the outcome</button></div>
-  </form>
-</section>
+  {{ outcome_capture() }}
 {% endif %}
 
 {% endblock %}
 
-{# A-5. The line the host actually delivers sits 250 words below the fold. It is held in a hairline
-   rail at the bottom of the viewport until the real block scrolls into place, and then it leaves.
-   It is the opening line repeated, so it competes with nothing. #}
+{# A-5: the Say rail — the line the host delivers, pinned until the real block arrives. #}
 {% block rail %}
 {% if say_block %}
 <aside class="sayrail" id="sayrail" aria-hidden="true">
@@ -250,13 +260,13 @@
 <script>
 (function () {
   var rail = document.getElementById('sayrail');
-  var real = document.querySelector('.blk.say');
+  var real = document.getElementById('sayblock');
   if (!rail || !real || !('IntersectionObserver' in window)) return;
   new IntersectionObserver(function (entries) {
     rail.classList.toggle('gone', entries[0].isIntersecting);
-  }, { threshold: 0.35 }).observe(real);
+  }, { threshold: 0.4 }).observe(real);
   rail.addEventListener('click', function () {
-    real.scrollIntoView({ behavior: 'smooth', block: 'end' });
+    window.scrollTo({ top: real.offsetTop - 20, behavior: 'smooth' });
   });
 })();
 </script>

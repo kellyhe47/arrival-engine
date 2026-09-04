@@ -26,9 +26,9 @@ decides what the BODY renders.
 | Unknown coverage | one or more expected sources was unreachable | Names the unread sources with their failure codes, counts coverage ("Reached 2 of 3"), and makes no silence claim in either direction. The Say line is unaffected. |
 | Empty room | roster empty | A state of the ROOM surface, not an error - a normal early evening. |
 | First arrival | exactly one present, nobody else to score | Full card. Who’s-here says they are first; The match reads "nobody present to score / no pairs"; nobody outside the roster is offered. |
-| Ingesting | live re-run triggered | Per-adapter progress, including unavailable ones |
+| Ingesting | live re-run triggered | The quiet/unknown ledger, live (R-064): coverage count first, then one stacked row per adapter with tier, status, fact count and reason, then the partial-profile outcome. |
 | Withheld | any hard gate failed | Who block only, plus the failed gate. Degrades to a greeting, never to a guess. |
-| Ambiguous | resolver has >1 corroborated candidate | Host picks. The engine never guesses identity. |
+| Ambiguous | resolver has >1 corroborated candidate | The chooser shows its work (R-063): per-candidate source count and corroboration summary, a bind action, no default, and its own Say line. Binding applies to this arrival only. |
 | Not found | resolver has 0 corroborated candidates | "No profile. Greet and log." Card still renders the Say block generically. |
 | Thin profile | identity resolved but fewer facts are available | Attempts a full card without invention; if the evidence cannot support 250 words, shows a withheld greeting with no Notice block. |
 

@@ -98,7 +98,7 @@ class Store:
         self.conn.commit()
 
     def record_outcome(self, outcome_id: str, subject_id: str, matched_id: str | None,
-                       outcome: str, observation: str | None, logged_at: str,
+                       outcome: str | None, observation: str | None, logged_at: str,
                        run_id: str) -> None:
         """R-060. Append-only: an outcome is never updated, only added. The only proof an
         introduction worked is what happened next, and this is where it lands."""
@@ -197,8 +197,10 @@ class Store:
             "career_start_decade": p["career_start_decade"],
             "prominence_tier": p["prominence_tier"],
             "prominence_basis": p["prominence_basis"],
-            # R-022: NULL reads as I0 — unknown, never "being social".
+            # R-022: NULL reads as I0 — unknown, never "being social". R-022b: at most two.
             "intent": p["intent"] if "intent" in p.keys() else None,
+            "intent_secondary": (p["intent_secondary"]
+                                 if "intent_secondary" in p.keys() else None),
             "intent_basis": p["intent_basis"] if "intent_basis" in p.keys() else None,
             "industries": [r["industry_slug"] for r in self.conn.execute(
                 "SELECT industry_slug FROM person_industry WHERE person_id = ? ORDER BY 1",

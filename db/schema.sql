@@ -33,10 +33,14 @@ CREATE TABLE person (
   career_start_decade TEXT,            -- '1980s' … '2010s'
   prominence_tier     INTEGER CHECK (prominence_tier BETWEEN 1 AND 4),
   prominence_basis    TEXT,            -- the measured figure the tier was derived from. See vocabulary.sql.
-  -- PRD R-022 (2026-09-04 re-baseline): one measured intent for the evening, I1..I8, or NULL,
-  -- which the engine reads as I0 (unknown — coverage incomplete, never read as I8).
+  -- PRD R-022/R-022b: the measured intents for the evening, I1..I8, or NULL, which the engine
+  -- reads as I0 (unknown — coverage incomplete, never read as I8). A member may hold TWO; a
+  -- third is treated as none, so there is no third column. Each needs the R-022b evidence bar:
+  -- two corroborating dated items inside the rolling 180-day window.
   intent              TEXT CHECK (intent IN ('I1','I2','I3','I4','I5','I6','I7','I8')),
-  intent_basis        TEXT,            -- the evidence the intent was read from. Never assumed.
+  intent_secondary    TEXT CHECK (intent_secondary IN
+                                  ('I1','I2','I3','I4','I5','I6','I7','I8')),
+  intent_basis        TEXT,            -- the evidence the intents were read from. Never assumed.
   created_run         TEXT NOT NULL REFERENCES run(id)
 );
 
@@ -228,12 +232,14 @@ CREATE TABLE outcome (
   id             TEXT PRIMARY KEY,
   subject_id     TEXT NOT NULL REFERENCES person(id),     -- the arriving member
   matched_id     TEXT REFERENCES person(id),              -- who the card named, if anyone
-  outcome        TEXT NOT NULL CHECK (outcome IN
+  -- R-060: a log needs the observation OR a tag; either alone is worth keeping.
+  outcome        TEXT CHECK (outcome IN
                    ('never_introduced','brief_hello','talked_a_while',
                     'together_all_night','swapped_details')),
-  observation    TEXT,                                    -- the host's own words, optional
+  observation    TEXT,                                    -- the host's own words
   logged_at      TEXT NOT NULL,
-  run_id         TEXT NOT NULL REFERENCES run(id)
+  run_id         TEXT NOT NULL REFERENCES run(id),
+  CHECK (outcome IS NOT NULL OR observation IS NOT NULL)
 );
 
 -- ── Deletion (P-3 / R-032) ────────────────────────────────────────────────────

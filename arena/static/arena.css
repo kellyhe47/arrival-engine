@@ -5,7 +5,7 @@
      1. ZERO border-radius. Anywhere. One rounded corner and it stops looking like Arena Hall.
      2. Hairlines, not boxes. Separate with rules and space — never cards-in-cards, never shadows.
      3. Italic serif in gold is the emphasis device, not bold. It marks the two places the host
-        reads ALOUD: the borrowed line in Who they are, and Your opening line.
+        reads ALOUD: the borrowed line in Who, and the Say line.
 
    THE DEVIATION, RESTATED AND MOVED (2026-09-03 design pass; docs/design-additions.md A-1).
    The old rule was "card prose never below 19px and never below weight 400, in Cormorant".
@@ -28,13 +28,8 @@
          coverage line ("reached 2 of 3") is the one visual difference this product exists to
          protect. `quiet` renders as ordinary prose, because it is an ordinary answer.
      A-5 The Say rail. The line the host delivers is 250 words below the fold. It is repeated in a
-         hairline rail pinned to the bottom of the viewport until the real block scrolls into
-         place. It is the opening line, so it competes with nothing.
-
-   ONE THING THIS PASS DID NOT TAKE. The design underlines every block label with a full-measure
-   hairline. Our section headers are unchanged: the label alone, on its own line, no rule beneath
-   it. The blocks are already separated by `.blk`'s top hairline, and a second rule 14px under the
-   first turns one ruled section into a two-line letterhead. See docs/design-additions.md A-9. */
+         hairline rail pinned to the bottom of the viewport until the real Say block scrolls into
+         place. It is the Say line, so it competes with nothing.  */
 
 :root {
   --olive:#2b3a26;  --olive-d:#1f2c1c;
@@ -69,8 +64,7 @@ body {
 
 .wrap { max-width: var(--measure); margin: 0 auto; padding: 0 var(--gutter) 40px; }
 
-/* ── the eyebrow, and the card's five bare nouns: the site's label treatment ──
-   UNCHANGED by the 2026-09-03 pass (A-9). Label on its own line, nothing under it. */
+/* ── the eyebrow: the site's label treatment ── */
 .lbl, .eyebrow {
   font-family: var(--ui);
   font-size: 11px; font-weight: 500;
@@ -82,6 +76,17 @@ body {
       letter-spacing: 2.16px; line-height: 1.6; text-transform: uppercase; }
 .num { font-family: var(--ui); font-variant-numeric: tabular-nums; }
 
+/* ── the card's five bare nouns: a rule the eye can count, not a heading ──
+   The label sits ON the block's hairline, left, so the five blocks read as five ruled
+   sections of one brief rather than five stacked cards. */
+/* ── the card's five bare nouns: label, then a full-width rule under it ──
+   The label sits on its own line and the hairline runs the full measure beneath it, so the five
+   blocks read as five ruled sections of one brief rather than five stacked cards. */
+.blk > .lbl:first-child {
+  margin: 0 0 14px; padding: 2px 0 9px;
+  border-bottom: 1px solid rgba(123,87,50,0.18);
+}
+
 /* ── the olive ground: arrival and attention. Compact, because it is spending the fold ── */
 .banner {
   background: var(--olive); color: var(--cream);
@@ -91,8 +96,15 @@ body {
 /* `.banner p` (0,1,1) outranks `.lbl, .eyebrow` (0,1,0), so a <p class="eyebrow"> in the banner was
    rendering at the 17px sub-line size with 3.5px tracking — enough to wrap onto two lines at 390.
    Same class of bug as the .blk p.meta note further down. */
+/* ── back to Room (A-11) ── every surface is a leaf reachable from Room, so every surface needs
+   the way out. Cream on olive, tracked caps, no chevron graphic — the club's glyph is an arrow. */
+.banner .crumb { display: inline-block; font-family: var(--ui); font-size: 10px; font-weight: 500;
+  letter-spacing: 2.4px; text-transform: uppercase; color: rgba(241,234,219,0.62);
+  text-decoration: none; margin: 0 0 16px; padding: 0; }
+.banner .crumb:hover { color: var(--gold); }
+
 .banner .eyebrow { color: var(--gold); margin-bottom: 8px; font-size: 11px; line-height: 1.5;
-  max-width: none; }
+  max-width: none; white-space: nowrap; }
 .banner .inner { max-width: var(--measure); margin: 0 auto; }
 .banner h1 {
   font-family: var(--display); font-weight: 300;
@@ -123,9 +135,34 @@ h3 { font-family: var(--display); font-weight: 300;
          font-size: clamp(27px, 1.5rem + 1vw, 34px); line-height: 1.24;
          letter-spacing: 0.002em; }
 .blk p.aloud { margin-bottom: 0; }
-/* The borrowed line inside Who they are is the same device at prose scale, inline. */
+/* The borrowed line inside Who is the same device at prose scale, inline. */
 .borrowed { font-family: var(--display); font-style: italic; font-size: 1.12em;
             color: var(--bronze); }
+
+/* ── bullets (A-10) ── the two blocks the host acts on are scanned, not read.
+   Hanging bronze rule instead of a disc: the club has no dot in its vocabulary. */
+.bullets { list-style: none; margin: 0; padding: 0; }
+.bullets li { position: relative; padding: 0 0 0 20px; margin: 0 0 11px; }
+.bullets li:last-child { margin-bottom: 0; }
+.bullets li::before { content: ""; position: absolute; left: 0; top: 0.62em;
+  width: 10px; height: 1px; background: var(--bronze); }
+
+/* ── the rest of the brief, collapsed (A-10) ──
+   Hairline and space. A <details> is the only interactive chrome on the card, so it gets the
+   tracked-caps label treatment and a text arrow, never a chevron graphic. */
+details.brief { border-top: var(--hair-paper); border-bottom: var(--hair-paper);
+  padding: 0; margin: 26px 0 0; }
+details.brief > summary { list-style: none; cursor: pointer; padding: 15px 0;
+  font-family: var(--ui); font-size: 11px; font-weight: 500; letter-spacing: 3.5px;
+  text-transform: uppercase; color: var(--bronze);
+  display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+details.brief > summary::-webkit-details-marker { display: none; }
+details.brief > summary .arw { font-family: var(--ui); letter-spacing: 0; font-size: 13px; }
+details.brief[open] > summary .arw { transform: none; }
+details.brief > summary:hover { color: var(--ink); }
+details.brief .inner { padding: 0 0 6px; }
+details.brief .blk { border-top: var(--hair-paper); }
+details.brief .blk:first-of-type { border-top: var(--hair-paper); padding-top: 20px; }
 
 /* ── provenance: a footnote, not a tag (A-2) ── */
 .chips { margin-top: 14px; padding-top: 8px; display: flex; flex-wrap: wrap;
@@ -139,6 +176,14 @@ h3 { font-family: var(--display); font-weight: 300;
 .chip .host { color: var(--bronze); font-weight: 500; }
 .chip.synthetic .host { color: var(--mut); }
 .chip.synthetic::after { content: " · demo seed"; color: var(--bronze); }
+
+/* ── the source ledger (A-13) ── provenance for the two scanned blocks lives in the panel:
+   which block, then its source. Two columns so the eye finds a block, not a URL. */
+.ledger { display: grid; grid-template-columns: 8.5em 1fr; gap: 4px 12px; align-items: baseline;
+  margin: 0 0 9px; }
+.ledger:last-child { margin-bottom: 0; }
+.ledger .for { font-family: var(--ui); font-size: 11px; font-weight: 500; letter-spacing: 1.8px;
+  text-transform: uppercase; color: var(--mut); }
 
 /* ── the score: right-set, tabular, off the prose line (A-3, R-036) ── */
 .match { display: grid; grid-template-columns: 1fr auto; align-items: baseline;
@@ -251,6 +296,29 @@ table.signals td:last-child { overflow-wrap: anywhere; }
 table.signals .stack-bar { display: block; height: 6px; background: var(--gold); }
 tr.off .stack-bar { background: rgba(123,87,50,0.22); }
 
+/* ── the page footer (A-17) ── one quiet line under a full rule, on Room only. */
+.pagefoot { border-top: var(--hair-strong); margin-top: 34px; padding-top: 14px;
+  display: flex; flex-wrap: wrap; gap: 6px 18px; align-items: baseline; }
+.pagefoot a { font-family: var(--ui); font-size: 11px; font-weight: 500; letter-spacing: 1.8px;
+  text-transform: uppercase; text-decoration: none; color: var(--bronze); }
+.pagefoot a:hover { color: var(--ink); }
+.pagefoot span { font-family: var(--ui); font-size: 11px; color: var(--mut);
+  letter-spacing: 0.02em; }
+
+/* ── the rubric (A-17) ── numbers and rules, so everything is Inter and tabular. */
+.rubric { width: 100%; border-collapse: collapse; font-family: var(--ui); font-size: 13px; }
+.rubric th, .rubric td { text-align: left; padding: 11px 10px 11px 0;
+  border-top: var(--hair-paper); vertical-align: top; line-height: 1.5; }
+.rubric th { font-size: 10px; text-transform: uppercase; letter-spacing: 2px;
+  color: var(--bronze); font-weight: 500; border-top: 0; padding-bottom: 8px; }
+.rubric td:last-child, .rubric th:last-child { padding-right: 0; }
+.rubric td.id { font-weight: 500; color: var(--ink); letter-spacing: 0.04em; width: 2.6em; }
+.rubric td.wt { font-variant-numeric: tabular-nums; font-weight: 500; color: var(--ink);
+  width: 2.2em; }
+.rubric tr.sum td { border-top: var(--hair-strong); font-weight: 500; color: var(--ink); }
+.rubric td.bar { width: 46px; padding-right: 12px; }
+.rubric .stack-bar { display: block; height: 6px; background: var(--gold); }
+
 a { color: var(--bronze); }
 a:hover { color: var(--ink); }
 hr { border: 0; border-top: var(--hair-paper); margin: 32px 0; }
@@ -258,8 +326,54 @@ footer { margin-top: 40px; padding-top: 18px; border-top: var(--hair-paper); }
 footer p { margin: 0 0 8px; }
 .stack > * + * { margin-top: 14px; }
 
+/* ── table seating (A-16) ── the host picks the seat count; the engine cuts the room.
+   A proposal, not a floor plan: reason first, names under it, no diagram. */
+.sizes { display: flex; gap: 8px; margin: 12px 0 0; }
+.size {
+  font-family: var(--ui); font-size: 15px; font-weight: 500; font-variant-numeric: tabular-nums;
+  color: var(--ink); background: transparent; border: var(--hair-paper);
+  width: 46px; height: 46px; cursor: pointer; padding: 0;
+}
+.size:hover { border-color: var(--bronze); color: var(--bronze); }
+.size[aria-pressed="true"] { background: var(--olive); border-color: var(--olive);
+  color: var(--cream); }
+
+.seat { border-top: var(--hair-paper); padding: 16px 0 0; margin-top: 16px; }
+.seat .no { font-family: var(--ui); font-size: 10px; font-weight: 500; letter-spacing: 2.4px;
+  text-transform: uppercase; color: var(--bronze); margin: 0 0 6px; display: block; }
+.seat .why { font-family: var(--serif); font-size: 17px; line-height: 1.45; color: var(--ink);
+  margin: 0 0 10px; }
+.seat ul { list-style: none; margin: 0; padding: 0;
+  display: grid; grid-template-columns: 1fr 1fr; gap: 6px 14px; }
+.seat li { font-family: var(--display); font-weight: 400; font-size: 21px; line-height: 1.2; }
+
+/* ── feedback (A-14) ── the host is the only person who ever learns the card was wrong, and it
+   happens seconds after the handshake. A textarea and one button, hairline, no card. */
+.fb { border-top: var(--hair-paper); padding: 22px 0 0; margin-top: 26px; }
+.fb .lbl { margin-bottom: 10px; }
+.fb p.hint { font-family: var(--ui); font-size: 12.5px; color: var(--mut); line-height: 1.6;
+  margin: 0 0 12px; }
+.fb textarea {
+  font-family: var(--serif); font-size: 18px; line-height: 1.5; color: var(--ink);
+  width: 100%; min-height: 92px; padding: 13px 14px; resize: vertical;
+  border: var(--hair-paper); background: var(--paper-2);
+}
+.fb textarea::placeholder { color: var(--mut); font-style: italic; }
+.fb textarea:focus { outline: none; border-color: var(--bronze); }
+.fb .tags { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0 0; }
+.fb .tag {
+  font-family: var(--ui); font-size: 10px; font-weight: 500; letter-spacing: 1.6px;
+  text-transform: uppercase; color: var(--bronze); cursor: pointer;
+  background: transparent; border: var(--hair-paper); padding: 9px 12px; min-height: 0;
+}
+.fb .tag:hover { border-color: var(--bronze); color: var(--ink); }
+.fb .tag[aria-pressed="true"] { background: var(--bronze); border-color: var(--bronze);
+  color: var(--cream); }
+.fb .send { display: flex; align-items: center; gap: 16px; margin-top: 14px; }
+.fb .sent { font-family: var(--ui); font-size: 12px; color: var(--bronze); margin: 0; }
+
 /* ── the Say rail (A-5): the line they deliver, held at the bottom of the viewport until the
-   real block arrives. Hairline and paper — it is a rail, not a card. ── */
+   real Say block arrives. Hairline and paper — it is a rail, not a card. ── */
 .sayrail {
   position: fixed; left: 0; right: 0; bottom: 0; z-index: 5;
   background: var(--paper); border-top: var(--hair-strong);
@@ -278,45 +392,16 @@ footer p { margin: 0 0 8px; }
 .sayrail.gone { opacity: 0; transform: translateY(6px); pointer-events: none; }
 body.has-rail .wrap { padding-bottom: 96px; }
 
-/* ── 2026-09-04 prototype re-baseline ─────────────────────────────────────────
-   R-034 the collapsed "rest of the brief", R-060 the outcome capture, R-062 table seating.
-   Same rules as everything above: zero radius, hairlines, no boxes-in-boxes. */
-
-details.rest { border-top: var(--hair-paper); border-bottom: var(--hair-paper); margin-top: 26px; }
-details.rest > summary { cursor: pointer; padding: 15px 0; list-style: none;
-  display: flex; align-items: center; justify-content: space-between; }
-details.rest > summary::-webkit-details-marker { display: none; }
-details.rest > summary .arrow { color: var(--bronze); font-size: 13px; }
-details.rest[open] > summary .arrow { transform: rotate(90deg); }
-details.rest .blk:first-of-type { border-top: var(--hair-paper); }
-
-.sizes { display: flex; gap: 8px; margin: 12px 0 4px; }
-.size { font-family: var(--ui); font-size: 15px; font-weight: 500;
-  font-variant-numeric: tabular-nums; width: 46px; height: 46px; display: inline-flex;
-  align-items: center; justify-content: center; text-decoration: none;
-  border: var(--hair-paper); color: var(--ink); }
-.size.on { background: var(--olive); color: var(--cream); border-color: var(--olive); }
-.size:hover { border-color: var(--bronze); }
-
-.table { border-top: var(--hair-paper); padding-top: 16px; margin-top: 16px; }
-.lbl.small { font-size: 10px; letter-spacing: 2.4px; margin-bottom: 6px; }
-.seats { list-style: none; margin: 12px 0 0; padding: 0;
-  display: grid; grid-template-columns: 1fr 1fr; gap: 6px 14px; }
-.seats li { font-family: var(--display); font-weight: 400; font-size: 21px; line-height: 1.2; }
-
-textarea { font-family: var(--serif, 'EB Garamond', Georgia, serif); font-size: 18px;
-  line-height: 1.5; color: var(--ink); width: 100%; padding: 13px 14px;
-  border: var(--hair-paper); background: var(--paper-2); box-sizing: border-box; }
-
-.picks { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
-.pick { cursor: pointer; }
-.pick input { position: absolute; opacity: 0; width: 0; height: 0; min-height: 0; }
-.pick span { display: inline-block; font-family: var(--ui); font-size: 10px; font-weight: 500;
-  letter-spacing: 1.6px; text-transform: uppercase; padding: 9px 12px;
-  border: var(--hair-paper); color: var(--bronze); }
-.pick input:checked + span { background: var(--bronze); color: var(--cream);
-  border-color: var(--bronze); }
-.pick input:focus-visible + span { outline: 2px solid var(--olive); }
-
-.of-big { color: var(--mut); }
-table.ref td:first-child { width: 2.6em; }
+/* ── repo compatibility additions (kept below the design file, which is ground truth) ── */
+/* Seating sizes are GET links in the app, not buttons; same box either way. */
+a.size { display: inline-flex; align-items: center; justify-content: center;
+  text-decoration: none; }
+/* Outcome tags are radio labels in the app, so the pressed state follows the input. */
+.fb label.tag { display: inline-block; }
+.fb .tag input { position: absolute; opacity: 0; width: 0; height: 0; min-height: 0; }
+.fb .tag:has(input:checked) { background: var(--bronze); border-color: var(--bronze);
+  color: var(--cream); }
+.fb .tag:has(input:focus-visible) { outline: 2px solid var(--olive); }
+textarea { font-family: var(--serif); font-size: 18px; line-height: 1.5; color: var(--ink);
+  width: 100%; padding: 13px 14px; border: var(--hair-paper); background: var(--paper-2); }
+.of-big { color: var(--cream-dim); }

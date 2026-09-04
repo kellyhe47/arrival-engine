@@ -46,6 +46,17 @@ Every member carries one intent for the evening, measured from evidence
   I8 being social — attendance without an agenda, a FINDING, never a residual ·
   I0 unknown — coverage incomplete. NULL reads as I0, and I0 is NEVER read as I8.
 
+**The evidence bar (R-022b):** an intent needs at least two corroborating items, each with a
+source and a date, inside a rolling 180-day window, or it is I0; intent decays out of the window
+rather than being carried forward. I8 needs its own evidence like any other value. **A member may
+hold two intents** (`person.intent` / `person.intent_secondary`); a third is treated as none.
+With two intents per side, I0 and I8 are whole-member states checked first; the class is then the
+best available combination, in the order complement > guarded > parallel > neutral.
+
+**What intent must never do (R-022c):** never rendered as a need; never inferred from a role or
+title; never inferred from silence; never carried across a suppression; never used as a residual;
+never shown to the member's face.
+
 Each pair takes an **intent class** for `score(A -> B)`, in precedence order:
 
   1. `unknown`    — I0 on either side. Ranked on score alone.
@@ -174,6 +185,7 @@ The collapsed layer also renders `The match` (candidate + score, score linking t
 and `Sources` (deduplicated provenance hosts), both derived, not narrated. Bare-noun labels, no
 headlines, no summary paragraph, no transitions.
 
-The card ends with the R-060 outcome capture: a free-text observation and five outcome chips
+The card ends with the R-060 outcome capture: a free-text observation and five outcome tags
 (`Never introduced` · `Brief hello` · `Talked a while` · `Together all night` · `Swapped
-details`), stored append-only against the introduction. Logging is optional and blocks nothing.
+details`), stored append-only against the introduction. A log needs the observation or a tag —
+either alone is worth keeping. Logging is optional and blocks nothing.
