@@ -39,7 +39,8 @@ feed is **not enumerable logged out** — only permalinks you already have. No R
 
 ## Inner circle (one hop)
 **Cliff Obrecht** — co-founder **and her partner**; her feed carries *"Melanie Perkins reposted this —
-Cliff Obrecht"* (`family_or_partner` **and** `shared_org`; family edges are traversal-only).
+Cliff Obrecht"* (`family_or_partner` **and** `shared_org`; facts reached through him render,
+tagged `via_edge_type` — DEC-12).
 **Cameron Adams** (co-founder). **Lars Rasmussen**. From a measured tag line: *`cc: Melanie Perkins,
 Lachlan Andrews, Kelly Steckelberg, Ian Lee`*. **Bill Tai** — see the deep cut.
 Investors, from fetched pages: Matrix, InterWest, 500 Startups (2013); Bond, General Catalyst,

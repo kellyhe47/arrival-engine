@@ -175,6 +175,16 @@ Family *organisations* and inherited context may render. Fixtures can assert the
 judgement and output shape, but cannot prove social suitability. This leaves an accepted residual
 risk: in the Target and Meyer cases, the person harmed was not the subject. *(DEC-9; AUD-LINE-6)*
 
+**R-027a** `[decided, DEC-12]` A fact reached by **traversing a `family_or_partner` edge renders on
+its own merits — no corroboration gate.** Corroboration by a subject-sourced fact raises confidence
+and is preferred, but its absence is not a bar: a shared household is real evidence of shared
+activity, and a gate would discard the freshest signal on the members whose own output has gone
+quiet. Two things stay restricted, and only two: **the edge never scores, and is never named on a
+card.** One hard line remains — a source showing the *partner* did something is not observation that
+the *member* did it, so that step is `provenance_class='inferred'` and must name `composed_from`
+(R-025). Every traversed fact carries `via_edge_type` / `via_person_id`, so the class is countable
+by the suppression counter, visible in Why-this-score, and reversible by policy without a re-ingest.
+
 **R-028** **The suppression counter.** The card shows withheld facts as **class and
 count only** — *"2 withheld: finance, family"* — never content. It proves restraint without
 leaking, and it is the visible answer to *"what did you choose to leave out."*
@@ -323,6 +333,7 @@ remain in `docs/spec-review-01.md` and `docs/decisions/DECISIONS.md`. Three defe
 | K-6 | **None of the ten are in Texas.** The brief's "same city" is false as written | harmless for scoring; noted so it is not mistaken for a modelling assumption |
 | K-8 | `board-games` is a G-017 placeholder with **no audit backing**, so `db/roster.sql` assigns it to nobody | source it or delete it and re-baseline G-017 |
 | K-9 | **Prominence mixes platforms.** Perkins reaches tier 4 on a LinkedIn figure (370,639) while the other nine are ranked on X; her X is 56,591, which alone is tier 3 | tiers are computed once at ingest and frozen into the file, so this is sound at runtime — but a LinkedIn follower is not the same unit as an X follower, and the ranking is only as even as the platforms actually measured |
+| K-11 | A non-member partner reached by `family_or_partner` traversal **never opted in and cannot opt out** — R-032's Do Not Brief covers members only. Their writing is public either way; the reason we read it is the relationship | accepted by decision (DEC-12); facts are labelled `via_edge_type` so the class stays countable and reversible |
 | K-10 | **Huffman has no measurable prominence on any GREEN source.** `x.com/spez` is a stranger, `@stevehuffman` has 38 followers, `@shuffman` has 4; Reddit is closed to logged-out reads | tier is NULL, so S8 is silent in both directions for him — correct, not a gap to paper over. Obtainable from SESSION LinkedIn `/in/shuffman`, the same source that produced Perkins' figure |
 
 ## 11. Implementation contract
@@ -353,5 +364,5 @@ silence: `feeds.feedburner.com/redeyevc` is a live feed with no items since 2019
 ## 12. Index
 
 Thesis R-001–004 · Sourcing R-005–011 · Identity R-012–015 · Scoring R-016–023 ·
-Disclosure R-024–032 · Card R-033–042 · Surfaces R-043–047 · Architecture R-048–051 ·
-Demo R-052–054 · **Implementation R-055–058 (§11)**. Risks are K-1–K-10, not R-numbered.
+Disclosure R-024–032 (incl. R-027a) · Card R-033–042 · Surfaces R-043–047 · Architecture R-048–051 ·
+Demo R-052–054 · **Implementation R-055–058 (§11)**. Risks are K-1–K-11, not R-numbered.

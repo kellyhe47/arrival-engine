@@ -28,8 +28,8 @@ names `@homebrew`; display name is the **identical string** as his verified Blue
 STRONG. A SESSION read would upgrade it. Evidence it is *not* him is a deny-list row and a finding.
 
 ## Inner circle (one hop)
-From his own bio: `@homebrew`, `@screendoorvc`, **`@cbarlerin`** (`family_or_partner`, traversal
-only), `@daisyfleets` (a dog — not a `person` row). **Satya Patel**, named by Feld as his Homebrew
+From his own bio: `@homebrew`, `@screendoorvc`, **`@cbarlerin`** (`family_or_partner` — DEC-12:
+facts reached through them render, tagged `via_edge_type`), `@daisyfleets` (a dog — not a `person` row). **Satya Patel**, named by Feld as his Homebrew
 co-founder. The **103 "Five Questions With…" interviewees** are a large open edge corpus.
 
 ## Edges — he is the best-connected of the ten

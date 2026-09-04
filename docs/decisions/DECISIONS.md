@@ -210,3 +210,42 @@ Reviewed /Users/kellyhe/Documents/gauntlet/arena-hall-arrival-engine/docs/PRD.md
 NOT adopted: their 0/1/3 buckets and max 48 (ours is 1/2/3, ceiling 16, already fixture-pinned);
 their floor of 6 coincides with ours; their fact-class ban list is superseded by DEC-9, which the
 user decided the other way.
+
+## DEC-12 — Family-sourced facts render without corroboration (user's call, 2026-09-03)
+
+**Trigger.** `knowledge-graph.md` described `family_or_partner` as "inner-circle traversal ONLY —
+never scored, never on a card". The user asked whether we are nonetheless using that relationship
+data to inform our view of the person. **We are**, and the wording hid it: the traversal exists
+precisely so a partner's public writing can be harvested for facts about the member, and those facts
+scored and rendered like any other. Wilson is the worked case — his own blog went quiet in May 2024
+while `gothamgal.com` posts near-daily, so his partner's site is one of the better recency sources
+on him, and `01-m_wilson.md` already directs an agent to it.
+
+**Options put to the user.** (a) keep the misleading wording; (b) require a family-sourced fact to
+corroborate a subject-sourced one before rendering, mirroring the image rule in DEC-8 / R-031;
+(c) render on its own merits, with labelling.
+
+**Decision: (c), with the wording fixed.** The user's reasoning: corroboration "gives it more
+credibility" but should not be a gate — *"if member A's wife is doing something, most likely he is
+also participating in the activity."* A shared household is real evidence of shared activity, and a
+corroboration gate would discard the freshest available signal on the members whose own output has
+gone quiet.
+
+**What this settles.**
+1. The **edge** never scores and is never named on a card. Unchanged, and the only two restrictions.
+2. Facts reached by traversing the edge **render on their own merits.** No corroboration gate.
+   Corroboration raises confidence and is preferred where available; its absence is not a bar.
+3. **Attribution stays hard.** A source showing the *partner* did something is not observation that
+   the *member* did it. That step is an inference and uses machinery that already exists:
+   `provenance_class = 'inferred'` with `composed_from` naming its inputs, and an `inferred` fact
+   that cannot name its inputs cannot render (R-025). "They were in Venice" when the post says *we*
+   is observation; "he was in Venice" from a post that says only *I* is an inference and must
+   declare itself. This is the one place the co-participation intuition must not be applied
+   silently — it is exactly the "assert what you merely failed to observe" failure (R-004).
+4. **Labelled, not hidden.** `fact.via_edge_type` and `fact.via_person_id` record the traversal, so
+   the class is countable by the suppression counter, visible in Why-this-score, and reversible by
+   policy later without a re-ingest.
+
+**Residual risk, accepted and stated.** The non-member partner never opted in, and unlike a member
+(R-032, Do Not Brief) has no way to opt out of being traversed. Their writing is public either way;
+the reason we read it is the relationship. Logged as K-11.

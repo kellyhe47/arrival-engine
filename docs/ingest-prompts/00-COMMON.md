@@ -61,6 +61,12 @@ Open one `run` row; stamp everything with `run_id`.
 - **`edge`** — directed, typed, with evidence. `no_edge_confirmed` only where you actually searched;
   name the corpus.
 - **`context`** — a caption is a claim, not a geotag. Ambiguous places get `resolved=0`.
+- **Family/partner sources** (DEC-12) — a partner's public writing is a legitimate source of facts
+  about the member and **renders without needing corroboration**; tag those facts
+  `via_edge_type='family_or_partner'` and `via_person_id`. The edge itself never scores and is never
+  named on a card. **But the partner doing something is not observation that the member did it** —
+  that step is `provenance_class='inferred'` and must name `composed_from`. "We were in Venice" is
+  observation; "he was in Venice" from a post that says only "I" is an inference.
 - **Backfill** `person_topic.evidence_fact_id` (all NULL now) and `person.career_start_decade`
   (S1 can't fire without it). `name_respelling` only if you can source a recording; else leave NULL.
 

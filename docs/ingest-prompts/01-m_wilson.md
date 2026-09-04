@@ -31,7 +31,8 @@ judgement about him is wrong.
 
 ## Inner circle (one hop)
 Joanne Wilson, his wife — `gothamgal.com/feed/`, posting near-daily and **fresher than his**
-(`family_or_partner`, traversal only). USV partners: Wenger, Grossman, Kaden, Mignano, Raman.
+(`family_or_partner`). Her posts are a legitimate source of facts about **him** — tag them
+`via_edge_type`; the edge itself never scores or gets named (DEC-12). USV partners: Wenger, Grossman, Kaden, Mignano, Raman.
 X following, measured first page: `bgurley`, `mattturck`, `semil`, `ttunguz`, `joshelman`.
 
 ## Edges

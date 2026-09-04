@@ -62,6 +62,12 @@ CREATE TABLE fact (
   observed_at      TEXT NOT NULL,
   composed_from    TEXT,              -- JSON array of fact ids; required when provenance='inferred'
   search_first_page INTEGER DEFAULT 0 CHECK (search_first_page IN (0,1)),
+  via_edge_type    TEXT,              -- DEC-12: the edge traversed to reach this fact, when any.
+                                      -- 'family_or_partner' is the one that matters: it does not
+                                      -- gate rendering, but it makes the class countable, visible
+                                      -- in Why-this-score, and reversible by policy without a
+                                      -- re-ingest. NULL = reached directly from the subject.
+  via_person_id    TEXT REFERENCES person(id),   -- whose source it came through, when traversed
   superseded_by    TEXT REFERENCES fact(id),   -- append-only: correct by superseding, never by UPDATE
   run_id           TEXT NOT NULL REFERENCES run(id)
 );

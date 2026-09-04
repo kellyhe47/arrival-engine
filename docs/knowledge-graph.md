@@ -38,13 +38,42 @@ AUD-EDGES measured `venture-capital-craft` on 5 of the 10 — hence the generici
 | `repost` | SESSION (LinkedIn/X reposts) | **S5**, inner circle |
 | `co_investment` / `board_together` | GREEN (SEC Form D related persons) | S2, S3 |
 | `employer_history`, `shared_org` | GREEN + SESSION | S1, S2 |
-| `family_or_partner` | SESSION | inner-circle traversal ONLY — never scored, never on a card |
+| `family_or_partner` | SESSION | traversal; the edge itself never scores and is never named on a card. **Facts reached through it DO render** — see below |
 | `co_appearance` | GREEN (podcast RSS, event pages) | S3, S7 |
 | `no_edge_confirmed` | audit | suppresses invented connections |
 
 `no_edge_confirmed` is deliberate. AUD-EDGES measured real absences (feld.com's 5,551 posts contain
 **zero** occurrences of Tavel, Huffman, Shear, Qureshi or Perkins). Recording an absence stops the
 engine dressing topical similarity up as a relationship.
+
+### `family_or_partner` — what is actually restricted (DEC-12)
+
+The earlier wording read as a firewall. It is not one, and pretending otherwise hid where the
+information really flows.
+
+**Restricted — two things only.** The relationship never contributes to a score, and it is never
+named on a card. A host never reads "his wife is Joanne Wilson", and being married to another member
+cannot raise a match.
+
+**Not restricted — the traversal, which is the whole point.** Walking the edge to harvest facts
+*about the member* is why the edge is stored. Wilson is the worked case: his own blog went quiet in
+May 2024 and `gothamgal.com` is posting near-daily, so his partner's writing is one of the better
+recency sources on him. Those facts land on his profile and score and render like any other.
+
+**Rendering.** A family-sourced fact renders on its own merits — no corroboration gate (DEC-12).
+Corroboration by a subject-sourced fact raises confidence and is preferred where available, but its
+absence is not a bar. A shared household is real evidence of shared activity.
+
+**The one hard line: attribution.** A source showing the *partner* did something is not observation
+that the *member* did it — that is an inference, and inferences use the machinery that already
+exists. `provenance_class = 'inferred'` with `composed_from` naming both the partner-activity fact
+and whatever supports co-participation. An `inferred` fact that cannot name its inputs cannot
+render. So "they were in Venice last week" is fine when the post says *we*; "he was in Venice last
+week" from a post that only says *I* is an inference and must declare itself.
+
+**Labelling.** Every fact obtained by traversing a `family_or_partner` edge carries
+`fact.via_edge_type = 'family_or_partner'`. That makes the class countable by the suppression
+counter, visible in Why-this-score, and reversible by policy later without a re-ingest.
 
 ## Source tiers feeding the graph
 

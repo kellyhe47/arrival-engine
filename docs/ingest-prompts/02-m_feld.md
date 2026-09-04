@@ -27,8 +27,8 @@ Don't attribute its episodes to him.
 - `github.com/bfeld` — **Björn Feld.** No verified Brad Feld GitHub account exists.
 
 ## Inner circle (one hop)
-Amy Batchelor, his wife — Anchor Point, co-author of *Startup Life* (`family_or_partner`, traversal
-only). Jason Mendelson (*Venture Deals*). David Cohen (Techstars). "Phin Argofy" is an AI, not a
+Amy Batchelor, his wife — Anchor Point, co-author of *Startup Life* (`family_or_partner`; facts reached
+through her render, tagged `via_edge_type` — DEC-12). Jason Mendelson (*Venture Deals*). David Cohen (Techstars). "Phin Argofy" is an AI, not a
 person — a fact about him, not a `person` row.
 
 ## Edges
