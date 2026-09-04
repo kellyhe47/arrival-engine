@@ -1,0 +1,25 @@
+# Build-context trim. The Dockerfile COPYs are explicit (arena/ db/ seed/ scripts/
+# eval/recorded/ requirements.txt), so nothing here is load-bearing — it only keeps
+# `make docker` from shipping 50MB of venv and git history to the daemon.
+.venv/
+var/
+.git/
+.github/
+.pytest_cache/
+.qa/
+__pycache__/
+*.pyc
+.DS_Store
+
+# The narrator's key never enters an image layer. It arrives as a real environment
+# variable — Railway Variables in a deployment. See arena/config.py:load_dotenv.
+.env
+.env.*
+!.env.example
+
+# Not copied by the Dockerfile; excluded so the context stays small.
+docs/
+designs/
+tests/
+nq.html
+ltse1.htm
