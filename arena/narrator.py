@@ -32,6 +32,20 @@ import httpx
 BLOCK_KINDS = {"Who": "identity", "Now": "recency", "Room": "match",
                "Notice": "deep_cut", "Say": "sayable"}
 
+#: How many activity lines "Recent activity" summarises before the block stops being a summary.
+NOW_SUMMARY_LINES = 4
+
+
+def _ago(days: int | None) -> str:
+    """"yesterday", not "1 days ago". The block is read out loud."""
+    if days is None:
+        return "undated"
+    if days <= 0:
+        return "today"
+    if days == 1:
+        return "yesterday"
+    return f"{days} days ago"
+
 
 class NarratorUnavailable(RuntimeError):
     """The narrator could not be reached. The caller degrades to the withheld greeting."""
@@ -135,11 +149,12 @@ class TemplateNarrator:
             # every word-count and prose gate sees one string.
             who = self._who_lines(plan, extra=who_lines)
             room = self._room_lines(plan)
+            now = self._now_lines(plan, extra=now_lines)
             return [
                 {"order": 1, "label": "Who", "kind": "identity",
                  "text": " ".join(who), "lines": who},
                 {"order": 2, "label": "Now", "kind": "recency",
-                 "text": self._now(plan, extra=now_lines)},
+                 "text": " ".join(now), "lines": now},
                 {"order": 3, "label": "Room", "kind": "match",
                  "text": " ".join(room), "lines": room,
                  "cited_signal_ids": plan.room.get("cited_signal_ids", [])},
@@ -151,14 +166,30 @@ class TemplateNarrator:
 
         blocks = build(chosen_who, chosen_now)
         total = _count(blocks)
-        # Fill toward the TOP of the band, not the floor (operator, 2026-09-04): the band was
-        # widened so the brief carries more data points, so every sourced line that still fits
-        # goes in. Still never padded — only sourced material is added, and a thin profile still
-        # comes out short and fails the gate honestly.
-        for line in pool:
+        # Recent activity is READ STANDING UP, so it is a short summary of what the member has
+        # been up to and not the card's overflow bin (operator, 2026-09-04). `plan.recent` is
+        # already filtered to activity — what they made, wrote, said or did — so the first pass
+        # takes the freshest few of those and stops.
+        for line in plan.recent[:NOW_SUMMARY_LINES]:
             words = len(line.text.split()) + 8      # allowing for the sentence that carries it
             if total + words > high:
                 continue                            # too long for what is left; try the next one
+            chosen_now.append(line)
+            blocks = build(chosen_who, chosen_now)
+            total = _count(blocks)
+        # Only then, and only as far as the FLOOR, does the rest of the sourced material go in.
+        # A card that stopped at the summary and fell under the band would be withheld whole,
+        # which costs the host the whole brief to save them four bullets. Still never padded —
+        # only sourced material is added, and a profile too thin to reach the floor comes out
+        # short and fails the gate honestly.
+        for line in pool:
+            if total >= low:
+                break
+            if line in chosen_now:
+                continue
+            words = len(line.text.split()) + 8
+            if total + words > high:
+                continue
             chosen_now.append(line)
             blocks = build(chosen_who, chosen_now)
             total = _count(blocks)
@@ -203,38 +234,37 @@ class TemplateNarrator:
         return [l for l in (room.get("primary_sentence"), room.get("hosting_sentence"),
                             room.get("others_sentence")) if l]
 
-    def _now(self, plan: CardPlan, extra: list[Line] | None = None) -> str:
+    def _now_lines(self, plan: CardPlan, extra: list[Line] | None = None) -> list[str]:
+        """What the member has been up to, as a host reads it: a dateline, then the activity.
+
+        This block used to open on the state of our RETRIEVAL — which sources 503'd, what claim
+        that does or does not license. A host standing at a door does not need the pipeline's
+        self-assessment, and the card already carries it twice below: the counted coverage note
+        under this block (A-4) names every unread source with its failure code, and the Sources
+        ledger names the source behind each block. So the prose here says what they have been
+        doing, and nothing about how we came to know it.
+
+        The honesty rule is untouched. This block still never states silence unless the recency
+        verdict is `quiet` (R-040), and a dateline reports what was READ, which is true in every
+        coverage state — a source we could not open cannot make a date we did read wrong.
+        """
         r = plan.recency or {}
-        kind = r.get("block_kind")
-        if kind == "coverage_gap":
-            ids = list(r.get("unavailable_source_ids") or [])
-            # The host is standing at a door. Three names and a count reads; ten names does not.
-            # The full list is on the card below this block, so nothing is hidden by shortening it.
-            if len(ids) > 3:
-                names = f"{', '.join(ids[:3])} and {len(ids) - 3} others"
-            else:
-                names = ", ".join(ids) or "one source"
-            head = (f"Coverage is incomplete — {names} could not be read on the last run — so "
-                    f"there is no claim to make in either direction about what they have been "
-                    f"doing lately. What follows is what was reached, not what exists.")
-        elif kind == "honest_absence" and r.get("days_since_latest") is not None:
-            head = (f"The trail is cold. The freshest thing read on them is dated "
-                    f"{r.get('latest_effective_date')}, {r['days_since_latest']} days ago. "
-                    f"Old material is not dressed up as current here.")
-        elif kind == "honest_absence":
-            head = ("Every source was reached and nothing first-person came back. That is genuine "
-                    "quiet, not a gap in our reading.")
-        else:
-            # Deliberately "read", not "published". `fact.source_date` is the date of the SOURCE
-            # DOCUMENT, and for a profile page that is the day we looked — so the newest date in
-            # the store is not evidence that anything new was published. See the
-            # `fact.item_published_at` request in docs/schema-requests.md.
-            head = (f"The freshest thing read on them is dated {r.get('latest_effective_date')}, "
-                    f"{r.get('days_since_latest')} days ago.")
-        lines = [head]
-        for line in extra or []:
-            lines.append(line.text)
-        return " ".join(lines)
+        lines = [line.text for line in (extra or [])]
+        latest = r.get("latest_effective_date")
+        if r.get("block_kind") == "honest_absence":
+            # The one state that earns a dateline of its own, because the host has to be told
+            # NOT to read what follows as news. Deliberately "read", not "published":
+            # `fact.source_date` is the date of the SOURCE DOCUMENT, and for a profile page that
+            # is the day we looked. See `fact.item_published_at` in docs/schema-requests.md.
+            return [(f"The trail is cold — the freshest thing we could read is dated {latest}, "
+                     f"{_ago(r.get('days_since_latest'))}. Old material is not dressed up as "
+                     f"current here.") if latest else
+                    ("Every source was reached and nothing first-person came back. That is "
+                     "genuine quiet, not a gap in our reading.")] + lines
+        # Otherwise the block opens on what they DID. Every line carries its own source and date
+        # in the chip beneath it, so a dateline in front of them is a sentence the host reads
+        # past to reach the point.
+        return lines or ["Nothing dated came back that says what they have been up to lately."]
 
     def _room(self, plan: CardPlan) -> str:
         room = plan.room or {}

@@ -25,6 +25,40 @@ GATE_SAYABLE = "closing_block_is_sayable"
 GATE_PROVENANCE = "every_rendered_fact_carries_provenance"
 GATE_REASON = "reason_cites_only_fired_signals"
 
+#: WHAT A HOST CANNOT USE. The store keeps the research trail beside the research — follower
+#: counts, handles, endpoints, what a probe returned, what one source does or does not
+#: corroborate. Every one of those lines is true and load-bearing for an auditor, and none of
+#: them is something a host can repeat to a member at the door. "Recent activity" was rendering
+#: them as activity (operator, 2026-09-04: "all I see is metadata, but I don't see the actual
+#: content"), so the same rule the Say line already applied to the match now guards the block.
+#:
+#: This is an ORDERING, not a gate: a filtered line is still sourced, still rendered further down
+#: the brief when the card would otherwise fall under the word floor, and never deleted.
+METADATA = re.compile(
+    r"\bprofile\b|\bAPI\b|og:|\bheadline\b|@\w{3,}|\bfollowers?\b|\bfollowing\b|"
+    r"\bconnections\b|\bfollowing list\b|\bSEC\b|\bfilings?\b|\bForm (?:D|ADV|4)\b|"
+    r"\bCIK\b|\bCRD\b|https?://|\bidentifies\b|\bmeasured?\b|\brendered?\b|"
+    r"\bcorroborat|\bLinkedIn\b|\bWikipedia\b|\bcrawl|\bscrape|\bendpoint\b|"
+    r"\bfeed\b|\bfull-text\b|\bposts? (?:in|between|through|since)\b|\bpost links\b|"
+    r"\bitems\b|\bcadence\b|\bcorpus\b|\barchived?\b|\barchive\b|\bverbatim\b|"
+    r"\bREDACTED\b|\bestablish(?:es|ed|ing)?\b|\bevidence\b|\bthis run\b|\blast run\b|"
+    r"\bre-baselin|\bbaseline\b|\bseeded\b|\bprominence\b|\bdrift|\bunavailable\b|"
+    r"\bprobe\b|\bsession\b|\bthe roster\b|\bsuppression\b|\bhandle\b|"
+    r"\bdisplay name\b|\bbio\b|\battribut|\bcareer[ _]start|\byears_active\b|"
+    r"\bindeterminate\b|\bnot him\b|\blifetime\b|\bstructured (?:profile )?data\b|"
+    r"\brepositor|\brepos\b|\bpushed\b|\bcommits?\b|\bGitHub\b|\bpermalinks?\b|"
+    r"\brepublicat|\breruns?\b|\bdated (?:here|by)\b|\bmasthead\b|\bredirects?\b|"
+    r"\bsubdomain\b|\bdomain\b|\bURL\b|\bposts? (?:a|per) (?:month|week|year)\b|"
+    r"\bbetween \w+ \d{4} and \w+ \d{4}\b|\btag index\b|\bhomepage\b|"
+    r"\b(?:author|team|films?|about|profile|landing|home|books|company)\s+page\b|"
+    r"\bpage (?:lists|says|credits|carries|is|contains|reads)\b",
+    re.IGNORECASE)
+
+#: Where a page ABOUT somebody lives, as opposed to something they made. Read on audit day, a
+#: profile page dates to today and would otherwise lead the block on freshness alone.
+PROFILE_HOSTS = {"linkedin.com", "x.com", "api.fxtwitter.com",
+                 "en.wikipedia.org", "news.ycombinator.com"}
+
 _IMPERATIVES = {
     "ask", "tell", "say", "open", "greet", "mention", "lead", "start", "try", "offer",
     "bring", "congratulate", "invite", "keep", "let", "walk", "point", "introduce", "steer",
@@ -423,8 +457,23 @@ def _build_plan(member_id, arriving, store, renderable, chips, recency, room, su
     # decision there is no rule to violate; it is simply never the first thing a host reads.
     rest.sort(key=lambda fid: (_leak_risk(renderable[fid].get("text") or ""),
                                -_recency_rank(renderable[fid])))
-    recent = [line(fid) for fid in rest[:2]]
-    used |= {l.fact_id for l in recent}
+    # `recent` is what "Recent activity" renders, so it is what the member HAS BEEN UP TO —
+    # something they made, wrote, said or did — newest first, with the research trail left to
+    # `supporting`. A profile page carries today's date and no news, so it sorts last among
+    # the survivors rather than leading the block on freshness it did not earn.
+    activity = [fid for fid in rest if _is_activity(renderable[fid], chips.get(fid))]
+    activity.sort(key=lambda fid: -_recency_rank(renderable[fid]))
+    activity.sort(key=lambda fid: (chips.get(fid) or {}).get("source_host") in PROFILE_HOSTS)
+    # A fact carrying the run's own newest read date is dated BY THE READING. `fact.source_date`
+    # is the date of the source document, and an evergreen page — a bio, a team roster, a tag
+    # index — is dated the day we opened it, which is why "what have they been up to" kept
+    # opening on things that happened a decade ago. Sorted last, so a line with an earned,
+    # earlier date goes first. Nothing is dropped; see `fact.item_published_at` in
+    # docs/schema-requests.md for the field that would end the guessing.
+    read_day = (recency or {}).get("latest_effective_date")
+    activity.sort(key=lambda fid: (renderable[fid].get("source_date") or "")[:10] == read_day)
+    recent = [line(fid) for fid in activity]
+    used |= set(activity)
     supporting = [line(fid) for fid in rest if fid not in used]
 
     # The Say model gets everything measured, not one clause (operator, 2026-09-04): the fired
@@ -451,21 +500,12 @@ def _build_plan(member_id, arriving, store, renderable, chips, recency, room, su
             # A profile page read on audit day is not "activity"; their published work is.
             # And the item TEXT must be user-facing content — what the research concluded —
             # never a developer-looking log line (operator, 2026-09-04).
-            log_like = re.compile(
-                r"\bprofile\b|\bAPI\b|og:|\bheadline\b|@\w{3,}|\bfollowers?\b|"
-                r"\bfollowing list\b|\bSEC\b|\bfilings?\b|\bForm (?:D|ADV|4)\b|"
-                r"\bCRD\b|https?://|\bidentifies\b|\bmeasured\b|\brendered\b|"
-                r"\bcorroborat|\bLinkedIn\b|\bcrawl|\bscrape|"
-                r"\bfeed\b|\bfull-text\b|\bposts? (?:in|between|through|since)\b|"
-                r"\bitems\b|\bcadence\b|\bcorpus\b", re.IGNORECASE)
-            profile_hosts = {"linkedin.com", "x.com", "api.fxtwitter.com",
-                             "en.wikipedia.org", "news.ycombinator.com"}
             candidates_r = [i for i in store.items(match_id)
                             if i.get("item_id") in eligible_ids
                             and not i.get("via_edge_type")     # the household's doings, not theirs
-                            and not log_like.search(i.get("text") or "")]
+                            and not METADATA.search(i.get("text") or "")]
             candidates_r.sort(key=lambda i: i.get("published_at") or "", reverse=True)
-            candidates_r.sort(key=lambda i: chip_host(i.get("source_url") or "") in profile_hosts)
+            candidates_r.sort(key=lambda i: chip_host(i.get("source_url") or "") in PROFILE_HOSTS)
             recent_items = candidates_r[:5]
             if recent_items:
                 say_ctx["match_recent_activity"] = {
@@ -477,7 +517,7 @@ def _build_plan(member_id, arriving, store, renderable, chips, recency, room, su
             else:
                 fallback = [f for f in store.candidate_facts(match_id)
                             if (f.get("fact_id") or f.get("id")) in eligible_ids
-                            and not log_like.search(f.get("text") or "")][:3]
+                            and not METADATA.search(f.get("text") or "")][:3]
                 if fallback:
                     say_ctx["match_recent_activity"] = {
                         "member": say_ctx.get("person_here"),
@@ -517,6 +557,20 @@ def _build_plan(member_id, arriving, store, renderable, chips, recency, room, su
 #: The leak test, in words a template can apply. Not a gate (DEC-9) — an ordering.
 _HOUSEHOLD = ("wife", "husband", "spouse", "partner ", "daughter", "son ", "children", "kids",
               "family home", "his home", "her home", "their home")
+
+
+def _is_activity(fact: dict, chip: dict | None) -> bool:
+    """Is this a thing they did, or a thing we noticed while looking them up?
+
+    Three ways to fail. It carries no date, so it cannot be placed in time. It reached us through
+    an edge — the household's doings, not theirs (DEC-9). Or it reads as research trail rather
+    than as content, which `METADATA` is the written-down form of.
+    """
+    if not fact.get("source_date"):
+        return False
+    if (chip or {}).get("via_edge_type"):
+        return False
+    return not METADATA.search(fact.get("text") or "")
 
 
 def _leak_risk(text: str) -> int:

@@ -214,7 +214,15 @@
       {% for label in ['Now', 'Notice'] %}{% set b = by_label.get(label) %}{% if b %}
       <section class="blk">
         <p class="lbl">{{ block_title(b.label) }}</p>
+        {# Recent activity is a LIST of things they did, so it is scanned like Who and Room
+           rather than read as a paragraph. #}
+        {% if b.lines %}
+        <ul class="bullets">
+          {% for line in b.lines %}<li>{{ line }}</li>{% endfor %}
+        </ul>
+        {% else %}
         <p>{{ b.text }}</p>
+        {% endif %}
         {{ chips_for(b) }}
 
         {% if b.label == 'Now' and digest.recency.recency_state == 'unknown' %}
