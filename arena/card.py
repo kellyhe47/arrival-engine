@@ -57,7 +57,12 @@ def is_sayable(text: str, addressee: str | None = None) -> bool:
     words = (text or "").strip().split()
     if not words:
         return False
-    if words[0].strip('“"').lower() in _IMPERATIVES:
+    first = words[0].strip('“"').lower()
+    if first in _IMPERATIVES:
+        return True
+    # The host speaking in the first person plural — "We have an exciting schedule lined up
+    # tonight." — is spoken words too (the 2026-09-04 Say scaffold opens this way).
+    if first in {"we", "we’ve", "we've", "welcome"}:
         return True
     if re.search(r"\byou(?:r(?:s|self)?|['’](?:re|ve|ll|d))?\b", text, re.IGNORECASE):
         return True
@@ -156,20 +161,29 @@ def _room_plan(ranked: dict, *, settings, names: dict, pairs: dict,
     plan = {
         "kind": "match",
         "primary_member_id": primary["member_id"],
+        # Four clauses, not three (operator, 2026-09-04): Who's-here carries every measured
+        # reason it can, so the host decides what to say from the full picture.
         "primary_sentence": reason_sentence(
-            primary["fired_signals"], primary_name, labels, arriving_name),
+            primary["fired_signals"], primary_name, labels, arriving_name, limit=4),
         "cited_signal_ids": cited_signal_ids(primary["fired_signals"]),
         "score": primary["score"],
         "intent_class": primary.get("intent_class"),
+        "present_count": ranked["pairs_scored"] + 1,
     }
-    # What the host physically does, in words backed by edges (R-022a). The retired
-    # mutual/broker machinery lives on only as this one sentence.
-    mode = pairs.get(primary["member_id"])
+    # What the host physically does, in words backed by edges (R-022a) — with both directional
+    # scores, so the host sees the shape of the pull, not just its direction.
+    pair = pairs.get(primary["member_id"]) or {}
+    mode = pair.get("mode")
     if mode:
         plan["mutuality"] = mode
+        fwd, rev = pair.get("forward"), pair.get("reverse")
+        both = f" — {fwd} and {rev} of 16 —" if fwd is not None and rev is not None else ""
+        gap = f" — {fwd} against {rev} of 16 —" if fwd is not None and rev is not None else ""
         plan["hosting_sentence"] = {
-            "mutual": "The pull runs both ways, so make the introduction and leave them to it.",
-            "one_way": "The pull runs one way, so stay a moment and carry the reason across.",
+            "mutual": f"The pull runs both ways{both} so make the introduction and leave "
+                      f"them to it.",
+            "one_way": f"The pull runs one way{gap} so stay a moment and carry the reason "
+                       f"across.",
             "neither": "",
         }[mode]
     if primary.get("intent_class") == "guarded":
@@ -256,9 +270,12 @@ def generate_digest(inputs: dict, *, settings, clock: str, store=None, narrator=
         b = next(p for p in present if p["id"] == m["member_id"])
         reverse = score_pair(b, arriving, aliases=aliases,
                              s8_requires_substrate=settings.s8_requires_substrate)
-        pairs[m["member_id"]] = mutuality(
-            m["_pair"], reverse, minimum=settings.surface_min_score,
-            requires_any_of=settings.surface_requires_any_of)
+        pairs[m["member_id"]] = {
+            "mode": mutuality(m["_pair"], reverse, minimum=settings.surface_min_score,
+                              requires_any_of=settings.surface_requires_any_of),
+            "forward": m["_pair"].display_score(),
+            "reverse": reverse.display_score(),
+        }
 
     vocab_labels = {slug: v.get("label") for slug, v in (store.vocabulary() if store else {}).items()}
     if store is not None:
@@ -300,6 +317,14 @@ def generate_digest(inputs: dict, *, settings, clock: str, store=None, narrator=
         active_narrator = narrator or TemplateNarrator()
     try:
         blocks = active_narrator.compose(plan)
+        # The 2026-09-04 Say eval, enforced at the digest level for every narrator-written card:
+        # when a match is named on the card, the Say line ABSOLUTELY must name them. A line that
+        # does not is treated as a narrator failure and the card withholds rather than guesses.
+        if room.get("kind") == "match" and not (narration and narration.get("blocks")):
+            match_name = names.get(room["primary_member_id"], "")
+            say_text = next((b.get("text") or "" for b in blocks if b.get("label") == "Say"), "")
+            if match_name and match_name.casefold() not in say_text.casefold():
+                raise NarratorUnavailable("Say line does not name the matched member")
     except NarratorUnavailable:
         return _withheld(member_id, plan, ranked, room, suppression, settings,
                          selection=selection, recency=recency)
@@ -335,7 +360,7 @@ def generate_digest(inputs: dict, *, settings, clock: str, store=None, narrator=
         "renderable_fact_ids": selection["renderable_fact_ids"],
         "provenance_chips": selection["provenance_chips"],
         "recency": recency,
-        "mutuality": pairs.get(room.get("primary_member_id")),
+        "mutuality": (pairs.get(room.get("primary_member_id")) or {}).get("mode"),
         "intent_class": room.get("intent_class"),
         "gate_failures": gated["gate_failures"],
         "gates_passed": gated["gates_passed"],
@@ -352,21 +377,8 @@ def _build_plan(member_id, arriving, store, renderable, chips, recency, room, su
     label_row = store.label(member_id) if store else None
     correction = None
     if label_row and label_row.get("stale"):
-        correction = (f"the door said {label_row['supplied_label']}; "
+        correction = (f"formerly {label_row['supplied_label']}; "
                       f"it is {label_row['current_label']} now")
-    # R-034: the door-label check is ALWAYS present, stale or not — the host may already have
-    # read the door, and "it holds" is as useful as a correction.
-    door_line = None
-    if label_row and label_row.get("supplied_label"):
-        supplied = label_row["supplied_label"]
-        current = label_row.get("current_label") or supplied
-        if label_row.get("stale"):
-            door_line = (f"The door said {supplied}; it is {current} now — worth knowing "
-                         f"before the handshake.")
-        elif supplied != current:
-            door_line = f"The door said {supplied}; the measured read is {current}."
-        else:
-            door_line = f"The door said {supplied}, and it holds."
 
     def line(fid) -> Line:
         f = renderable[fid]
@@ -415,13 +427,82 @@ def _build_plan(member_id, arriving, store, renderable, chips, recency, room, su
     used |= {l.fact_id for l in recent}
     supporting = [line(fid) for fid in rest if fid not in used]
 
+    # The Say model gets everything measured, not one clause (operator, 2026-09-04): the fired
+    # reasons, the personal detail with its source, the recent-activity line, and the mutuality
+    # reading. It may only rephrase this material — R-030 is unchanged — but starving it was
+    # producing lines too generic to be worth saying.
+    say_ctx = (room or {}).get("say_context")
+    if say_ctx is not None:
+        say_ctx["present_count"] = room.get("present_count")
+        match_id = room.get("primary_member_id")
+        if match_id and store is not None:
+            from .view import affiliation_line
+            match_label = store.label(match_id) or {}
+            does = affiliation_line(match_label.get("current_label") or "")
+            if does:
+                say_ctx["person_does"] = does
+            # The host's sentence hypes the MATCH'S RECENT ACTIVITY (operator, 2026-09-04):
+            # their freshest dated first-person items, newest first, render-eligible only.
+            # The model may only rephrase these (R-030). When nothing recent exists, their
+            # render-eligible record fills in so the host still has something true to say.
+            match_facts = select_renderable_facts(
+                store.candidate_facts(match_id), settings=settings)
+            eligible_ids = set(match_facts["renderable_fact_ids"])
+            # A profile page read on audit day is not "activity"; their published work is.
+            # And the item TEXT must be user-facing content — what the research concluded —
+            # never a developer-looking log line (operator, 2026-09-04).
+            log_like = re.compile(
+                r"\bprofile\b|\bAPI\b|og:|\bheadline\b|@\w{3,}|\bfollowers?\b|"
+                r"\bfollowing list\b|\bSEC\b|\bfilings?\b|\bForm (?:D|ADV|4)\b|"
+                r"\bCRD\b|https?://|\bidentifies\b|\bmeasured\b|\brendered\b|"
+                r"\bcorroborat|\bLinkedIn\b|\bcrawl|\bscrape|"
+                r"\bfeed\b|\bfull-text\b|\bposts? (?:in|between|through|since)\b|"
+                r"\bitems\b|\bcadence\b|\bcorpus\b", re.IGNORECASE)
+            profile_hosts = {"linkedin.com", "x.com", "api.fxtwitter.com",
+                             "en.wikipedia.org", "news.ycombinator.com"}
+            candidates_r = [i for i in store.items(match_id)
+                            if i.get("item_id") in eligible_ids
+                            and not i.get("via_edge_type")     # the household's doings, not theirs
+                            and not log_like.search(i.get("text") or "")]
+            candidates_r.sort(key=lambda i: i.get("published_at") or "", reverse=True)
+            candidates_r.sort(key=lambda i: chip_host(i.get("source_url") or "") in profile_hosts)
+            recent_items = candidates_r[:5]
+            if recent_items:
+                say_ctx["match_recent_activity"] = {
+                    "member": say_ctx.get("person_here"),
+                    "items": [{"activity": (i.get("text") or "").strip(),
+                               "date": i.get("published_at") or "",
+                               "source": chip_host(i.get("source_url") or "") or ""}
+                              for i in recent_items]}
+            else:
+                fallback = [f for f in store.candidate_facts(match_id)
+                            if (f.get("fact_id") or f.get("id")) in eligible_ids
+                            and not log_like.search(f.get("text") or "")][:3]
+                if fallback:
+                    say_ctx["match_recent_activity"] = {
+                        "member": say_ctx.get("person_here"),
+                        "items": [{"activity": (f.get("text") or "").strip(),
+                                   "date": f.get("source_date") or "",
+                                   "source": f.get("source_host") or ""}
+                                  for f in fallback]}
+        if deep_cut:
+            chip = deep_cut.chip or {}
+            say_ctx["personal_detail"] = deep_cut.text
+            say_ctx["personal_detail_source"] = (
+                f"{chip.get('source_host', 'their own record')} · "
+                f"{chip.get('source_date', 'undated')}")
+        if recency.get("latest_effective_date"):
+            say_ctx["recent_activity"] = (
+                f"freshest first-person item dated {recency['latest_effective_date']}")
+        if room.get("hosting_sentence"):
+            say_ctx["how_to_host_it"] = room["hosting_sentence"]
+
     return CardPlan(
         member_id=member_id,
         display_name=(person or {}).get("display_name") or arriving.get("display_name") or member_id,
         name_respelling=(person or {}).get("name_respelling"),
         label=(label_row or {}).get("current_label", ""),
         correction_line=correction,
-        door_line=door_line,
         borrowed=borrowed,
         recency=recency,
         recent=recent,

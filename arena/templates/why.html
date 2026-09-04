@@ -6,7 +6,7 @@
   <p class="eyebrow">Why this score</p>
   <h1><span class="num" style="font-size:0.82em">{{ why.score }}</span><span class="of-big">/{{ why.ceiling }}</span></h1>
   <p>{{ why.from_name }} → {{ why.to_name }}. <span class="num">{{ why.score_excluding_s8 }}</span>
-     against a floor of {{ floor }} once the status gradient is set aside.</p>
+     once the status gradient is set aside.</p>
 </div></div>
 {% endblock %}
 {% block content %}
@@ -29,8 +29,8 @@
         <td>{{ s.evidence }}</td></tr>
     {% endfor %}
   </table>
-  <p class="meta">The floor is evaluated with S8 set aside; the displayed score includes it.
-     Prominence may break a tie. It may never create a match.</p>
+  <p class="meta">The displayed score includes S8; surfacing never reads it. Prominence may
+     break a tie. It may never create a match.</p>
 </section>
 
 <section class="blk">

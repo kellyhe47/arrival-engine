@@ -337,14 +337,14 @@ class Store:
         rec = "recorded_at" if "recorded_at" in cols else "NULL AS recorded_at"
         rer = "is_rerun" if "is_rerun" in cols else "0 AS is_rerun"
         rows = self.conn.execute(
-            f"SELECT id, text, source_date, source_url, {rec}, {rer} FROM fact"
+            f"SELECT id, text, source_date, source_url, via_edge_type, {rec}, {rer} FROM fact"
             f" WHERE subject_id = ? AND superseded_by IS NULL AND source_date IS NOT NULL"
             f"{self._register_filter()}"
             f" ORDER BY source_date DESC, id", (person_id,))
         return [
             {"item_id": r["id"], "text": r["text"], "published_at": r["source_date"],
              "recorded_at": r["recorded_at"], "is_rerun": bool(r["is_rerun"]),
-             "source_url": r["source_url"]}
+             "source_url": r["source_url"], "via_edge_type": r["via_edge_type"]}
             for r in rows
         ]
 

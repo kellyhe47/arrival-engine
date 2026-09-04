@@ -116,13 +116,19 @@ def reason_sentence(fired_signals: list[dict], display_name: str, labels: dict |
 
 def say_context(fired_signals: list[dict], display_name: str, labels: dict | None = None,
                 arriving_name: str = "They") -> dict:
-    """Select the useful fact for R-039 without attempting to write the host's line."""
-    fact = next((c for c in (_clause(s, arriving_name, display_name, labels)
-                             for s in _ordered(fired_signals)) if c), None)
+    """Select the material for the Say line without attempting to write it.
+
+    Everything measured rides along — every fired clause, not just the strongest — so the model
+    has enough to be specific with. `arena.card` adds the personal detail and the recent-activity
+    line before the narrator fires (operator, 2026-09-04: one clause produced generic lines).
+    """
+    clauses = [c for c in (_clause(s, arriving_name, display_name, labels)
+                           for s in _ordered(fired_signals)) if c]
     return {
         "arriving_member": arriving_name,
         "person_here": display_name,
-        "useful_fact": fact or f"{display_name} is here tonight",
+        "useful_fact": clauses[0] if clauses else f"{display_name} is here tonight",
+        "measured_reasons": clauses,
     }
 
 

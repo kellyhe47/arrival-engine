@@ -78,9 +78,14 @@ def public_root() -> bool:
     return os.environ.get("ARENA_PUBLIC_ROOT", "1") != "0"
 
 
-WORD_BAND = (250, 350)
+#: Raised 350 -> 450 at the operator's instruction (2026-09-04): the brief should carry more
+#: data points, not fewer words. The floor stays 250; thin profiles stay honest.
+WORD_BAND = (250, 450)
 REQUIRED_BLOCKS = ("Who", "Now", "Room", "Notice", "Say")
-SURFACE_MIN_SCORE = 6
+#: The 6-point floor is REMOVED (operator, 2026-09-04). Surfacing now needs substance only —
+#: at least one qualifying signal below. The numeric floor survives as configuration (fixtures
+#: and deployments may set one); the product default is none.
+SURFACE_MIN_SCORE = 0
 #: R-020's qualifying set: a shared context, topic, personal interest or declared link.
 #: Demographics (S1/S2/S4) alone never name anyone.
 SURFACE_REQUIRES_ANY_OF = ("S3", "S5", "S6", "S7")

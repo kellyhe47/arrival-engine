@@ -219,7 +219,7 @@ def seat_tables(present: list[dict], *, per: int, settings, aliases: dict | None
     return tables
 
 
-def mutuality(forward: PairScore, reverse: PairScore, *, minimum: int = 6,
+def mutuality(forward: PairScore, reverse: PairScore, *, minimum: int = 0,
               requires_any_of=("S3", "S5", "S6", "S7")) -> str:
     """Whether the pull runs both ways, for the card's Who's-here prose.
 

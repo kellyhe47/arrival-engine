@@ -148,8 +148,8 @@ STATE_COPY = {
                              "only."),
     "no_strong_match": (
         "No strong match",
-        "Nobody present clears the floor. No name is offered — a weak introduction spends "
-        "credibility that a strong one will need."),
+        "Nothing specific is measured with anyone present. No name is offered — a weak "
+        "introduction spends credibility that a strong one will need."),
     "cold_trail": (
         "Cold trail",
         "No first-person item inside a year. The gap is stated; old material is not dressed as "
@@ -158,8 +158,8 @@ STATE_COPY = {
         "Unknown coverage",
         "A source could not be read on the last run. No claim is made about silence in either "
         "direction."),
-    "empty_room": ("First arrival", "First one here. Not an error — the first person through "
-                                    "the door still gets a full card."),
+    "empty_room": ("First arrival", "First one here. Not an error — the first arrival "
+                                    "still gets a full card."),
     "ingesting": ("Ingesting", "A live GREEN re-run is in progress. Unavailable sources are named."),
     "withheld": ("Withheld", "A hard gate failed. This degrades to a greeting, never to a guess."),
     "ambiguous": ("Ambiguous", "More than one corroborated candidate. The host picks; the engine "
@@ -211,6 +211,14 @@ def card_banner(member: dict | None, label: dict | None, state: str, *,
         eyebrow = "Arena Hall · Austin, Texas"
     if not subtitle:
         subtitle = STATE_COPY.get(state, ("", ""))[1]
+    # The supplied label rides in the caption as a plain FACT (operator, 2026-09-04): it was
+    # written down, so it is most likely true — and when the research says it no longer holds,
+    # it gets exactly one word in front of it: "Former". Never "the door said".
+    supplied = (label or {}).get("supplied_label")
+    current = (label or {}).get("current_label")
+    if supplied and supplied != current:
+        prefix = "Former " if (label or {}).get("stale") else ""
+        subtitle = f"{subtitle} {prefix}{supplied}.".strip()
     return eyebrow, subtitle
 
 

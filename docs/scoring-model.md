@@ -75,7 +75,7 @@ Each pair takes an **intent class** for `score(A -> B)`, in precedence order:
 ## 3a. The status-gradient rule (the taste constraint)
 
 **S8 fires only if at least one of S3, S5, S6, S7 has already fired**, and, independently,
-**the floor in §5 is evaluated on the score EXCLUDING S8.** Two rules, both required: the first
+**surfacing in §5 never reads S8.** Two rules, both required: the first
 stops prominence contributing at all without substrate; the second stops it carrying a borderline
 pair over the line. S8 affects display and ranking only.
 
@@ -97,20 +97,23 @@ Related trap: **do not merge adjacent topics.** Tavel writes about AI-and-work, 
 AI-alignment, Huffman about content moderation — three people, three tags, no shared tag.
 Collapsing them into one `AI` bucket manufactures a fake affinity.
 
-## 5. The floor, and the order of operations
+## 5. Surfacing, and the order of operations
 
-A match is surfaced only if **`sum(fired S1..S7) >= 6`** (S8 and S9 both excluded) **AND at least
-one of S3, S5, S6, S7 fired**. S1/S2/S4 are demographics, and demographics alone is not a reason
-to interrupt someone. Below the floor **nobody is named** — not as primary, not as backup. The
-card reports the miss with the number ("Top score, no candidate named · 5 · needs 6").
+**The 6-point floor is removed (operator, 2026-09-04).** A match surfaces when **at least one of
+S3, S5, S6, S7 fired** — a shared context, topic, personal interest or declared link. S1/S2/S4
+are demographics, and demographics alone is not a reason to interrupt someone; S8 and S9 never
+decide surfacing. When nobody present shares anything specific, **nobody is named** — not as
+primary, not as backup — and the card reports the miss honestly. A numeric threshold survives as
+CONFIGURATION only (`surface_min_score`, default 0, evaluated on S1–S7); fixtures use it to pin
+the machinery.
 
-The full pipeline (PRD R-022a, verbatim):
+The full pipeline (PRD R-022a):
 
   1. Score every pair in the room, both directions, S1–S8.
-  2. Drop everything below the floor.
+  2. Drop every pair with nothing specific — no qualifying signal.
   3. Class every survivor. I8 on either side means open.
   4. Rank: complement, then parallel, then open / neutral / unknown on score, guarded last.
-  5. Add S9 to the displayed score where the class is complement. The floor excludes it.
+  5. Add S9 to the displayed score where the class is complement. It never decides surfacing.
   6. Write the reason from the intent, not the overlap.
 
 ## 6. Ranking and ties
@@ -163,7 +166,8 @@ inputs cannot render.
 
 ## 9. Word budget
 
-The rendered card body is 250–350 words, measured over the whole brief — the reading layer and
+The rendered card body is 250–450 words (ceiling raised from 350 at the operator's instruction,
+2026-09-04), measured over the whole brief — the reading layer and
 the collapsed rest together. Outside the band is a hard gate failure, not a warning.
 
 ## 10. Card blocks
@@ -175,7 +179,9 @@ unchanged: `Who` · `Now` · `Room` · `Notice` · `Say`. The RENDER arranges th
   reading layer   `Who`  (Who they are) — name + one line, borrowed and attributed
                   `Room` (Who's here)   — the one named match, reason first, score small; or an
                                           honest miss
-                  `Say`  (Say this)     — the sayable line. Spoken to somebody, present tense.
+                  `Say`  (Say this)     — the sayable line, R-039's fixed shape: the engine's
+                                          welcome-and-name opening plus one model sentence; the
+                                          matched member's name must appear.
                                           The reading layer ENDS here; a pinned Say rail repeats
                                           the condensed line until the real block is on screen
   collapsed       `Now`    (Recent activity) — or an honest cold trail / coverage gap
