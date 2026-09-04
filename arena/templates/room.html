@@ -17,7 +17,7 @@
       <span class="name">
         <a href="{{ base }}/card/{{ token_for(r.person_id) }}">{{ r.display_name }}</a>
       </span>
-      <span class="meta num">arrived {{ r.arrived_at[11:16] }}{% if r.do_not_brief %} · do not brief{% endif %}</span>
+      <span class="meta num">arrived {{ r.arrived_at[11:16] }}</span>
       <span class="actions">
         <form method="post" action="{{ base }}/depart">
           <input type="hidden" name="person_id" value="{{ r.person_id }}">
@@ -40,7 +40,7 @@
   <form method="post" action="{{ base }}/arrive" class="stack">
     <select name="person_id" aria-label="Member">
       {% for m in absent %}
-      <option value="{{ m.id }}">{{ m.display_name }}{% if m.do_not_brief %} — do not brief{% endif %}</option>
+      <option value="{{ m.id }}">{{ m.display_name }}</option>
       {% endfor %}
     </select>
     <div><button class="btn" type="submit">Fire the webhook</button></div>

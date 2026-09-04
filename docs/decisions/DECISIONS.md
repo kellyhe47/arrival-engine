@@ -172,6 +172,8 @@ All six queued changes and the eight P0s from the (since-retired) spec review we
 ACCEPTED and now in the PRD:
   P-1 phonetic respelling in Who        -> R-034
   P-3 do-not-brief + real deletion      -> R-032, schema member_flags + ON DELETE CASCADE, G-035
+                                          (the do-not-brief half was withdrawn by DEC-15;
+                                           the deletion half stands)
   P-4 quiet vs unknown recency          -> R-040, schema source_status + v_recency_state, G-033
   P-5 trust_class / injection surface   -> R-026, schema fact.trust_class + v_renderable_fact, G-034
   P-6 Instagram captions feed S4        -> R-005/R-031, schema context.resolved
@@ -246,8 +248,9 @@ gone quiet.
    the class is countable by the suppression counter, visible in Why-this-score, and reversible by
    policy later without a re-ingest.
 
-**Residual risk, accepted and stated.** The non-member partner never opted in, and unlike a member
-(R-032, Do Not Brief) has no way to opt out of being traversed. Their writing is public either way;
+**Residual risk, accepted and stated.** The non-member partner never opted in and has no way to opt
+out of being traversed. Since DEC-15 that is true of members too, so this is no longer a gap
+peculiar to non-members — it is the condition the whole product operates under. Their writing is public either way;
 the reason we read it is the relationship. Logged as K-11.
 
 ## DEC-13 — Stack: Python 3.12 + FastAPI + stdlib sqlite3 + server-rendered Jinja2 (2026-09-03)
@@ -290,3 +293,78 @@ not stored; missing credentials or model failure takes the existing withheld-car
 
 This supersedes only DEC-13's final consequence that the deployed narrator is deterministic. The
 stack, server-rendered surface, read-only store, and deterministic test narrator remain unchanged.
+
+## DEC-14 — The surfaces answer at the root; the unguessable path is withdrawn (user's call, 2026-09-04)
+
+**Trigger.** `http://localhost:8111/` returned 404 and the operator asked for the app to be served
+there. Told that the unguessable path is the only discovery mitigation R-059 has, the operator
+reaffirmed: *"Make this update and remove that requirement."*
+
+**Decision.** Root serves the Room. The unguessable-path clause is struck from R-059, and P0-5 is
+**reopened** rather than quietly left marked closed — the risk did not go away, it got larger, and
+the honest thing is for the table to say so.
+
+**What is actually given up, stated once and plainly.** The path was never access control; it was
+the requirement that somebody know a string before they could look. Without it, anyone who can
+reach the host reaches the Room, and from the Room every member's card is one tap away. On a laptop
+that is nothing. On a public URL carrying ten real, named people it is the whole of the exposure,
+and no other line in this repository reduces it.
+
+**What is kept, because it is still worth keeping and is now the entire mitigation.**
+  - `X-Robots-Tag: noindex, nofollow, noarchive` and a `robots.txt` disallow — the cards stay out
+    of search results, which is where a member would most plausibly stumble into one.
+  - `Referrer-Policy: no-referrer`.
+  - **No member name in any URL or page title.** Card URLs carry an opaque token derived from the
+    member id, so a name cannot leak through a referrer header, a proxy log or a browser-history
+    entry. This one is independent of the path and is unaffected by the decision.
+
+**How it is built.** The same handlers are registered twice — under `/` and under `/<path>` — so a
+bookmark of either keeps working and nothing is a redirect. `arena.config.public_root()` reads
+`ARENA_PUBLIC_ROOT`; setting it to `0` restores the old posture. That is offered as a **deployment
+option, not as a mitigation the spec claims** — R-059 no longer promises it, and a README that
+described it as protection would be doing the papering-over this decision exists to avoid.
+
+**Recommendation on the record, not acted on.** If this is ever put on a public host, the answer is
+not to bring the path back. It is a session behind the door — the one thing the brief's no-auth
+constraint rules out for the demo and the first thing to build after it.
+
+
+## DEC-15 — The Do Not Brief opt-out is withdrawn, flag and all (user's call, 2026-09-04)
+
+**Trigger.** The operator, on seeing a card that read *"This member has opted out of recognition"*:
+*"There shouldn't be any way, absolutely no way, that a member is opting out of this service. The
+members don't know about the service."*
+
+**Decision.** R-032's opt-out half is struck. `member_flags.do_not_brief` is removed from the
+scratch schema, from `v_present`, from `rank_room`, from `card_state`, from the Room list and the
+member picker, and the Do Not Brief card is deleted. Golden fixture 35 and red-first G-035 are
+retired with the behaviour they defended. Every member is briefed, always.
+
+**Why the flag had to go rather than default to 0.** The opt-out was never reachable. Members are
+not told this service exists — no notice, no consent surface, no self-service, and the PRD said so
+in its own words ("member self-service is out of scope"). Nothing could ever have set the column,
+and in the one build where an operator did set it by hand, the card told the host a member had
+made a choice that no member had been given the opportunity to make. A privacy control that cannot
+be exercised is not a privacy control; it is a claim, and leaving it in the schema defaulted to 0
+would have kept the claim readable to anyone auditing this repo.
+
+**What is deliberately KEPT, and why it is not the same thing.**
+  - **R-032's purge.** `DELETE FROM person` still cascades through facts, edges, contexts, roster
+    and cards. Erasure on request is a legal obligation that does not require the subject to have
+    known about the system in advance — it is the opposite case. It stays.
+  - **`member_flags.do_not_traverse`.** The operator restraining the INGEST walk across any person
+    row, including the non-members reached by `family_or_partner` traversal. K-11 already says
+    nobody can request it and that it is operator-set; it is the operator exercising restraint on
+    a third party's behalf, not a member setting a preference. It stays, and `member_flags` stays
+    with it.
+
+**Also in this pass, at the same request.** The synthetic seed no longer pre-populates the roster.
+The app starts with **nobody in the room** — a state the product already had to handle honestly
+("first one here, not an error"), and the state a real evening actually starts in. Presence is
+filled by the arrival webhook or Room's simulate-arrival control. The serving store was rebuilt
+from the existing measured `db/*.db` files; no ingest adapter was re-run.
+
+**Cost.** The repository can no longer point at a mechanism and say a member may decline. That was
+the honest reading of the ask: the mechanism did not work, and saying so out loud is better than
+shipping a control that only looks like one. The exposure this leaves is the one DEC-14 already
+reopened under P0-5, and it is not reduced here.

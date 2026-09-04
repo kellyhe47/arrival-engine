@@ -62,7 +62,7 @@ build's scope (ingest-side collection, run by separate agents), with the runtime
 | R-029 | ✔ | the worked example ships suppressed in `seed/synthetic.sql` (`f_syn_huffman_form4`) |
 | R-030 | ✔ | the narrator receives only render-eligible facts and adds none; `TemplateNarrator` cannot |
 | R-031 | ⊘ | ingest-side. The runtime stores no image and no signed CDN URL, and there is no code path that could |
-| R-032 | ◐ | honoured at scoring time (`rank_room`), both ways, with a name-and-role card. **The purge is blocked by `db/schema.sql`'s missing `ON DELETE` actions** — measured, written up, patched in the scratch store only |
+| R-032 | ◐ | rewritten by DEC-15: the opt-out half is withdrawn (members are never told the service exists, so none of them could ever have declined it) and the column is gone from the scratch schema. What remains is the purge, and **it is blocked by `db/schema.sql`'s missing `ON DELETE` actions** — measured, written up, patched in the scratch store only |
 
 ## 6. The card
 
@@ -77,13 +77,13 @@ build's scope (ingest-side collection, run by separate agents), with the runtime
 | R-039 | ✔ | `say_context()` selects a fired fact; the Say prompt turns it into warm words the host can speak verbatim, never stage directions or member routing |
 | R-040 | ✔ | `arena/recency.py` — three states; only `quiet` may state silence; reruns dated by recording |
 | R-041 | ✔ | thin profile: fewer facts, `deep_cut_fact_id: null`, no Notice block, nothing invented |
-| R-042 | ◐ | never linked from a member-facing surface; unguessable path + `noindex` are discovery mitigation only. This is P0-5, accepted, and stated in the README |
+| R-042 | ◐ | never linked from a member-facing surface. Since **DEC-14** there is no unguessable path either; `noindex` + robots disallow are search-visibility control only. P0-5 is REOPENED and stated in the README |
 
 ## 7. Surfaces
 
 | R | | where |
 |---|---|---|
-| R-043 | ◐ | mobile-first, three surfaces, no login. Same P0-5 residual |
+| R-043 | ◐ | mobile-first, three surfaces, no login, served at the root. Same P0-5 residual, now larger |
 | R-044 | ✔ | Room: presence by `arrived_at`, name and time, simulate-arrival, mark-departed |
 | R-045 | ✔ | all ten states in `arena/view.py::STATE_COPY` with rule-chosen triggers |
 | R-046 | ✔ | fired signals with weights, signals that did not fire **and why**, excluded topics with their share, the reverse-direction score, brokering mode |
@@ -114,11 +114,11 @@ build's scope (ingest-side collection, run by separate agents), with the runtime
 | R-056 | ✔ | `v_collectable_source` queried; deny-listed values refused, not down-weighted |
 | R-057 | ⊘ | the walk is ingest-side. The runtime performs no traversal: `via_edge_type` is read off facts already written onto the member |
 | R-058 | ✔ | `source_status` read through `v_recency_state`; a 200 with zero items is not silence |
-| R-059 | ✔ | opaque tokens, generic `<title>`, `noindex`, `no-referrer`, robots disallow — and the README says in plain words that this is not access control |
+| R-059 | ✔ | as **rewritten by DEC-14**: opaque tokens, generic `<title>`, `noindex`, `no-referrer`, robots disallow, and a README that says in one plain sentence that this is a staff instrument on an open URL carrying ten real named people. The unguessable-path clause was struck at the operator's instruction; `ARENA_PUBLIC_ROOT=0` restores it as a deployment **option**, which is how R-059 now describes it |
 
 ---
 
-**Summary: 48 met, 6 partial with the residual stated, 3 ingest-side with the runtime half named,
+**Summary (R-059 rewritten by DEC-14 on 2026-09-04): 48 met, 6 partial with the residual stated, 3 ingest-side with the runtime half named,
 and 3 more (R-005, R-032, R-052) partial for reasons written up above.** The three that would most
 change the answer are the same three named in the README: a session behind the card, the `ON DELETE`
 schema request, and a hosting target.

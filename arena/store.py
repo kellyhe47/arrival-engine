@@ -135,11 +135,14 @@ class Store:
             (person_id,))]
 
     def flags(self) -> dict:
+        """Operator-set flags. `do_not_brief` is gone (DEC-15) — members are never told this
+        service exists, so a column recording their preference about it recorded nothing.
+        `do_not_traverse` remains: it restrains the INGEST walk over any person row, including
+        the non-members who never opted in and have nobody to ask (K-11)."""
         return {
-            r["person_id"]: {"do_not_brief": bool(r["do_not_brief"]),
-                             "do_not_traverse": bool(r["do_not_traverse"])}
+            r["person_id"]: {"do_not_traverse": bool(r["do_not_traverse"])}
             for r in self.conn.execute(
-                "SELECT person_id, do_not_brief, do_not_traverse FROM member_flags")
+                "SELECT person_id, do_not_traverse FROM member_flags")
         }
 
     def traversable(self) -> set[str]:
@@ -241,7 +244,7 @@ class Store:
 
     # ── presence ──────────────────────────────────────────────────────────────
     def present_ids(self) -> list[str]:
-        """R-044 / P-3. Ordered by arrival. Read through `v_present`, which already drops opt-outs.
+        """R-044. Ordered by arrival. Read through `v_present`.
 
         Grouped, not just joined. `v_present` yields one row per LIVE ROSTER ROW, so joining it
         back against `roster` squares any duplication — two live rows for one person came back as
@@ -256,10 +259,8 @@ class Store:
     def roster_rows(self) -> list[dict]:
         """What Room lists. One row per PERSON, dated by their earliest live arrival."""
         return [dict(r) for r in self.conn.execute(
-            "SELECT r.person_id, MIN(r.arrived_at) AS arrived_at, p.display_name,"
-            " COALESCE(f.do_not_brief, 0) AS do_not_brief"
+            "SELECT r.person_id, MIN(r.arrived_at) AS arrived_at, p.display_name"
             " FROM roster r JOIN person p ON p.id = r.person_id"
-            " LEFT JOIN member_flags f ON f.person_id = r.person_id"
             " WHERE r.departed_at IS NULL GROUP BY r.person_id"
             " ORDER BY arrived_at, r.person_id")]
 

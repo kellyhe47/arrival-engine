@@ -1,37 +1,39 @@
 
-  Room   http://localhost:8112/d3f0-arrival-9c1a/
-  Root   http://localhost:8112/  ->  404 on purpose; the path is the mitigation, not access control
+  Room   http://localhost:8112/
+  Also   http://localhost:8112/d3f0-arrival-9c1a/   (the same handlers; ARENA_PUBLIC_ROOT=0 leaves only this)
+  Note   there is no access control and no path obscurity — DEC-14
 
   states are computed without the narrator — see the note in scripts/urls.py
 
   member        state                 words  card
-  Brad Feld     withheld (no narrator)     -  http://localhost:8112/d3f0-arrival-9c1a/card/eaedd31d32b5
-  Steve Huffman unknown_coverage        252  http://localhost:8112/d3f0-arrival-9c1a/card/2eaef7631a5e
-  Josh Kopelman withheld (no narrator)     -  http://localhost:8112/d3f0-arrival-9c1a/card/fea47d03b43e
-  Melanie Perkins unknown_coverage        258  http://localhost:8112/d3f0-arrival-9c1a/card/6e4188728e77
-  Nabeel Qureshi unknown_coverage        282  http://localhost:8112/d3f0-arrival-9c1a/card/bab8a97f9bd3
-  Eric Ries     do_not_brief              -  http://localhost:8112/d3f0-arrival-9c1a/card/cab0bc6e22ba
-  Emmett Shear  withheld (no narrator)     -  http://localhost:8112/d3f0-arrival-9c1a/card/f5113e471625
-  Sarah Tavel   withheld (no narrator)     -  http://localhost:8112/d3f0-arrival-9c1a/card/7e5f712c5ab0
-  Hunter Walk   withheld (no narrator)     -  http://localhost:8112/d3f0-arrival-9c1a/card/fa23239fa290
-  Fred Wilson   withheld (no narrator)     -  http://localhost:8112/d3f0-arrival-9c1a/card/ed6daa88752f
+  Brad Feld     empty_room              252  http://localhost:8112/d3f0-arrival-9c1a/card/eaedd31d32b5
+  Steve Huffman empty_room              280  http://localhost:8112/d3f0-arrival-9c1a/card/2eaef7631a5e
+  Josh Kopelman empty_room              267  http://localhost:8112/d3f0-arrival-9c1a/card/fea47d03b43e
+  Melanie Perkins empty_room              301  http://localhost:8112/d3f0-arrival-9c1a/card/6e4188728e77
+  Nabeel Qureshi empty_room              271  http://localhost:8112/d3f0-arrival-9c1a/card/bab8a97f9bd3
+  Eric Ries     empty_room              261  http://localhost:8112/d3f0-arrival-9c1a/card/cab0bc6e22ba
+  Emmett Shear  empty_room              305  http://localhost:8112/d3f0-arrival-9c1a/card/f5113e471625
+  Sarah Tavel   empty_room              299  http://localhost:8112/d3f0-arrival-9c1a/card/7e5f712c5ab0
+  Hunter Walk   empty_room              268  http://localhost:8112/d3f0-arrival-9c1a/card/fa23239fa290
+  Fred Wilson   empty_room              268  http://localhost:8112/d3f0-arrival-9c1a/card/ed6daa88752f
 
-INFO:     Started server process [40686]
+INFO:     Started server process [42957]
 INFO:     Waiting for application startup.
 INFO:     Application startup complete.
 INFO:     Uvicorn running on http://0.0.0.0:8112 (Press CTRL+C to quit)
-INFO:     127.0.0.1:56812 - "GET /d3f0-arrival-9c1a/card/f5113e471625 HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56821 - "GET /d3f0-arrival-9c1a/card/eaedd31d32b5 HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56824 - "GET /d3f0-arrival-9c1a/card/2eaef7631a5e HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56825 - "GET /d3f0-arrival-9c1a/card/fea47d03b43e HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56826 - "GET /d3f0-arrival-9c1a/card/6e4188728e77 HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56827 - "GET /d3f0-arrival-9c1a/card/bab8a97f9bd3 HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56828 - "GET /d3f0-arrival-9c1a/card/cab0bc6e22ba HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56829 - "GET /d3f0-arrival-9c1a/card/f5113e471625 HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56830 - "GET /d3f0-arrival-9c1a/card/7e5f712c5ab0 HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56831 - "GET /d3f0-arrival-9c1a/card/fa23239fa290 HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56832 - "GET /d3f0-arrival-9c1a/card/ed6daa88752f HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56833 - "GET /d3f0-arrival-9c1a/ HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56834 - "GET /d3f0-arrival-9c1a/resolve?name=Josh HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56835 - "GET /d3f0-arrival-9c1a/why/ed6daa88752f/fea47d03b43e HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56836 - "POST /d3f0-arrival-9c1a/reingest HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57491 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57492 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57492 - "GET /static/arena.css?v=1788495747 HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:57492 - "GET /favicon.ico HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:57493 - "POST /arrive HTTP/1.1" 303 See Other
+INFO:     127.0.0.1:57494 - "POST /arrive HTTP/1.1" 303 See Other
+INFO:     127.0.0.1:57495 - "POST /arrive HTTP/1.1" 303 See Other
+INFO:     127.0.0.1:57496 - "POST /arrive HTTP/1.1" 303 See Other
+INFO:     127.0.0.1:57497 - "GET /card/cab0bc6e22ba HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57499 - "GET /card/f5113e471625 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57500 - "GET /card/bab8a97f9bd3 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57501 - "GET /card/2eaef7631a5e HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57502 - "GET /card/7e5f712c5ab0 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57503 - "GET /card/fea47d03b43e HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57504 - "GET /card/cab0bc6e22ba HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57504 - "GET /favicon.ico HTTP/1.1" 404 Not Found

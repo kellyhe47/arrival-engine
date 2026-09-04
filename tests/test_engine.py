@@ -27,7 +27,7 @@ from arena.facts import chip_host  # noqa: E402
 from arena.identity import resolve_identity  # noqa: E402
 from arena.labels import resolve_label  # noqa: E402
 from arena.narrator import (  # noqa: E402
-    CardPlan, ModelNarrator, NarratorUnavailable, OpenAISayWriter)
+    CardPlan, ModelNarrator, NarratorUnavailable, OpenAISayWriter, validate_say_line)
 from arena.ranking import brokering_mode, evidence_recency  # noqa: E402
 from arena.reason import say_context  # noqa: E402
 from arena.scoring import CEILING, WEIGHTS, score_pair, surfaces  # noqa: E402
@@ -256,9 +256,27 @@ def test_word_count_is_derived_from_block_text():
     ("Fred Wilson is here, and you’ve written about his work before.", True),
     ("He has taken those meetings for twenty years.", False),
     ("Tell them the room is quieter than usual tonight.", True),
+    # No addressee supplied: a vocative reads as any other bare fact, as it always has.
+    ("Brad, Fred Wilson is here this evening.", False),
 ])
 def test_sayable_recognises_an_action_rather_than_a_fact(text, ok):
     assert is_sayable(text) is ok
+
+
+@pytest.mark.parametrize("text,ok", [
+    ("Brad, Fred Wilson is here this evening.", True),
+    ("Brad Feld — Fred Wilson is here this evening.", True),
+    ("He has taken those meetings for twenty years.", False),
+    ("Fred Wilson is here this evening.", False),
+])
+def test_sayable_accepts_a_vocative_when_it_knows_who_is_addressed(text, ok):
+    """The gate and `narrator.validate_say_line` are one rule; they must not disagree.
+
+    They did: the narrator is instructed to write a declarative name-drop that does not route the
+    member, and on a thin fact it answers with a vocative — which both checks rejected, withholding
+    the whole brief over a missing pronoun.
+    """
+    assert is_sayable(text, "Brad Feld") is ok
 
 
 def test_match_say_context_carries_the_strongest_useful_fact_without_writing_the_line():
@@ -466,6 +484,9 @@ def test_openai_say_writer_briefly_suppresses_a_repeated_failure():
 
 
 @pytest.mark.parametrize("line", [
+    # A vocative is direct address ("Brad, Fred Wilson is here"); naming nobody is not.
+    "Fred Wilson is here this evening.",
+    "Someone you have cited is here tonight.",
     "",
     "Fred Wilson is here tonight.",
     "I thought you might want to know someone is here tonight.",
@@ -500,6 +521,25 @@ def test_openai_say_writer_rejects_copy_that_breaks_the_spoken_contract(line):
 
     with pytest.raises(ValueError):
         OpenAISayWriter("test-key", post=lambda *_args, **_kwargs: Response()).write_say(context)
+
+
+@pytest.mark.parametrize("line", [
+    "Brad, Fred Wilson is here this evening.",
+    "Brad — Fred Wilson is here this evening.",
+    "Brad Feld, Fred Wilson is here this evening.",
+    "Fred Wilson is here, and you have cited him in print.",
+])
+def test_say_validator_accepts_a_vocative_as_direct_address(line):
+    """A host says "Brad, Fred Wilson is here" — that addresses Brad as directly as a pronoun does.
+
+    Requiring a literal "you" rejected exactly that line and withheld the WHOLE brief over a
+    pronoun. It also fought the prompt: the model is told not to route the member, and on a thin
+    fact most natural ways to work in a "you" lean toward routing, so it dropped the pronoun and
+    kept the vocative.
+    """
+    context = {"arriving_member": "Brad Feld", "person_here": "Fred Wilson",
+               "useful_fact": "Brad Feld follows Fred Wilson"}
+    assert validate_say_line(line, context) == line
 
 
 def test_say_validator_allows_connection_words_used_as_factual_nouns():
@@ -605,19 +645,33 @@ def test_the_render_gate_lives_in_the_store(store):
     assert "source_url IS NOT NULL" in view_sql
 
 
-def test_v_present_drops_opted_out_members(tmp_path):
+def test_v_present_has_no_opt_out_filter(tmp_path):
+    """DEC-15. The opt-out is withdrawn, so presence is presence.
+
+    Members are never told this service exists; a column recording their preference about it
+    recorded nothing, and a card explaining that one had "opted out of recognition" described
+    something that had never happened. `member_flags` keeps `do_not_traverse`, which is the
+    operator restraining the ingest walk — a different mechanism, and not a member's choice.
+    """
     sys.path.insert(0, str(ROOT / "scripts"))
     from build_store import build
     path = tmp_path / "present.db"
     build(path, merge=False, seed=True, quiet=True)
     conn = sqlite3.connect(path)
     conn.execute("PRAGMA foreign_keys = ON")
+
+    columns = {r[1] for r in conn.execute("PRAGMA table_info(member_flags)")}
+    assert "do_not_brief" not in columns
+    assert "do_not_traverse" in columns
+
+    view_sql = conn.execute(
+        "SELECT sql FROM sqlite_master WHERE name = 'v_present'").fetchone()[0]
+    assert "do_not_brief" not in view_sql
+
     conn.execute("INSERT OR REPLACE INTO roster VALUES ('m_ries','2026-09-03T19:00:00Z',NULL)")
-    conn.execute("INSERT OR REPLACE INTO member_flags VALUES "
-                 "('m_ries',1,0,'2026-09-03','operator')")
     conn.commit()
     present = {r[0] for r in conn.execute("SELECT person_id FROM v_present")}
-    assert "m_ries" not in present
+    assert "m_ries" in present
 
 
 # ── R-001: the arrival webhook is authenticated, integrity-checked, replay-protected ──
@@ -684,3 +738,66 @@ def test_an_unknown_name_is_not_found_rather_than_a_nearest_match(store):
     members = [store.member(mid) for mid in store.member_ids()]
     assert resolve_arrival_name("Somebody Else", members)["resolution"] == "not_found"
     assert resolve_arrival_name("Brad Feld", members)["resolution"] == "resolved"
+
+
+# ── DEC-14: the surfaces answer at the root, and the switch still works ──────
+def test_the_surfaces_answer_at_the_root_and_under_the_path():
+    from fastapi.testclient import TestClient
+    import arena.web as web
+    client = TestClient(web.app)
+    token = token_for("m_walk", web.SECRET)
+    for path in ("/", f"/{web.SECRET}/", f"/card/{token}", f"/{web.SECRET}/card/{token}"):
+        assert client.get(path).status_code == 200, path
+
+
+def test_a_page_reached_at_the_root_links_within_the_root_mount():
+    """Both mounts are the same handlers, so a link must stay on the mount it was reached through.
+
+    The room is arranged here rather than assumed: DEC-15 removed the seeded roster, so the app
+    now starts with nobody present and a Room page carries no card links until somebody arrives.
+    """
+    from fastapi.testclient import TestClient
+    import arena.web as web
+    client = TestClient(web.app)
+    client.post("/arrive", data={"person_id": "m_walk"}, follow_redirects=False)
+    try:
+        root_html = client.get("/").text
+        assert f'href="/{web.SECRET}/card/' not in root_html
+        assert 'href="/card/' in root_html
+        secret_html = client.get(f"/{web.SECRET}/").text
+        assert f'href="/{web.SECRET}/card/' in secret_html
+    finally:
+        client.post("/depart", data={"person_id": "m_walk"}, follow_redirects=False)
+
+
+def test_no_member_name_reaches_a_url_or_a_title_either_way():
+    """The one R-059 mitigation DEC-14 did not touch: it never depended on the path."""
+    from fastapi.testclient import TestClient
+    import arena.web as web
+    client = TestClient(web.app)
+    response = client.get(f"/card/{token_for('m_wilson', web.SECRET)}")
+    assert "<title>Arrival</title>" in response.text
+    assert "wilson" not in str(response.url).lower()
+    assert response.headers["X-Robots-Tag"].startswith("noindex")
+    assert response.headers["Referrer-Policy"] == "no-referrer"
+    assert "Disallow: /" in client.get("/robots.txt").text
+
+
+def test_the_render_gate_survives_being_called_from_several_threads():
+    """The web layer runs sync handlers on a threadpool, so the scratch db must be per-thread.
+
+    Regression: a single cached `sqlite3.Connection` worked until the pool handed a request to a
+    different worker, and then raised out of `select_renderable_facts` — a 500 on a card, in
+    production, from inside the render gate.
+    """
+    import concurrent.futures
+
+    from arena.facts import select_renderable_facts
+
+    candidates = [{"fact_id": "f", "provenance_class": "self_published",
+                   "trust_class": "subject_authored", "source_url": "https://feld.com/"}]
+    with concurrent.futures.ThreadPoolExecutor(max_workers=4) as pool:
+        results = [f.result() for f in
+                   [pool.submit(select_renderable_facts, candidates, settings=Settings())
+                    for _ in range(12)]]
+    assert all(r["renderable_fact_ids"] == ["f"] for r in results)

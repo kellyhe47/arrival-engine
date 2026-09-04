@@ -2,10 +2,10 @@
 {% block title %}Arrival{% endblock %}
 
 {# The rail (A-5) is only earned when the body below it actually RENDERS the card. A digest can
-   carry a perfectly good card that this page then declines to show — a member who opted out, a
-   token that resolves to nobody — and the rail must decline with it, or the one screen that says
-   "no dossier" ends with that member's opening line pinned to the bottom of the viewport. #}
-{% set renders_card = digest and digest.card and state not in ('not_found', 'do_not_brief') %}
+   carry a perfectly good card that this page then declines to show — a token that resolves to
+   nobody — and the rail must decline with it, rather than pinning an opening line to the bottom
+   of a screen that has no brief on it. #}
+{% set renders_card = digest and digest.card and state != 'not_found' %}
 {% set say_block = (digest.card.blocks | selectattr('label', 'equalto', 'Say') | first)
                    if renders_card else None %}
 {% block body_class %}{% if say_block %} class="has-rail"{% endif %}{% endblock %}
@@ -66,18 +66,6 @@
     <p class="lbl">{{ block_title('Say') }}</p>
     <p class="aloud">Greet them by name, welcome them in, and log the arrival for someone to check
        later.</p>
-  </section>
-
-{% elif state == 'do_not_brief' %}
-  <section class="blk">
-    <p class="lbl">{{ block_title('Who') }}</p>
-    {{ identity_line(member, label) }}
-    <p class="note warn">This member has opted out of recognition. No dossier, no matches, and no
-       score is computed in either direction — the opt-out is honoured at scoring time, not at
-       render time, so nothing was built and then thrown away. They are also absent from other
-       members' Who's-here blocks, because a one-way opt-out is not an opt-out.</p>
-    <p class="lbl">{{ block_title('Say') }}</p>
-    <p class="aloud">Welcome them by name and leave it there.</p>
   </section>
 
 {% elif not digest.card %}

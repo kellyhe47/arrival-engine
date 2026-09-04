@@ -101,7 +101,6 @@ def run(operation: str, given: dict, *, store=None, when: dict | None = None) ->
             inputs.get("arriving_member") or {},
             inputs.get("present_members") or [],
             settings=settings,
-            flags=inputs.get("flags") or {},
             signal_evidence=inputs.get("signal_evidence") or {},
             aliases=aliases,
         )

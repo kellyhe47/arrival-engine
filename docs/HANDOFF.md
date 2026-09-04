@@ -70,7 +70,7 @@ is the contract. A 200 is not identity confirmation.
 - **`test-golden` is consumed by everything and does not exist.** Build it first.
 - The **narrator is an injected seam**. It extracts facts and writes prose; its only policy judgement
   is DEC-9 family suitability. Identity, scoring, ranking, structural render gates, suppression and
-  opt-out remain deterministic. Temperature 0. Fixtures assert decisions and shape, not exact prose.
+  remain deterministic. Temperature 0. Fixtures assert decisions and shape, not exact prose.
   Build the seam with a fixture-backed fake before any card work.
 - **Storage loads in one order:** `db/schema.sql` → `db/vocabulary.sql` → `db/roster.sql`.
   Verified: loads clean under SQLite with `foreign_keys = ON`; 10 people, 55 allow-listed sources,

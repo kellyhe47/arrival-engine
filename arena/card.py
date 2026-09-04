@@ -37,22 +37,51 @@ def count_words(blocks) -> int:
     return sum(len((b.get("text") or "").split()) for b in blocks)
 
 
-def is_sayable(text: str) -> bool:
-    """SBAR's Recommendation slot: second person, present tense, an action rather than a fact."""
+def is_sayable(text: str, addressee: str | None = None) -> bool:
+    """SBAR's Recommendation slot: spoken to somebody, present tense, not a bare fact.
+
+    Three forms qualify. An imperative opener ("Ask him whether…"). A second-person pronoun ("you've
+    written about his work"). And, when the caller says who is being spoken to, a VOCATIVE —
+    "Emmett, Nabeel Qureshi is here this evening."
+
+    The vocative had to be added because this gate and `narrator.validate_say_line` were two
+    separate spellings of one rule, and they disagreed. The narrator's own instructions demand a
+    declarative name-drop that does not route the member; on a thin fact the model answers with a
+    vocative, which both checks then rejected — and rejecting the closing line withholds the entire
+    brief. `addressee` defaults to None, so a caller that cannot say who is being addressed gets
+    the old, stricter test unchanged.
+
+    A line that addresses nobody — "He has taken those meetings for twenty years." — is still not
+    sayable, which is the whole point of the gate.
+    """
     words = (text or "").strip().split()
     if not words:
         return False
-    return (words[0].strip('“"').lower() in _IMPERATIVES
-            or re.search(r"\byou(?:r(?:s|self)?|['’](?:re|ve|ll|d))?\b", text,
-                         re.IGNORECASE) is not None)
+    if words[0].strip('“"').lower() in _IMPERATIVES:
+        return True
+    if re.search(r"\byou(?:r(?:s|self)?|['’](?:re|ve|ll|d))?\b", text, re.IGNORECASE):
+        return True
+    return _opens_with_vocative(text, addressee)
+
+
+def _opens_with_vocative(text: str, addressee: str | None) -> bool:
+    """"Emmett, …" / "Brad — …". Direct address by name, then a break, then the line."""
+    addressee = (addressee or "").strip()
+    if not addressee:
+        return False
+    names = {addressee, addressee.split()[0]}
+    pattern = "|".join(re.escape(n) for n in sorted(names, key=len, reverse=True))
+    return re.match(rf"[“\"']?\s*(?:{pattern})\s*[,—–-]\s*\S", text or "",
+                    re.IGNORECASE) is not None
 
 
 def render_card(narration: dict, *, settings, facts: list[dict] | None = None,
-                scored_pair: dict | None = None, degraded: bool = False) -> dict:
+                scored_pair: dict | None = None, degraded: bool = False,
+                addressee: str | None = None) -> dict:
     """Run every hard gate over a composed card. On any failure the card is withheld, not trimmed.
 
-    `degraded` marks the non-card responses R-033 exempts from the word band — Do Not Brief,
-    `not_found`, ambiguous, and the withheld greeting. They are never padded to reach it.
+    `degraded` marks the non-card responses R-033 exempts from the word band — `not_found`,
+    ambiguous, and the withheld greeting. They are never padded to reach it.
     """
     blocks = sorted(narration.get("blocks") or [], key=lambda b: b.get("order", 0))
     failures: list[dict] = []
@@ -69,7 +98,7 @@ def render_card(narration: dict, *, settings, facts: list[dict] | None = None,
 
     closing = blocks[-1] if blocks else {}
     closing_kind = closing.get("kind")
-    if closing_kind != "sayable" or not is_sayable(closing.get("text") or ""):
+    if closing_kind != "sayable" or not is_sayable(closing.get("text") or "", addressee):
         failures.append({"gate": GATE_SAYABLE, "observed": closing_kind})
 
     if facts is not None:
@@ -149,8 +178,7 @@ def _room_plan(ranked: dict, *, settings, names: dict, pairs: dict,
     return plan
 
 
-def generate_digest(inputs: dict, *, settings, clock: str, store=None,
-                    flags: dict | None = None, narrator=None) -> dict:
+def generate_digest(inputs: dict, *, settings, clock: str, store=None, narrator=None) -> dict:
     """The whole product in one call: a name arrives, the room is scored, one match is surfaced
     with a reason built only from fired signals, a sourced deep cut is chosen, suppressions are
     disclosed without leaking their text, and the card closes on a line the host can say."""
@@ -177,14 +205,11 @@ def generate_digest(inputs: dict, *, settings, clock: str, store=None,
         else:
             present.append({"id": p})
 
-    flags = flags if flags is not None else (inputs.get("flags") or
-                                             (store.flags() if store else {}))
-
     signal_evidence = inputs.get("signal_evidence")
     if signal_evidence is None and store is not None:
         signal_evidence = store.signal_evidence(member_id, [p["id"] for p in present])
 
-    ranked = rank_room(arriving, present, settings=settings, flags=flags,
+    ranked = rank_room(arriving, present, settings=settings,
                        signal_evidence=signal_evidence, aliases=aliases)
 
     names = {}
@@ -254,7 +279,7 @@ def generate_digest(inputs: dict, *, settings, clock: str, store=None,
 
     gated = render_card({"blocks": blocks}, settings=settings,
                         facts=candidates if candidates is not None else None,
-                        scored_pair=scored_pair)
+                        scored_pair=scored_pair, addressee=plan.display_name)
 
     deep_cut_fact_id = None
     for b in blocks:
@@ -263,7 +288,7 @@ def generate_digest(inputs: dict, *, settings, clock: str, store=None,
     if deep_cut_fact_id is None and plan.deep_cut:
         deep_cut_fact_id = plan.deep_cut.fact_id
 
-    grade = _grade(deep_cut_fact_id, renderable, chips, blocks)
+    grade = _grade(deep_cut_fact_id, renderable, chips, blocks, plan.display_name)
 
     result = {
         "card": gated["card"],
@@ -376,7 +401,7 @@ def _recency_rank(fact: dict) -> int:
     return int(date) if date.isdigit() else 0
 
 
-def _grade(deep_cut_fact_id, renderable, chips, blocks) -> dict:
+def _grade(deep_cut_fact_id, renderable, chips, blocks, addressee=None) -> dict:
     """DEC-5's graded half. Partial credit, reported as a score and a failure list."""
     checks = {
         "deep_cut_found": deep_cut_fact_id is not None,
@@ -384,7 +409,8 @@ def _grade(deep_cut_fact_id, renderable, chips, blocks) -> dict:
             deep_cut_fact_id and not (renderable.get(deep_cut_fact_id) or {}).get("search_first_page")),
         "reason_cites_resolvable_source": all(
             c.get("source_host") for c in chips.values()) if chips else bool(deep_cut_fact_id),
-        "talk_track_is_sayable": bool(blocks) and is_sayable(blocks[-1].get("text") or ""),
+        "talk_track_is_sayable": bool(blocks) and is_sayable(blocks[-1].get("text") or "",
+                                                            addressee),
     }
     scored = sum(1 for v in checks.values() if v)
     return {"scored": scored, "possible": len(checks),

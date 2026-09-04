@@ -24,7 +24,7 @@ from fastapi.templating import Jinja2Templates
 from .adapters import deployed_registry
 from .adapters.registry import registry_from_sources
 from .card import generate_digest
-from .config import Settings, card_path_secret, store_path
+from .config import Settings, card_path_secret, public_root, store_path
 from .ingest import run_ingestion
 from .narrator import close_live_narrator, live_narrator
 from .ranking import brokering_mode
@@ -36,6 +36,25 @@ from .webhook import ReplayGuard, WebhookRejected, resolve_arrival_name, secret,
 
 HERE = Path(__file__).resolve().parent
 SECRET = card_path_secret()
+PUBLIC_ROOT = public_root()
+
+#: Every surface answers under `/<SECRET>/`. When PUBLIC_ROOT is on it ALSO answers under `/`, and
+#: the two are the same handlers registered twice rather than a redirect, so a bookmark of either
+#: keeps working. `_base` tells a template which mount it was reached through, so every link it
+#: writes stays on that mount.
+ROUTES = (
+    ("GET", "", "room"), ("GET", "/", "room"),
+    ("POST", "/arrive", "arrive"), ("POST", "/depart", "depart"),
+    ("GET", "/card/{token}", "card"), ("GET", "/why/{token}/{other}", "why"),
+    ("POST", "/reingest", "reingest"), ("GET", "/resolve", "resolve"),
+    ("POST", "/webhook/arrival", "webhook_arrival"),
+)
+
+
+def _base(request: Request) -> str:
+    """The mount this request came in on: `/<SECRET>` or `` (root)."""
+    path = request.url.path
+    return f"/{SECRET}" if path == f"/{SECRET}" or path.startswith(f"/{SECRET}/") else ""
 
 @asynccontextmanager
 async def _lifespan(_app: FastAPI):
@@ -64,12 +83,6 @@ def robots() -> str:
     return "User-agent: *\nDisallow: /\n"
 
 
-@app.get("/", response_class=HTMLResponse)
-def root():
-    # Nothing lives at the root. The path is the mitigation; advertising it would undo it.
-    raise HTTPException(status_code=404)
-
-
 def _store(writable: bool = False) -> Store:
     try:
         return Store(store_path(), writable=writable)
@@ -81,13 +94,14 @@ def _now() -> str:
     return dt.datetime.now(dt.timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
 
 
-def _ctx(store: Store, **extra) -> dict:
+def _ctx(store: Store, request: Request | None = None, **extra) -> dict:
     """Everything every page needs, including the honesty banner about synthetic rows."""
     synthetic = store.conn.execute(
         "SELECT COUNT(*) FROM fact WHERE run_id = 'run_synthetic_demo'").fetchone()[0]
     measured = store.conn.execute(
         "SELECT COUNT(*) FROM fact WHERE run_id <> 'run_synthetic_demo'").fetchone()[0]
-    base = {"secret": SECRET, "synthetic_facts": synthetic, "measured_facts": measured,
+    base = {"secret": SECRET, "base": _base(request) if request is not None else f"/{SECRET}",
+            "synthetic_facts": synthetic, "measured_facts": measured,
             "css_version": int((HERE / "static" / "arena.css").stat().st_mtime),
             "token_for": lambda mid: token_for(mid, SECRET),
             # Render-time only. The block IDS stay `Who`/`Now`/`Room`/`Notice`/`Say` everywhere
@@ -110,30 +124,29 @@ def room(request: Request):
     store = _store()
     present = store.roster_rows()
     present_ids = {r["person_id"] for r in present}
-    flags = store.flags()
     absent = [
-        {"id": mid, "display_name": (store.member(mid) or {}).get("display_name", mid),
-         "do_not_brief": bool((flags.get(mid) or {}).get("do_not_brief"))}
+        {"id": mid, "display_name": (store.member(mid) or {}).get("display_name", mid)}
         for mid in store.member_ids() if mid not in present_ids
     ]
     return templates.TemplateResponse(request, "room.html", _ctx(
-        store, present=present, absent=absent, registry=sorted(deployed_registry())))
+        store, request, present=present, absent=absent, registry=sorted(deployed_registry())))
 
 
 @app.post("/" + SECRET + "/arrive")
-def arrive(person_id: str = Form(...)):
+def arrive(request: Request, person_id: str = Form(...)):
     """Fires the webhook path for that member against the current roster."""
     store = _store(writable=True)
     store.arrive(person_id, _now())
-    return RedirectResponse(f"/{SECRET}/card/{token_for(person_id, SECRET)}", status_code=303)
+    return RedirectResponse(f"{_base(request)}/card/{token_for(person_id, SECRET)}",
+                            status_code=303)
 
 
 @app.post("/" + SECRET + "/depart")
-def depart(person_id: str = Form(...)):
+def depart(request: Request, person_id: str = Form(...)):
     """Removes from roster. Already-rendered cards are not retro-edited."""
     store = _store(writable=True)
     store.depart(person_id, _now())
-    return RedirectResponse(f"/{SECRET}/", status_code=303)
+    return RedirectResponse(f"{_base(request)}/" if _base(request) else "/", status_code=303)
 
 
 # ── Card ──────────────────────────────────────────────────────────────────────
@@ -146,29 +159,20 @@ def card(request: Request, token: str, retry: int = 0):
     if member_id is None:
         # R-013 / ui-states: no corroborated profile. Greet and log; the Say block still renders.
         return templates.TemplateResponse(request, "card.html", _ctx(
-            store, state="not_found",
+            store, request, state="not_found",
             copy=card_banner(None, None, "not_found", industry_labels={}, vocabulary={}),
             digest=None, member=None, chips=[], token=token), status_code=404)
 
-    flags = store.flags()
-    opted_out = bool((flags.get(member_id) or {}).get("do_not_brief"))
     settings = Settings()
     present_ids = [p for p in store.present_ids() if p != member_id]
 
-    if opted_out:
-        # P-3, honoured before anything is built. The Do Not Brief card says in so many words that
-        # "nothing was built and then thrown away" — so nothing is. Running the digest first made
-        # that sentence false: a full dossier was assembled, a Say line was bought from the
-        # narrator, and the card that discarded it still pinned that line to the Say rail.
-        digest = {}
-    else:
-        digest = generate_digest(
-            {"arrival": {"member_id": member_id}, "present_members": present_ids},
-            settings=settings, clock=_now(), store=store, narrator=live_narrator())
+    digest = generate_digest(
+        {"arrival": {"member_id": member_id}, "present_members": present_ids},
+        settings=settings, clock=_now(), store=store, narrator=live_narrator())
 
     renderable = set(digest.get("renderable_fact_ids") or [])
     state = card_state(digest, present_count=len(present_ids),
-                       renderable_count=len(renderable), opted_out=opted_out)
+                       renderable_count=len(renderable))
 
     member = store.member(member_id)
     label = store.label(member_id) or {}
@@ -203,7 +207,7 @@ def card(request: Request, token: str, retry: int = 0):
         writable.close()
 
     return templates.TemplateResponse(request, "card.html", _ctx(
-        store, state=state, copy=copy, digest=digest, member=member,
+        store, request, state=state, copy=copy, digest=digest, member=member,
         label=label, chips=chips, names=names, token=token, retry=retry,
         coverage=coverage, floor=settings.surface_min_score))
 
@@ -229,7 +233,7 @@ def why(request: Request, token: str, other: str):
                     excluded_topics=excluded_topic_records(vocabulary), names=names)
     view["brokering"] = brokering_mode(forward, reverse)
     return templates.TemplateResponse(request, "why.html", _ctx(
-        store, why=view, token=token, other=other, floor=6))
+        store, request, why=view, token=token, other=other, floor=6))
 
 
 # ── Ingesting (DEC-3: one live re-run, GREEN adapters only) ───────────────────
@@ -257,7 +261,7 @@ def reingest(request: Request, person_id: str = Form(...)):
     configuration = {"execution_context": "deployed_runtime", "adapters": configuration_adapters}
     result = run_ingestion({"fetch_plan": plan}, configuration=configuration, registry=registry)
     return templates.TemplateResponse(request, "ingesting.html", _ctx(
-        store, state="ingesting", copy=STATE_COPY["ingesting"], result=result,
+        store, request, state="ingesting", copy=STATE_COPY["ingesting"], result=result,
         member=store.member(person_id), token=token_for(person_id, SECRET)))
 
 
@@ -305,7 +309,7 @@ async def webhook_arrival(
     writable.arrive(member_id, _now())
     writable.close()
     return JSONResponse({"accepted": True,
-                         "card": f"/{SECRET}/card/{token_for(member_id, SECRET)}"})
+                         "card": f"{_base(request)}/card/{token_for(member_id, SECRET)}"})
 
 
 @app.get("/" + SECRET + "/resolve", response_class=HTMLResponse)
@@ -320,5 +324,17 @@ def resolve(request: Request, name: str = ""):
     outcome = resolve_arrival_name(name, members)
     state = outcome["resolution"]
     return templates.TemplateResponse(request, "resolve.html", _ctx(
-        store, state=state, copy=STATE_COPY[state], supplied=name,
+        store, request, state=state, copy=STATE_COPY[state], supplied=name,
         candidates=outcome["candidates"]))
+
+
+# ── the root mount ────────────────────────────────────────────────────────────
+# Registered LAST, so `/static` and `/robots.txt` keep their own handlers, and only when the
+# operator has asked for it. See `arena.config.public_root` for what turning this on gives up.
+if PUBLIC_ROOT:
+    for _method, _path, _name in ROUTES:
+        if _path == "":
+            continue                     # `/` already covers the bare mount at the root
+        app.add_api_route(_path, globals()[_name], methods=[_method],
+                          response_class=HTMLResponse if _method == "GET" else JSONResponse)
+    app.add_api_route("/", room, methods=["GET"], response_class=HTMLResponse)

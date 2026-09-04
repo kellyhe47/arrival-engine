@@ -210,20 +210,26 @@ subject-published images; screenshot the render, never store a signed CDN URL; n
 only the derived observation; an image-derived fact must corroborate a textual one to render.
 Demonstrated value: the blog said "music", the photo said *vinyl and vintage receivers*. *(DEC-8)*
 
-**R-032** **Do Not Brief.** A member may opt out of recognition. Their card renders
-name and role only — no dossier, no matches, no score computed either way — and they are removed
-from *other* members' rooms, because a one-way opt-out is not an opt-out. Honoured at scoring time.
-For this deliverable, an operator records a verified request in `member_flags`; member self-service
-is out of scope. Deletion is a real purge (`ON DELETE CASCADE`), not a hidden flag that reinstates.
-The purge workflow also removes generated cards and replaces any deployed snapshot containing the
-member before reporting completion.
+**R-032** **Deletion is a real purge.** `DELETE FROM person` cascades (`ON DELETE CASCADE`) —
+facts, edges, contexts, roster rows and generated cards go with it. It is not a hidden flag that
+reinstates, which is explicitly the opposite of OpenTable, where a suppressed profile comes back
+with its notes intact. The purge workflow also replaces any deployed snapshot containing the member
+before reporting completion.
+
+**There is no opt-out, and there is deliberately no flag for one.** *(DEC-15)* Members are never
+told this service exists. They are not asked, not notified, and given no surface on which to
+express a preference about it — so nothing could have populated a "do not brief" column, and a card
+explaining that a member *"has opted out of recognition"* described something that had never
+happened. A dormant privacy control is worse than none, because it reads to a reviewer as a control
+that exists. Removed from the schema, the scoring path and the card. Erasure on request is the
+obligation that survives, and it is R-032 above.
 
 ## 6. The card
 
 **R-033** A full card is **250–350 words**; outside the band is a hard gate failure. The declassified
 PDB of 3 Sep 1968 is 5 items / ~265 words / ~87s aloud; Brysbaert (2019, 190 studies) puts adult
 silent reading at 175–300 wpm and the slow end binds, because the host is standing and watching a
-door. Do Not Brief, `not_found`, gate-withheld and other non-card responses are degraded states and
+door. `not_found`, gate-withheld and other non-card responses are degraded states and
 are exempt from the band; they are never padded. A thin profile attempts a full card without
 fabrication and falls back to its withheld greeting when the available evidence cannot support one.
 
@@ -256,16 +262,17 @@ and must be dated by recording. *(B-009/B-021, G-014/G-033)*
 fabricates nothing. Kopelman is the thinnest of the ten.
 
 **R-042** The card is a **staff-intended instrument** and is never linked from a member-facing
-surface. For this no-login deliverable, an unguessable URL and `noindex` mitigate discovery but do
-not guarantee access control; this is the accepted P0-5 risk in §10. The Battery's charter already
+surface. For this no-login deliverable there is no access control and, since DEC-14, no path
+obscurity either; `noindex` and the robots disallow keep it out of search results and nothing keeps
+anyone out. This is the accepted P0-5 risk in §10. The Battery's charter already
 forbids members using presence features to watch each other.
 
 ## 7. Surfaces
 
 `wireframes.html` · `ui-states.md`.
 
-**R-043** Mobile-first. This demo has no login; its unguessable URL and `noindex` are discovery
-mitigations, not access control. One primary surface (the card), plus **Why-this-score** (one tap)
+**R-043** Mobile-first. This demo has no login and, since DEC-14, no unguessable path; `noindex`
+and the robots disallow are search-visibility controls, not access control. One primary surface (the card), plus **Why-this-score** (one tap)
 and **Room**.
 
 **R-044** **Room is the current-presence list**, ordered by `arrived_at`, with each member's name and
@@ -297,10 +304,10 @@ inner-circle expansion is an ingest-time walk that writes facts back onto the me
 file *is* the cache DEC-3 requires — the ingest/serve split becomes a file copy.
 
 **R-050** **Deterministic:** resolution, scoring, buckets, ranking, floor, provenance and trust
-gates, suppression class, and opt-out. **Probabilistic:** fact extraction at ingest and prose at
+gates and suppression class. **Probabilistic:** fact extraction at ingest and prose at
 compose, including the DEC-9 judgement about whether an otherwise eligible family fact is suitable.
-No model output changes identity, score, ranking, a structural render gate, suppression class or
-opt-out. Retrieved text is untrusted data, never instructions; the narrator has no tools or network
+No model output changes identity, score, ranking, a structural render gate or suppression class.
+Retrieved text is untrusted data, never instructions; the narrator has no tools or network
 authority and receives only render-eligible structured facts. The narrator is an injected seam at
 both points at temperature 0. Goldens assert decisions and output structure, not exact prose.
 
@@ -332,7 +339,7 @@ was wrong, and how it was settled, stays legible.
 
 | id | defect | fix |
 |---|---|---|
-| ~~P0-5~~ | ~~"never member-visible" has no enforcement: no auth + public URL + ten real named people~~ | **Decided: accept, and mitigate honestly.** The brief forbids auth and accounts, so: unguessable path, `X-Robots-Tag: noindex`, `robots.txt` disallow, and **no member name in any URL or page title** so nothing leaks by referrer or browser history. The residual risk is stated in the README rather than papered over. See R-059 |
+| **P0-5** | **"never member-visible" has no enforcement: no auth + open URL + ten real named people.** REOPENED 2026-09-04 by DEC-14: the unguessable path — the only thing that made anyone work to find it — was removed at the operator's instruction so the surfaces answer at the root. | **Accepted, with less in front of it than before.** What is left is search-visibility control only: `X-Robots-Tag: noindex`, a `robots.txt` disallow, `Referrer-Policy: no-referrer`, and **no member name in any URL or page title**. The residual is stated in the README in one sentence, not papered over. See R-059 and DEC-14 |
 | ~~P0-7~~ | ~~`word_count` is handed to fixtures, not derived (circular)~~ | **Resolved: G-010 and G-022 now carry real block text and `narration.word_count` is gone from `given`.** The runner counts (`_count_words`) and errors if a fixture asserts a count it cannot derive. Verified by tampering: changing the asserted count fails the check |
 | **P0-10** | **G-022 asserted `score(m_feld -> m_wilson) = 11` including S8, and cited S8 in its Room block. S8 requires B's prominence tier strictly above A's; `db/roster.sql` measures both at tier 4 (640,845 and 388,685 followers), so it cannot fire. G-001 was re-baselined for exactly this on 2026-09-03; G-022 was the stale twin, and it survived because it passed `present_members` as bare ids, which `verify_fixtures.py` cannot re-derive** | **Resolved 2026-09-03: spec and fixture fixed together.** The member attribute records are now supplied inline, taken verbatim from G-001 and G-005, so the checker re-derives this case like every other; the expectation is **10** on S1/S2/S5/S7 and S8 is removed from `cited_signal_ids` (forced by R-037 — a reason may name only signals that fired). Block text is untouched, so the derived `word_count` is still 253. Full write-up: `docs/fixture-notes.md` |
 | ~~P0-9~~ | ~~G-017 carries `m_shear` as `founder`; the canonical cast says `chief-executive`** (measured: `x.com/eshear` og:description, "CEO of Softmax"). Correcting it kills S1 and drops him 6→4, destroying the tie the fixture exists to test ~~ | **Resolved: G-017 re-grounded on the one real tie in the audited graph** — Walk scores 9 to both Wilson and Feld on identical signals, so tier 1 cannot separate them and it falls through to evidence recency (Feld 2014-05-27 beats Wilson 2012-03-04). Tiers 2 and 3 had **zero** coverage before. `m_shear` is gone from the fixture, so the contradiction is gone. **G-037** was added for tier 1 and is labelled synthetic, because an exhaustive search found no differing-LARGE-count tie anywhere in the real graph |
@@ -345,7 +352,7 @@ was wrong, and how it was settled, stays legible.
 | K-4 | Provenance is structural (R-025); **the family half is a prompt instruction, not a mechanism** | accepted by decision (DEC-9) |
 | K-5 | AUD-EDGES incomplete — Kopelman's retrievable first-person archive ends in 2014; feld.com's Pagefind index is unqueryable | **now a constraint, not a caution:** `v_assertable_absence` requires every `no_edge_confirmed` row to carry an `evidence_fact_id` naming the corpus actually searched. An absence with no named corpus is not readable by the engine |
 | K-9 *(accepted)* | **Prominence mixes platforms.** Perkins reaches tier 4 on a LinkedIn figure (370,639) while the other nine are ranked on X; her X is 56,591, which alone is tier 3 | **Decided: accept, and record the platform alongside every figure.** Tiers are computed once at ingest and frozen into the file, so this is sound at runtime. The residual — that a LinkedIn follower is not the same unit as an X follower — is stated rather than engineered away |
-| K-11 | A non-member partner reached by `family_or_partner` traversal **never opted in and cannot opt out** — R-032's Do Not Brief covers members only | **partially mechanised:** `member_flags.do_not_traverse` now exists and applies to any `person` row, member or not, and `v_traversable_person` excludes them. Residual: nobody can *request* the flag, so it is operator-set. Accepted (DEC-12) |
+| K-11 | A non-member partner reached by `family_or_partner` traversal **never opted in and has nobody to ask** — and since DEC-15 no member has a way to opt out either, so this is the general condition rather than a gap peculiar to non-members | **partially mechanised:** `member_flags.do_not_traverse` now exists and applies to any `person` row, member or not, and `v_traversable_person` excludes them. Residual: nobody can *request* the flag, so it is operator-set. Accepted (DEC-12) |
 | K-10 | **Huffman has no measurable prominence on any GREEN source.** `x.com/spez` is a stranger, `@stevehuffman` has 38 followers, `@shuffman` has 4; Reddit is closed to logged-out reads | tier is NULL, so S8 is silent in both directions for him — correct, not a gap to paper over. Obtainable from SESSION LinkedIn `/in/shuffman`, the same source that produced Perkins' figure |
 
 ## 11. Implementation contract
@@ -373,12 +380,21 @@ per `(person, source, run)` — `ok` / `unavailable` / `skipped`, with `http_cod
 It is the only thing that distinguishes `quiet` from `unknown` (R-040). A 200 with zero items is not
 silence: `feeds.feedburner.com/redeyevc` is a live feed with no items since 2019.
 
-**R-059** `[decided]` **Staff-only is asserted, not enforced, and the spec says so.** The brief
-forbids auth and accounts, so the mitigations are discovery-side only: an unguessable path,
-`X-Robots-Tag: noindex`, a `robots.txt` disallow, and **no member name in any URL or page title**, so
-a name cannot leak through a referrer header or a browser-history entry. This is not access control
-and must not be described as such — the README states the residual in plain words: the card is a
-staff instrument on a public URL carrying ten real people. *(closes P0-5 by decision, not mechanism)*
+**R-059** `[decided, DEC-14 — supersedes the unguessable-path clause]` **Staff-only is asserted,
+not enforced, and the spec says so in the plainest words available.** The brief forbids auth and
+accounts, so there is no access control, and **as of DEC-14 there is no path obscurity either**:
+the surfaces answer at the root of whatever host serves them. Anyone who reaches the host reaches
+the Room.
+
+What remains is narrower and is still required: `X-Robots-Tag: noindex, nofollow, noarchive`, a
+`robots.txt` disallow, `Referrer-Policy: no-referrer`, and **no member name in any URL or page
+title**, so a name cannot leak through a referrer header or a browser-history entry. Those keep the
+cards out of search results and keep names out of logs. They do not keep anyone out.
+
+The README must state the residual in one sentence a non-engineer can read: *this is a staff
+instrument on an open URL carrying ten real, named people.* An implementation MAY offer path
+obscurity as a deployment option (`ARENA_PUBLIC_ROOT=0`), but it is an option, not a mitigation
+this spec claims. *(P0-5 stays accepted, and is now accepted with less in front of it)*
 
 ## 12. Index
 

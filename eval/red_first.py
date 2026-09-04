@@ -188,11 +188,6 @@ def _trust_everything(candidate_facts, *, settings):
     }
 
 
-def _opt_out_at_render_time(arriving, present, *, flags=None, **kw):
-    """B-023: filter opted-out members out of the card, but score and rank them anyway."""
-    return ranking.rank_room(arriving, present, flags={}, **kw)
-
-
 MUTATIONS = {
     "G-001": ("score_pair_both_directions computes one symmetric number",
               lambda: patched((__import__("arena.operations", fromlist=["x"]), "_score",
@@ -236,9 +231,6 @@ MUTATIONS = {
     "G-034": ("third_party_open content is allowed to render",
               lambda: patched((__import__("arena.operations", fromlist=["x"]), "_select",
                                _trust_everything))),
-    "G-035": ("do-not-brief is applied at render time, after scoring",
-              lambda: patched((__import__("arena.operations", fromlist=["x"]), "_rank",
-                               _opt_out_at_render_time))),
     "G-037": ("tie-break tier 1 prefers the FEWEST large signals",
               lambda: patched((ranking, "_compare", _large_count_inverted))),
 }

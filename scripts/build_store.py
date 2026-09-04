@@ -53,6 +53,27 @@ FK_ACTION_PATCHES = (
     ("card.subject_id",
      "  subject_id     TEXT NOT NULL REFERENCES person(id),",
      "  subject_id     TEXT NOT NULL REFERENCES person(id) ON DELETE CASCADE,"),
+    # ── the opt-out is withdrawn (2026-09-04, DEC-15) ────────────────────────
+    # Members do not know this service exists. They are never told, never asked, and have no
+    # surface on which to express a preference about it — so a column recording their choice
+    # recorded nothing, and a card explaining that a member "has opted out of recognition" told
+    # the host something that had never happened. Removed rather than left defaulted to 0: a
+    # dormant privacy flag is worse than no flag, because it reads as a control that exists.
+    #
+    # `do_not_traverse` STAYS. It is a different mechanism and it survives the same reasoning:
+    # operator-set, applying to any person row including the non-members reached by traversal who
+    # — as K-11 says in so many words — never opted in and cannot ask for anything. It is the
+    # operator restraining the ingest walk, not a member choosing a service setting.
+    ("member_flags.do_not_brief",
+     "  do_not_brief INTEGER NOT NULL DEFAULT 0 CHECK (do_not_brief IN (0,1)),\n",
+     ""),
+    ("v_present.opt_out_filter",
+     "  SELECT r.person_id FROM roster r\n"
+     "    LEFT JOIN member_flags f ON f.person_id = r.person_id\n"
+     "   WHERE r.departed_at IS NULL\n"
+     "     AND COALESCE(f.do_not_brief, 0) = 0;      -- P-3: opt-out removes you from OTHERS' rooms too",
+     "  SELECT r.person_id FROM roster r\n"
+     "   WHERE r.departed_at IS NULL;"),
 )
 
 

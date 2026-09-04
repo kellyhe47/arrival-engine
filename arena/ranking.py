@@ -52,32 +52,25 @@ def rank_room(
     present: list[dict],
     *,
     settings,
-    flags: dict | None = None,
     signal_evidence: dict | None = None,
     aliases: dict | None = None,
 ) -> dict:
     """Score every present member against the arriving member and order them.
 
-    P-3 / R-032 is honoured HERE, at scoring time, not at render time — so no digest is ever built
-    and then discarded, and an opted-out member also disappears from OTHER members' Room blocks.
+    Every member present is a candidate. There is no opt-out to honour: members are never told
+    this service exists, so they have never been in a position to decline it (DEC-15).
     R-055: people reached by traversal (`is_member = 0`) are never scored and never surfaced.
     """
-    flags = flags or {}
     excluded_records = excluded_topic_records(settings.vocabulary)
     excluded = excluded_topic_slugs(settings.vocabulary)
 
-    arriving_opted_out = bool((flags.get(arriving.get("id")) or {}).get("do_not_brief"))
-
     candidates: list[dict] = []
-    if not arriving_opted_out:
-        for b in present:
-            if b.get("id") == arriving.get("id"):
-                continue
-            if b.get("is_member") == 0:
-                continue                       # R-055: never scored, never surfaced
-            if (flags.get(b.get("id")) or {}).get("do_not_brief"):
-                continue                       # R-032: honoured before a pair is ever scored
-            candidates.append(b)
+    for b in present:
+        if b.get("id") == arriving.get("id"):
+            continue
+        if b.get("is_member") == 0:
+            continue                           # R-055: never scored, never surfaced
+        candidates.append(b)
 
     matches = []
     for b in candidates:

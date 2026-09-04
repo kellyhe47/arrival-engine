@@ -168,10 +168,6 @@ STATE_COPY = {
         "Thin profile",
         "Identity is resolved and the evidence cannot carry a full card. Fewer facts, nothing "
         "invented."),
-    "do_not_brief": (
-        "Do not brief",
-        "This member has opted out of recognition. Name and role only, no score computed in "
-        "either direction, and they are absent from other members' rooms."),
 }
 
 
@@ -217,11 +213,13 @@ def card_banner(member: dict | None, label: dict | None, state: str, *,
     return eyebrow, subtitle
 
 
-def card_state(digest: dict, *, present_count: int, renderable_count: int,
-               opted_out: bool = False) -> str:
-    """Choose the card state. Order matters: the most restrictive answer wins."""
-    if opted_out:
-        return "do_not_brief"
+def card_state(digest: dict, *, present_count: int, renderable_count: int) -> str:
+    """Choose the card state. Order matters: the most restrictive answer wins.
+
+    There is no opt-out state. Members are never told this service exists, so none of them has
+    ever been in a position to decline it, and a card announcing that one had was describing
+    something that never happened (DEC-15).
+    """
     if digest.get("card_state") == "withheld":
         return "withheld"
     if not digest.get("gates_passed"):

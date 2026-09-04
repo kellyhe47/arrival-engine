@@ -22,15 +22,20 @@ from arena.view import card_state, token_for  # noqa: E402
 def main() -> int:
     base = os.environ.get("ARENA_BASE", f"http://localhost:{os.environ.get('PORT', '8000')}")
     secret = card_path_secret()
-    print(f"\n  Room   {base}/{secret}/")
-    print(f"  Root   {base}/  ->  404 on purpose; the path is the mitigation, not access control\n")
+    from arena.config import public_root
+    if public_root():
+        print(f"\n  Room   {base}/")
+        print(f"  Also   {base}/{secret}/   (the same handlers; ARENA_PUBLIC_ROOT=0 leaves only this)")
+        print("  Note   there is no access control and no path obscurity — DEC-14\n")
+    else:
+        print(f"\n  Room   {base}/{secret}/")
+        print(f"  Root   {base}/  ->  404; ARENA_PUBLIC_ROOT=0 is set\n")
     try:
         store = Store()
     except StoreUnavailable as exc:
         print(f"  no store yet: {exc}\n")
         return 0
     present = store.present_ids()
-    flags = store.flags()
     # Deliberately WITHOUT the model narrator: this listing runs on every `make serve`, and
     # buying ten Say lines to print a table is not what the key is for. So a member whose card
     # needs a narrator shows `withheld (no narrator)` here and still renders in the app.
@@ -38,14 +43,11 @@ def main() -> int:
     print(f"  {'member':13} {'state':21} {'words':>5}  card")
     for mid in store.member_ids():
         others = [p for p in present if p != mid]
-        opted_out = bool((flags.get(mid) or {}).get("do_not_brief"))
-        # P-3, same as the app: nothing is built for a member who opted out.
-        digest = {} if opted_out else generate_digest(
+        digest = generate_digest(
             {"arrival": {"member_id": mid}, "present_members": others},
             settings=Settings(), clock="2026-09-03T21:00:00Z", store=store)
         state = card_state(digest, present_count=len(others),
-                           renderable_count=len(digest.get("renderable_fact_ids") or []),
-                           opted_out=opted_out)
+                           renderable_count=len(digest.get("renderable_fact_ids") or []))
         words = digest["card"]["word_count"] if digest.get("card") else "-"
         if any(g["gate"] == "narrator_available" for g in digest.get("gate_failures") or []):
             state = "withheld (no narrator)"

@@ -293,17 +293,6 @@
       ]
     },
     {
-      "id": "B-023",
-      "statement": "A do_not_brief member gets a name-only card, is scored in neither direction, and is absent from other members' rooms.",
-      "traces_to": [
-        "AUD-LINE-19",
-        "RUBRIC-4"
-      ],
-      "required_case_types": [
-        "negative_control"
-      ]
-    },
-    {
       "id": "B-024",
       "statement": "Withheld facts are reported as class and count only, never as content.",
       "traces_to": [

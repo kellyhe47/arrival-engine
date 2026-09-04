@@ -1,5 +1,13 @@
 # Manual QA — Arena Hall Arrival Engine
 
+> **SUPERSEDED IN PART, 2026-09-04 (DEC-15).** The operator withdrew the Do Not Brief opt-out
+> entirely — members are never told this service exists, so none of them could ever have declined
+> it. **QA-9 is void**: the state it asked for no longer exists, and seeding a holder for the flag
+> was reverted along with the flag. **QA-10 is moot** for the same reason, though the rail-gating
+> fix it produced was kept and still guards `not_found`. **QA-11**'s opt-out handling in
+> `scripts/urls.py` was likewise removed. Everything else below stands. The seeded roster is also
+> gone: the app now starts with nobody in the room.
+>
 > **Re-walked 2026-09-04 after fixes.** Resolution status is recorded under each finding.
 > `OPENAI_API_KEY` is now loaded from `.env`; all ten members render.
 
@@ -176,6 +184,33 @@ HTML, 2 times on every other card. `scripts/urls.py` was given the same short-ci
 `withheld` for seven members whose cards render fine, and ignored the opt-out. It now labels that
 column honestly (`withheld (no narrator)`) and honours `do_not_brief`. It deliberately still does
 NOT call the model — buying ten Say lines to print a table is not what the key is for.
+
+### QA-12 · Two spellings of "sayable" disagreed, and the disagreement withheld whole briefs
+**FIXED.** Reported as "Emmett Shear's brief is failing". Deterministic, and the model was right.
+
+For a thin fact — `{"useful_fact": "Emmett Shear follows Nabeel Qureshi"}` — the narrator returned
+`"Emmett, Nabeel Qureshi is here this evening."` four times out of four. Both checks rejected it
+for the same reason, a missing literal "you":
+
+- `narrator.validate_say_line` — "a Say line without direct second-person speech"
+- `card.is_sayable`, the `closing_block_is_sayable` hard gate
+
+The rule also fought the prompt. `SAY_INSTRUCTIONS` forbids routing the member and demands "a
+declarative observation, not a suggestion, question, offer, or command" — and on a thin fact
+almost every natural way to work in a "you" leans toward the routing it was told to avoid. So the
+model dropped the pronoun, kept the vocative, and the whole brief was withheld over it: name,
+recency, matches and deep cut, all gone, on a card that then said "a hard gate failed".
+
+Both checks now accept a **vocative** — the line opening by naming the person it is spoken to —
+as direct address, which is what it is. `is_sayable` takes an optional `addressee` and keeps the
+old strict behaviour when the caller cannot supply one, so nothing a fixture asserts moved. A line
+addressing nobody ("Fred Wilson is here tonight.") is still rejected.
+
+Verified: all ten cards render. Shear closes on *"Emmett, Nabeel Qureshi is here this evening."*
+— 261 words, gates passed, grade 4/4. `make test`: 85 passed.
+
+Nabeel Qureshi was collateral, not a second bug: he sits on the other side of the same pair, and
+his own card had already been rendering.
 
 ## Escalations
 

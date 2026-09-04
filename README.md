@@ -10,7 +10,9 @@ Three surfaces, mobile-first, no login: **Card** (primary), **Why-this-score** (
 ```bash
 make install     # uv venv, python 3.12
 make store       # build the serving store outside db/ (db/ is never written)
-make run         # http://localhost:8000/d3f0-arrival-9c1a/
+make run         # rebuild the store, then serve on http://localhost:8000/
+make serve       # serve the store as it is — no rebuild
+make urls        # print every card URL
 make test        # validate-spec + test-golden + red-first + unit tests
 ```
 
@@ -25,17 +27,22 @@ bounded, process-local cache for identical contexts; the API request itself sets
 
 ## Read this first: what this is *not*
 
-**The card is a staff instrument on a public URL carrying ten real, named people, and nothing
-prevents a member from opening it.** The brief forbids auth and accounts, so the mitigations are
-discovery-side only: an unguessable path, `X-Robots-Tag: noindex`, a `robots.txt` disallow,
+**This is a staff instrument on an open URL carrying ten real, named people, and nothing prevents a
+member from opening it.** The brief forbids auth and accounts, so there is no access control — and
+since **DEC-14** there is no unguessable path either: the surfaces answer at the root, so anyone who
+can reach the host reaches the Room, and from the Room every card is one tap away.
+
+What is left is search-visibility control, not access control, and it is worth having on its own
+terms: `X-Robots-Tag: noindex, nofollow, noarchive`, a `robots.txt` disallow,
 `Referrer-Policy: no-referrer`, and **no member name in any URL or page title** — card URLs carry an
-opaque token, so a name cannot leak through a referrer header or a browser-history entry. That is
-**discovery mitigation, not access control**, and it must not be described as such. It is the
-accepted P0-5 risk (R-059), and this paragraph is where the spec says it is stated plainly.
+opaque token, so a name cannot leak through a referrer header, a proxy log or a browser-history
+entry. That last one is independent of the path and still holds.
 
-If this ever ships beyond a demo, the fix is not a longer path. It is a session behind the door.
+`ARENA_PUBLIC_ROOT=0` puts the surfaces back behind `/<ARENA_PATH_SECRET>/` only. It is offered as a
+deployment option and is deliberately **not** described here as protection: knowing a string is not
+a credential. This is the accepted P0-5 risk, reopened in PRD §10 rather than left marked closed.
 
----
+If this goes anywhere public, the fix is not a longer path. It is a session behind the door.
 
 ## The invariant
 

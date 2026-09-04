@@ -2,8 +2,8 @@
 
 Surfaces: **Card** (primary), **Why-this-score** (secondary, tap from Room), **Room** (demo control).
 There is no login, no settings, no member-facing view. These are staff-intended surfaces. An
-unguessable URL and `noindex` mitigate discovery but are not access control; that limitation is the
-accepted P0-5 risk in the PRD. The Battery's charter already forbids members using presence features
+open URL: since DEC-14 there is no unguessable path either, and `noindex` plus the robots disallow
+control search visibility rather than access. That limitation is the accepted P0-5 risk in the PRD. The Battery's charter already forbids members using presence features
 to watch each other.
 
 ## Navigation

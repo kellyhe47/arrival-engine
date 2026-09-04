@@ -232,17 +232,8 @@ INSERT OR IGNORE INTO source_status
   ('m_perkins','podcast_guest','GREEN','ok',NULL,200,1,'2026-09-03','run_synthetic_demo'),
   ('m_perkins','linkedin_profile','SESSION','unavailable','session_expired',NULL,0,'2026-09-03','run_synthetic_demo');
 
--- ── the opt-out, with a holder ────────────────────────────────────────────────
--- P-3 / R-032 is a state the product HAS and, until now, a state nothing in the store could
--- reach: `member_flags` was empty, so Do Not Brief was unreachable and untestable. The Room design
--- lists "Eric Ries — do not brief" in Simulate arrival, so that is who holds it here.
--- Synthetic like everything else in this file: it is an operator setting, not a measurement.
-INSERT OR IGNORE INTO member_flags (person_id, do_not_brief, do_not_traverse, set_at, set_by) VALUES
-  ('m_ries', 1, 0, '2026-09-03T20:00:00Z', 'run_synthetic_demo');
-
--- ── a Friday evening ──────────────────────────────────────────────────────────
--- Presence is runtime state; this is a starting position for the demo, and Room can change it.
-INSERT OR IGNORE INTO roster (person_id, arrived_at, departed_at) VALUES
-  ('m_wilson','2026-09-03T18:40:00Z',NULL),
-  ('m_walk',  '2026-09-03T18:52:00Z',NULL),
-  ('m_perkins','2026-09-03T19:05:00Z',NULL);
+-- ── an empty room ────────────────────────────────────────────────────────────
+-- Presence is RUNTIME state and this seed no longer pre-populates it. The app starts with nobody
+-- in the room — which is a state the product has to handle anyway ("first one here, not an
+-- error"), and which makes the demo start where a real evening starts. Room's simulate-arrival
+-- control, and the arrival webhook, fill it.

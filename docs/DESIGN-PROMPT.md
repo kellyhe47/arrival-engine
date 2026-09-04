@@ -71,7 +71,7 @@ and quiet — a printed brief, not an app UI.
 ## Every state, not just the happy path
 Reach them from the Room surface (`make run`, then the unguessable root path printed at start):
 ready · no-strong-match · cold trail · unknown coverage · empty room (`make store-empty`) ·
-ingesting · withheld · ambiguous · not-found · thin profile · do-not-brief. Each gets a screenshot
+ingesting · withheld · ambiguous · not-found · thin profile. Each gets a screenshot
 at 390×844 in your hand-back.
 
 ## Design past the spec — but label it

@@ -129,7 +129,7 @@ file copy — which is also why a live demo cannot fail on a network call.
 | `v_renderable_fact` | Enforces B-007 (no source, no render), B-008 (inferred facts name their inputs) and R-026 (`third_party_open` never renders); the mixed contract is G-034. Enforcement lives in the **store**, not in application care. |
 | `fact.trust_class` | **P-5.** Independent of `provenance_class`: a fact can be public, sourced, and still authored by a stranger. The Instagram tagged tab is the measured case. |
 | `edge` type `no_edge_confirmed` | **R-019.** Records measured *absence*, so topical similarity can never be dressed up as a relationship. |
-| `member_flags.do_not_brief` + `v_present` | **P-3.** The opt-out removes the member from *other* members' rooms too. Honoured at scoring time, so no digest is built and then discarded. |
+| `member_flags.do_not_traverse` + `v_traversable_person` | **K-11.** The operator restraining the INGEST walk over any person row, member or not. Not a member preference — nobody can request it, which is exactly why it is operator-set. The sibling column `do_not_brief` was removed by DEC-15. |
 | `ON DELETE CASCADE` throughout | **R-032.** `DELETE FROM person` is a real purge. Explicitly the opposite of OpenTable, where a hidden profile auto-reinstates with its notes intact. |
 | `card` | If a member ever asks what was said about them, this answers it — with the exact fact ids that rendered. |
 | `person.name_respelling` | **P-1.** NPR pronouncer convention, `[EL-suh]`, NULL when the name is obvious. |

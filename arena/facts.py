@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import json
 import sqlite3
+import threading
 from urllib.parse import urlparse
 
 from .config import SCHEMA_SQL
@@ -29,20 +30,25 @@ _CLAUSES = (
     ("__trust__", "trust_class <> 'third_party_open'"),
 )
 
-_conn: sqlite3.Connection | None = None
+#: One scratch database PER THREAD. A `sqlite3.Connection` may only be used on the thread that
+#: created it, and the web layer runs sync handlers on a threadpool — so a single cached connection
+#: works until the pool hands the next request to a different worker, and then raises
+#: `SQLite objects created in a thread can only be used in that same thread` from inside the render
+#: gate. Thread-local keeps the schema load to once per worker and removes the failure entirely.
+_local = threading.local()
 
 
 def _scratch() -> sqlite3.Connection:
     """One in-memory database carrying the real schema. Never touches db/ except to READ the DDL."""
-    global _conn
-    if _conn is None:
+    conn = getattr(_local, "conn", None)
+    if conn is None:
         conn = sqlite3.connect(":memory:")
         conn.row_factory = sqlite3.Row
         conn.executescript(SCHEMA_SQL.read_text())
         # Throwaway classifier: candidate facts have no person or run rows to point at.
         conn.execute("PRAGMA foreign_keys = OFF")
-        _conn = conn
-    return _conn
+        _local.conn = conn
+    return conn
 
 
 def _load(conn: sqlite3.Connection, facts: list[dict]) -> None:
