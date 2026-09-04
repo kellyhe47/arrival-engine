@@ -15,6 +15,7 @@ Load order is schema.sql -> vocabulary.sql -> roster.sql, with PRAGMA foreign_ke
 from __future__ import annotations
 
 import argparse
+import re
 import sqlite3
 import sys
 from datetime import datetime, timezone
@@ -53,6 +54,12 @@ FK_ACTION_PATCHES = (
     ("card.subject_id",
      "  subject_id     TEXT NOT NULL REFERENCES person(id),",
      "  subject_id     TEXT NOT NULL REFERENCES person(id) ON DELETE CASCADE,"),
+    # outcome.subject_id shares the card.subject_id line shape, so the patch above already
+    # cascades it — `str.replace` rewrites every occurrence.
+    ("outcome.matched_id",
+     "  matched_id     TEXT REFERENCES person(id),              -- who the card named, if anyone",
+     "  matched_id     TEXT REFERENCES person(id) ON DELETE SET NULL,"
+     "              -- who the card named, if anyone"),
     # ── the opt-out is withdrawn (2026-09-04, DEC-15) ────────────────────────
     # Members do not know this service exists. They are never told, never asked, and have no
     # surface on which to express a preference about it — so a column recording their choice
@@ -96,7 +103,36 @@ SCHEMA_REQUESTS = (
      "ALTER TABLE fact ADD COLUMN is_rerun INTEGER NOT NULL DEFAULT 0 CHECK (is_rerun IN (0,1))"),
     ("fact", "suppression_class", "ALTER TABLE fact ADD COLUMN suppression_class TEXT"),
     ("fact", "quote", "ALTER TABLE fact ADD COLUMN quote TEXT"),
+    # The register split (2026-09-04). Ingest agents write two kinds of rows into `fact`: things
+    # true about the MEMBER, and notes about the COLLECTION — measured absences, follow-graph
+    # methodology, identity checks, API measurements. Both belong in the store (absences feed
+    # `v_assertable_absence`, identity notes feed resolution); only the first may ever reach a
+    # card. A member reading "her X following list was walked read-only in the operator's Chrome"
+    # over the host's shoulder is the R-002 failure in one sentence.
+    ("fact", "register", "ALTER TABLE fact ADD COLUMN register TEXT NOT NULL DEFAULT 'member'"),
 )
+
+#: Deterministic build-time classifier for `fact.register`. The vocabulary of a collection note,
+#: not of a life: audit runs, corpora, sessions, selectors, API identity checks, measured
+#: absences. Inspectable (the column stores the verdict) and reversible (rebuild the store).
+OPERATIONAL_MARKERS = re.compile(
+    r"\b(PARTIAL|MEASURED(?:\s+ABSENCE)?|UNVERIFIED|audit(?:ed)?|corp(?:us|ora)|headless|"
+    r"selector|wheel events|logged-(?:in|out)|read-only|scrape[dr]?|crawl|Pagefind|"
+    r"http_\d+|HTTP \d|429|robots\.txt|api\.\w+|og:description|deny-list|allow-list|"
+    r"identity (?:is|check|signal|STRONG|WEAK)|name field|profile API|"
+    r"follower count measured|"
+    r"follow-graph|following list|operator's (?:Chrome|session)|paired-edge|"
+    r"reference was found|searched (?:in full|corpus))\b")
+
+
+def classify_registers(conn: sqlite3.Connection) -> int:
+    """Mark collection notes `operational` so the render path can refuse them wholesale."""
+    rows = list(conn.execute(
+        "SELECT id, text FROM fact WHERE register = 'member' AND text IS NOT NULL"))
+    ops = [(r["id"],) for r in rows if OPERATIONAL_MARKERS.search(r["text"])]
+    conn.executemany("UPDATE fact SET register = 'operational' WHERE id = ?", ops)
+    conn.commit()
+    return len(ops)
 
 #: FK-safe order. `fact.superseded_by` is self-referential, so FKs are off during the copy and
 #: `PRAGMA foreign_key_check` runs afterwards — a violation is reported, never swallowed.
@@ -272,6 +308,11 @@ def build(out: Path, *, merge: bool, seed: bool, quiet: bool = False) -> dict:
         conn.commit()
         report["seeded"] = True
         say(f"  seeded {SEED_SQL.name} (synthetic, tagged run_synthetic_demo)")
+
+    ops = classify_registers(conn)
+    report["operational_facts"] = ops
+    say(f"  register split: {ops} collection note(s) marked operational — engine-readable, "
+        f"never rendered")
 
     violations = list(conn.execute("PRAGMA foreign_key_check"))
     if violations:

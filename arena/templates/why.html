@@ -3,13 +3,17 @@
 {% block banner %}
 <div class="banner"><div class="inner">
   <p class="eyebrow">Why this score</p>
-  <h1>{{ why.from_name }} → {{ why.to_name }}</h1>
-  <p><span class="num">{{ why.score }}</span> of {{ why.ceiling }} ·
-     <span class="num">{{ why.score_excluding_s8 }}</span> against a floor of {{ floor }} once the
-     status gradient is set aside</p>
+  <h1><span class="num">{{ why.score }}</span><span class="of-big">/{{ why.ceiling }}</span></h1>
+  <p>{{ why.from_name }} → {{ why.to_name }}, against a floor the status gradient is set aside
+     for: <span class="num">{{ why.score_excluding_s8 }}</span> counts toward {{ floor }}.</p>
 </div></div>
 {% endblock %}
 {% block content %}
+
+<section class="blk">
+  <p class="lbl">Intent</p>
+  <p>{{ why.intent_line }}</p>
+</section>
 
 <section class="blk">
   <p class="lbl">Signals that fired</p>
@@ -24,8 +28,8 @@
         <td>{{ s.evidence }}</td></tr>
     {% endfor %}
   </table>
-  <p class="meta">The threshold is evaluated on the score EXCLUDING S8; the displayed score
-     includes it. Prominence may break a tie. It may never create a match.</p>
+  <p class="meta">The floor is evaluated with S8 set aside; the displayed score includes it.
+     Prominence may break a tie. It may never create a match.</p>
 </section>
 
 <section class="blk">
@@ -52,8 +56,7 @@
     {% endfor %}
   </table>
   <p class="meta">Genericity is a property of the vocabulary, measured once over the member base
-     and stored. It is never recomputed from who happens to be in the room — that version was
-     non-monotonic, room-size-inverted, and failed on the only case ever measured.</p>
+     and stored. It is never recomputed from who happens to be in the room.</p>
   {% else %}
   <p>None. No stored topic reaches the 40% holder share.</p>
   {% endif %}
@@ -72,9 +75,8 @@
         <td>{{ s.evidence }}</td></tr>
     {% endfor %}
   </table>
-  <p class="meta">Brokering mode: <strong>{{ why.brokering.replace('_', ' ') }}</strong>.
-     Mutual means introduce and step away. Broker means stay and carry the reason across.</p>
 </section>
 
-<p><a class="btn" href="{{ base }}/card/{{ token }}">Back to the card</a></p>
+<p><a class="btn" href="{{ base }}/card/{{ token }}">Back to the card</a> &nbsp;
+   <a href="{{ base }}/score">How the score works</a></p>
 {% endblock %}

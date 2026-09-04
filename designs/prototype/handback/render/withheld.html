@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Arrival</title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=EB+Garamond:ital,wght@0,400;0,500;1,400&family=Inter:wght@400;500&display=swap">
+<link rel="stylesheet" href="../static/arena.css?v=4">
+</head><body>
+<div class="banner"><div class="inner">
+  <a class="crumb" href="room.html">&larr; Room</a>
+  <p class="eyebrow">Reddit · Chief Executive</p>
+  <h1>Steve Huffman</h1>
+  <p>Co-founded Reddit at twenty-two, left, and came back to run it.</p>
+</div></div>
+<main class="wrap">
+  <section class="blk">
+    <p class="lbl">Who they are</p>
+    <p>Steve Huffman — Reddit.</p>
+    <p class="note warn">A hard gate failed, so the brief is withheld. This degrades to a greeting,
+       never to a guess.</p>
+  </section>
+  <section class="blk">
+    <p class="lbl">What failed</p>
+    <table>
+      <tr><th>Gate</th><th>Observed</th><th>Allowed</th></tr>
+      <tr><td>word count in band</td><td class="w">372</td><td class="w">250–350</td></tr>
+      <tr><td>reason cites fired only</td><td class="w">S8</td><td class="w">S1, S2, S5</td></tr>
+    </table>
+    <p class="meta">Retry re-runs render only. It does not re-ingest, and it does not lower a
+       threshold — the obvious implementation of a retry button turns a hard gate into a retry loop.</p>
+    <p><a class="btn quiet" href="withheld.html">Retry render</a></p>
+  </section>
+  <section class="blk">
+    <p class="lbl">Say this</p>
+    <p class="aloud">Greet them by name and log the arrival.</p>
+  </section>
+
+  <section class="fb">
+    <p class="lbl">What did you observe about the interaction?</p>
+    <p class="hint">The only proof the introduction worked is what happened next. How long did they
+       talk, and did it go anywhere — a nod on the way past, or still together at closing.</p>
+    <textarea id="fbtext-withheld" aria-label="What you observed" placeholder="Twenty minutes by the bar, then he walked her over to his own table…"></textarea>
+    <div class="tags" role="group" aria-label="What you observed">
+      <button class="tag" type="button" aria-pressed="false">Never introduced</button>
+      <button class="tag" type="button" aria-pressed="false">Brief hello</button>
+      <button class="tag" type="button" aria-pressed="false">Talked a while</button>
+      <button class="tag" type="button" aria-pressed="false">Together all night</button>
+      <button class="tag" type="button" aria-pressed="false">Swapped details</button>
+    </div>
+    <div class="send">
+      <button class="btn" type="button" id="fbsend-withheld">Log the outcome</button>
+      <p class="sent" id="fbsent-withheld" hidden>Logged against this introduction.</p>
+    </div>
+  </section>
+  <script>
+    (function () {
+      var box = document.getElementById('fbtext-withheld');
+      var btn = document.getElementById('fbsend-withheld');
+      var ok = document.getElementById('fbsent-withheld');
+      var tags = document.querySelectorAll('.fb .tag');
+      tags.forEach(function (t) {
+        t.addEventListener('click', function () {
+          var on = t.getAttribute('aria-pressed') === 'true';
+          t.setAttribute('aria-pressed', on ? 'false' : 'true');
+        });
+      });
+      btn.addEventListener('click', function () {
+        if (!box.value.trim() && !document.querySelector('.fb .tag[aria-pressed="true"]')) {
+          box.focus(); return;
+        }
+        ok.hidden = false;
+        btn.disabled = true;
+        btn.style.opacity = 0.5;
+      });
+    })();
+  </script>
+</main>
+
+</body></html>

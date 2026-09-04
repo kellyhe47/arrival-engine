@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """Independently re-derive every golden fixture's domain arithmetic from `given`.
 
-This deliberately re-implements the scoring model from docs/scoring-model.md rather than
+This deliberately re-implements the scoring model from docs/PRD.md §4 (re-baselined
+2026-09-04; docs/scoring-model.md is stale until re-synced) rather than
 importing anything, and never reads `expect` before computing. If this file and the fixtures
 disagree, one of them is wrong and the disagreement is the point.
 
@@ -15,9 +16,30 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 GOLDEN = os.path.join(ROOT, "eval", "golden")
 
 BUCKET = {"SMALL": 1, "MID": 2, "LARGE": 3}
-W = {"S1": 2, "S2": 2, "S3": 3, "S4": 3, "S5": 3, "S6": 1, "S7": 3, "S8": 1}
-SUBSTRATE = {"S2", "S3", "S5", "S7"}
-CEILING = W["S1"] + max(W["S2"], W["S3"]) + W["S4"] + W["S5"] + W["S6"] + W["S7"] + W["S8"]
+W = {"S1": 2, "S2": 2, "S3": 3, "S4": 1, "S5": 3, "S6": 2, "S7": 3, "S8": 1, "S9": 3}
+SUBSTRATE = {"S3", "S5", "S6", "S7"}
+#: The ceiling is S1..S7 = 16. S8 sits outside it (display/tie-break) and S9 outside both the
+#: ceiling and the floor, so a displayed score may run up to CEILING + 1 + 3.
+CEILING = sum(W[s] for s in ("S1", "S2", "S3", "S4", "S5", "S6", "S7"))
+MAX_DISPLAY = CEILING + W["S8"] + W["S9"]
+
+INTENT_COMPLEMENTS = {"I2": {"I1", "I6"}, "I5": {"I4", "I6"}, "I3": {"I7"}}
+_ASKS = {"I2", "I5"}
+
+
+def intent_class(a_intent, b_intent):
+    a, b = a_intent or "I0", b_intent or "I0"
+    if a == "I0" or b == "I0":
+        return "unknown"
+    if a == "I8" or b == "I8":
+        return "open"
+    if b in INTENT_COMPLEMENTS.get(a, ()):
+        return "complement"
+    if (a in _ASKS and b == "I7") or (b in _ASKS and a == "I7"):
+        return "guarded"
+    if a == b:
+        return "parallel"
+    return "neutral"
 
 errors, checks = [], 0
 
@@ -66,8 +88,10 @@ def chip_host(url):
     h = urlparse(url).hostname
     return h[4:] if h and h.startswith("www.") else h
 
-def ctx_key(c):
-    return (c.get("type"), c.get("value"))
+def ctx_keys(member, types):
+    """Resolved context keys of the given types. `resolved = 0` never matches (AUD-07-6)."""
+    return {(c.get("type"), c.get("value")) for c in member.get("contexts", [])
+            if int(c.get("resolved", 1)) != 0 and c.get("type") in types}
 
 def generic_topics(vocabulary):
     """Non-discriminating topics, read from the controlled vocabulary.
@@ -89,36 +113,44 @@ def _unused_room_genericity(room, max_share, min_room=4):
     return {t for t, c in counts.items() if c / n > max_share}
 
 def score(a, b, excluded=frozenset()):
-    """Return (score, [signal_ids]) for a -> b, derived only from member records."""
+    """Return (display score, [signal_ids]) for a -> b, derived only from member records.
+
+    The signal set re-baselined 2026-09-04 (PRD §4): S1 same industry, S2 same tier AND same
+    career-start decade (both measured), S3 shared place/institution/life_event context, S4 shared
+    organisation history, S5 shared professional topic (generics excluded), S6 shared personal
+    topic (pursuit contexts count), S7 directed declared link, S8 status gradient (substrate
+    required), S9 intent complement (display only — included here in the returned score, excluded
+    from the floor by should_surface).
+    """
     fired = []
     ia, ib = set(a.get("industries", [])), set(b.get("industries", []))
     tpa = set(a.get("topics_professional", [])) - excluded
     tpb = set(b.get("topics_professional", [])) - excluded
-    tsa = set(a.get("topics_personal", [])) - excluded
-    tsb = set(b.get("topics_personal", [])) - excluded
-    ca = {ctx_key(c) for c in a.get("contexts", [])}
-    cb = {ctx_key(c) for c in b.get("contexts", [])}
+    tsa = (set(a.get("topics_personal", [])) | {v for _, v in ctx_keys(a, {"pursuit"})}) - excluded
+    tsb = (set(b.get("topics_personal", [])) | {v for _, v in ctx_keys(b, {"pursuit"})}) - excluded
 
-    if a.get("seniority_tier") == b.get("seniority_tier") and \
-       a.get("career_start_decade") == b.get("career_start_decade"):
+    if ia & ib:
         fired.append("S1")
-    same_industry = bool(ia & ib)
-    if same_industry:
+    tier_a, tier_b = a.get("seniority_tier"), b.get("seniority_tier")
+    dec_a, dec_b = a.get("career_start_decade"), b.get("career_start_decade")
+    if tier_a is not None and tier_a == tier_b and dec_a is not None and dec_a == dec_b:
         fired.append("S2")
-    # S2 and S3 are mutually exclusive: S3 requires NO industry overlap.
-    if not same_industry and (tpa & tpb):
+    life_types = {"place", "institution", "life_event"}
+    if ctx_keys(a, life_types) & ctx_keys(b, life_types):
         fired.append("S3")
-    if ca & cb:
+    if ctx_keys(a, {"organisation"}) & ctx_keys(b, {"organisation"}):
         fired.append("S4")
-    if any(l.get("to") == b.get("id") for l in a.get("declared_links", [])):
+    if tpa & tpb:
         fired.append("S5")
     if tsa & tsb:
         fired.append("S6")
-    if tpa & tpb:
+    if any(l.get("to") == b.get("id") for l in a.get("declared_links", [])):
         fired.append("S7")
-    if b.get("prominence_tier", 0) > a.get("prominence_tier", 0) and \
-       (set(fired) & SUBSTRATE):
+    pa, pb = a.get("prominence_tier"), b.get("prominence_tier")
+    if pa is not None and pb is not None and pb > pa and (set(fired) & SUBSTRATE):
         fired.append("S8")
+    if intent_class(a.get("intent"), b.get("intent")) == "complement":
+        fired.append("S9")
     return sum(W[s] for s in fired), sorted(fired)
 
 def expected_signals(node):
@@ -137,17 +169,15 @@ def check_sum(fid, node, where):
     tot = sum(s["weight"] for s in node.get("fired_signals", []))
     if node.get("score") != tot:
         err(fid, f"{where}: score {node.get('score')} != sum of fired weights {tot}")
-    if not (0 <= node.get("score", 0) <= CEILING):
-        err(fid, f"{where}: score {node.get('score')} outside [0,{CEILING}]")
+    if not (0 <= node.get("score", 0) <= MAX_DISPLAY):
+        err(fid, f"{where}: score {node.get('score')} outside [0,{MAX_DISPLAY}]")
 
 def check_exclusive(fid, node, where):
     global checks
     checks += 1
     sigs = set(expected_signals(node))
-    if {"S2", "S3"} <= sigs:
-        err(fid, f"{where}: S2 and S3 both fired; they are mutually exclusive")
     if "S8" in sigs and not (sigs & SUBSTRATE):
-        err(fid, f"{where}: S8 fired with no substrate signal (S2/S3/S5/S7)")
+        err(fid, f"{where}: S8 fired with no substrate signal (S3/S5/S6/S7)")
 
 def check_derived(fid, a, b, node, where, excluded=frozenset()):
     global checks
@@ -165,9 +195,13 @@ def by_id(fid, members, mid):
     err(fid, f"member {mid} not present in given.inputs")
     return None
 
-def should_surface(score_value, signal_ids, minimum=6, required=frozenset({"S3", "S5", "S7"})):
-    """The compact truth table replacing one-fixture-per-surfacing-clause."""
-    surfacing_score = score_value - (W["S8"] if "S8" in signal_ids else 0)
+def should_surface(score_value, signal_ids, minimum=6, required=frozenset({"S3", "S5", "S6", "S7"})):
+    """The compact truth table replacing one-fixture-per-surfacing-clause.
+
+    The floor reads S1–S7 only: S8 (display/tie-break) and S9 (intent, display only) are both
+    subtracted before the comparison.
+    """
+    surfacing_score = score_value - sum(W[s] for s in ("S8", "S9") if s in signal_ids)
     return surfacing_score >= minimum and bool(set(signal_ids) & set(required))
 
 def main():
@@ -181,6 +215,7 @@ def main():
         ("above-minimum-without-qualifying-substrate", 7, ["S1", "S2", "S4"], False),
         ("below-minimum-with-substrate", 5, ["S2", "S7"], False),
         ("s8-cannot-push-five-over-the-line", 6, ["S2", "S7", "S8"], False),
+        ("s9-never-reaches-the-floor", 8, ["S1", "S5", "S9"], False),
     ]
     for name, score_value, signal_ids, expected in surfacing_cases:
         checks += 1
@@ -255,7 +290,7 @@ def main():
                     # surfacing rule, re-derived
                     checks += 1
                     mn = cfg.get("surface_min_score", 6)
-                    req = set(cfg.get("surface_requires_any_of", ["S3", "S5", "S7"]))
+                    req = set(cfg.get("surface_requires_any_of", ["S3", "S5", "S6", "S7"]))
                     sigs_set = set(expected_signals(rm))
                     surf_score = rm["score"] - sum(s["weight"] for s in rm["fired_signals"]
                                                    if s["signal_id"] == "S8")

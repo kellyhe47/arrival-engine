@@ -22,8 +22,9 @@ from .config import store_path
 DIRECTED_LINK_TYPES = ("follows", "cited_in_own_writing", "co_mention", "repost")
 
 #: The only tables the running application may write. The profile half of the store is a frozen
-#: cache; the runtime adds presence and the cards it emitted, and nothing else.
-RUNTIME_WRITABLE = frozenset({"roster", "card"})
+#: cache; the runtime adds presence, the cards it emitted, and the outcomes hosts log against
+#: those cards (R-060) — and nothing else.
+RUNTIME_WRITABLE = frozenset({"roster", "card", "outcome"})
 
 
 class StoreUnavailable(RuntimeError):
@@ -94,6 +95,18 @@ class Store:
             " gate_failures, body, fact_ids, run_id) VALUES (?,?,?,?,?,?,?,?,?)",
             (card_id, subject_id, rendered_at, word_count, 1 if gates_passed else 0,
              json.dumps(gate_failures), body, json.dumps(fact_ids), run_id))
+        self.conn.commit()
+
+    def record_outcome(self, outcome_id: str, subject_id: str, matched_id: str | None,
+                       outcome: str, observation: str | None, logged_at: str,
+                       run_id: str) -> None:
+        """R-060. Append-only: an outcome is never updated, only added. The only proof an
+        introduction worked is what happened next, and this is where it lands."""
+        self._guard("outcome")
+        self.conn.execute(
+            "INSERT INTO outcome (id, subject_id, matched_id, outcome, observation, logged_at,"
+            " run_id) VALUES (?,?,?,?,?,?,?)",
+            (outcome_id, subject_id, matched_id, outcome, observation or None, logged_at, run_id))
         self.conn.commit()
 
     # ── reference data ────────────────────────────────────────────────────────
@@ -184,6 +197,9 @@ class Store:
             "career_start_decade": p["career_start_decade"],
             "prominence_tier": p["prominence_tier"],
             "prominence_basis": p["prominence_basis"],
+            # R-022: NULL reads as I0 — unknown, never "being social".
+            "intent": p["intent"] if "intent" in p.keys() else None,
+            "intent_basis": p["intent_basis"] if "intent_basis" in p.keys() else None,
             "industries": [r["industry_slug"] for r in self.conn.execute(
                 "SELECT industry_slug FROM person_industry WHERE person_id = ? ORDER BY 1",
                 (person_id,))],
@@ -221,7 +237,7 @@ class Store:
                 f"   AND e.type IN ({','.join('?' * len(DIRECTED_LINK_TYPES))})",
                 (person_id, other, *DIRECTED_LINK_TYPES)).fetchone()
             if row and row["d"]:
-                dates["S5"] = row["d"][:10]
+                dates["S7"] = row["d"][:10]        # declared link
             row = self.conn.execute(
                 "SELECT MAX(f.source_date) AS d FROM context ca"
                 " JOIN context cb ON cb.type = ca.type AND cb.value = ca.value"
@@ -229,15 +245,15 @@ class Store:
                 " WHERE ca.person_id = ? AND cb.person_id = ? AND ca.resolved = 1"
                 "   AND cb.resolved = 1", (person_id, other)).fetchone()
             if row and row["d"]:
-                dates["S4"] = row["d"][:10]
+                dates["S3"] = row["d"][:10]        # shared context
             row = self.conn.execute(
                 "SELECT MAX(f.source_date) AS d FROM person_topic pa"
                 " JOIN person_topic pb ON pb.topic_slug = pa.topic_slug"
                 " LEFT JOIN fact f ON f.id = pa.evidence_fact_id"
                 " WHERE pa.person_id = ? AND pb.person_id = ?", (person_id, other)).fetchone()
             if row and row["d"]:
-                dates["S7"] = row["d"][:10]
-                dates["S2"] = row["d"][:10]
+                dates["S5"] = row["d"][:10]        # shared topic
+                dates["S6"] = row["d"][:10]
             if dates:
                 out[other] = dates
         return out
@@ -265,11 +281,24 @@ class Store:
             " ORDER BY arrived_at, r.person_id")]
 
     # ── facts and coverage ────────────────────────────────────────────────────
+    def _register_filter(self) -> str:
+        """SQL guard excluding `operational` collection notes from anything card-bound.
+
+        Those rows exist for the engine — measured absences, identity checks, follow-graph
+        methodology — and a member must never read one over the host's shoulder. An older store
+        without the column has no such rows to hide.
+        """
+        cols = {r["name"] for r in self.conn.execute("PRAGMA table_info(fact)")}
+        return (" AND COALESCE(register, 'member') <> 'operational'"
+                if "register" in cols else "")
+
     def candidate_facts(self, person_id: str) -> list[dict]:
-        """Live facts for a subject, pre-gate. `select_renderable_facts` applies the store's view."""
+        """Live MEMBER facts for a subject, pre-gate. `select_renderable_facts` applies the
+        store's view; operational collection notes never enter the pool."""
         rows = self.conn.execute(
             "SELECT * FROM fact WHERE subject_id = ? AND superseded_by IS NULL"
-            " ORDER BY COALESCE(source_date, observed_at) DESC, id", (person_id,))
+            + self._register_filter()
+            + " ORDER BY COALESCE(source_date, observed_at) DESC, id", (person_id,))
         out = []
         for r in rows:
             d = dict(r)
@@ -308,6 +337,7 @@ class Store:
         rows = self.conn.execute(
             f"SELECT id, text, source_date, source_url, {rec}, {rer} FROM fact"
             f" WHERE subject_id = ? AND superseded_by IS NULL AND source_date IS NOT NULL"
+            f"{self._register_filter()}"
             f" ORDER BY source_date DESC, id", (person_id,))
         return [
             {"item_id": r["id"], "text": r["text"], "published_at": r["source_date"],

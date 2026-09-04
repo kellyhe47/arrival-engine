@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Arrival</title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=EB+Garamond:ital,wght@0,400;0,500;1,400&family=Inter:wght@400;500&display=swap">
+<link rel="stylesheet" href="../static/arena.css?v=4">
+</head><body class="has-rail">
+<div class="banner"><div class="inner">
+  <a class="crumb" href="room.html">&larr; Room</a>
+  <p class="eyebrow">Long-Term Stock Exchange · Founder</p>
+  <h1>Eric Ries</h1>
+  <p>Built the lean-startup playbook, then founded a stock exchange to argue the opposite timescale.</p>
+</div></div>
+<main class="wrap">
+  <section class="blk">
+    <p class="lbl">Who they are</p>
+    <ul class="bullets">
+      <li>Eric Ries, founder of the Long-Term Stock Exchange.</li>
+      <li>The whole thesis in one clause: <span class="borrowed">&ldquo;the fiduciary duty to the long term.&rdquo;</span></li>
+      <li>The door said author — true, and the smaller half of it.</li>
+    </ul>
+  </section>
+  <section class="blk">
+    <p class="lbl">Who's here</p>
+    <ul class="bullets">
+      <li><b style="font-weight:500">Josh Kopelman</b> — third parties cite the two of them together in the same governance argument.</li>
+      <li>Neither has written about the other, so the connection is real but not mutual yet.</li>
+      <li>Sarah Tavel is also present; nothing is measured between them.</li>
+    </ul>
+  </section>
+  <section class="blk" id="sayblock">
+    <p class="lbl">Say this</p>
+    <p class="aloud">Ask him what the exchange has changed about how he thinks about shipping fast. He has had six years to answer it and the answer is not the one from the book.</p>
+  </section>
+
+  <details class="brief">
+    <summary><span>The rest of the brief</span><span class="arw">&rarr;</span></summary>
+    <div class="inner">
+      <section class="blk">
+        <p class="lbl">The match</p>
+        <p class="match"><span class="who">Josh Kopelman</span>
+       <a class="score" href="why.html">7<span class="of">/16 · why</span></a></p>
+      </section>
+      <section class="blk">
+        <p class="lbl">Sources</p>
+        <p class="ledger"><span class="for">Who's here</span><span class="chip"><span class="host">firstround.com</span> · 2019-05-22</span></p>
+      </section>
+      <section class="blk">
+        <p class="lbl">Recent activity</p>
+        <p>Two of the three expected sources were read and neither carried a first-person item after the first of June, 2021. The third could not be read at all, so nothing here is a claim about what he has or has not published since.</p>
+      <div class="chips">
+        <span class="chip"><span class="host">ltse.com</span> · 2021-06-01</span>
+      </div>
+      <div class="coverage">
+        <span class="count">Reached 2 of 3 sources</span>
+        <p>No claim is made about silence in either direction. Absence of evidence from a source
+           that could not be read is not evidence of absence.</p>
+        <p class="srcs">Unread: <span class="out">wayback</span> · http_503</p>
+      </div>
+      </section>
+      <section class="blk">
+        <p class="lbl">Personal detail</p>
+        <p>He wrote the standard playbook for shipping before you are ready and then spent a decade building the slowest possible institution — a stock exchange — on the argument that the two are the same discipline applied at different timescales. He says the second one is harder.</p>
+      <div class="chips">
+        <span class="chip"><span class="host">ltse.com</span> · 2020-09-15</span>
+      </div>
+
+      </section>
+    </div>
+  </details>
+
+  <section class="fb">
+    <p class="lbl">What did you observe about the interaction?</p>
+    <p class="hint">The only proof the introduction worked is what happened next. How long did they
+       talk, and did it go anywhere — a nod on the way past, or still together at closing.</p>
+    <textarea id="fbtext-unknown" aria-label="What you observed" placeholder="Twenty minutes by the bar, then he walked her over to his own table…"></textarea>
+    <div class="tags" role="group" aria-label="What you observed">
+      <button class="tag" type="button" aria-pressed="false">Never introduced</button>
+      <button class="tag" type="button" aria-pressed="false">Brief hello</button>
+      <button class="tag" type="button" aria-pressed="false">Talked a while</button>
+      <button class="tag" type="button" aria-pressed="false">Together all night</button>
+      <button class="tag" type="button" aria-pressed="false">Swapped details</button>
+    </div>
+    <div class="send">
+      <button class="btn" type="button" id="fbsend-unknown">Log the outcome</button>
+      <p class="sent" id="fbsent-unknown" hidden>Logged against this introduction.</p>
+    </div>
+  </section>
+  <script>
+    (function () {
+      var box = document.getElementById('fbtext-unknown');
+      var btn = document.getElementById('fbsend-unknown');
+      var ok = document.getElementById('fbsent-unknown');
+      var tags = document.querySelectorAll('.fb .tag');
+      tags.forEach(function (t) {
+        t.addEventListener('click', function () {
+          var on = t.getAttribute('aria-pressed') === 'true';
+          t.setAttribute('aria-pressed', on ? 'false' : 'true');
+        });
+      });
+      btn.addEventListener('click', function () {
+        if (!box.value.trim() && !document.querySelector('.fb .tag[aria-pressed="true"]')) {
+          box.focus(); return;
+        }
+        ok.hidden = false;
+        btn.disabled = true;
+        btn.style.opacity = 0.5;
+      });
+    })();
+  </script>
+</main>
+<aside class="sayrail" id="sayrail" aria-hidden="true">
+  <div class="inner"><p class="lbl">Say this</p><p class="line">Ask him what the exchange has changed about how he thinks about shipping fast.</p></div>
+</aside>
+<script>
+(function(){var r=document.getElementById('sayrail');var real=document.getElementById('sayblock');
+if(!r||!real||!('IntersectionObserver' in window))return;
+new IntersectionObserver(function(e){r.classList.toggle('gone',e[0].isIntersecting);},{threshold:0.4}).observe(real);
+r.addEventListener('click',function(){real.scrollIntoView?window.scrollTo({top:real.offsetTop-20,behavior:'smooth'}):0;});})();
+</script>
+
+</body></html>

@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %}How the score works{% endblock %}
+{% block banner %}
+<div class="banner"><div class="inner">
+  <p class="eyebrow">Reference</p>
+  <h1>How the score works</h1>
+  <p>Nine signals, one intent per member, six classes. Ceiling {{ ceiling }}, floor 6.</p>
+</div></div>
+{% endblock %}
+{% block content %}
+
+{# R-043: the staff reference screen — the signal table, the intent taxonomy, the intent classes
+   and the order of operations, verbatim from the PRD. Per-pair questions belong on
+   Why-this-score; this page is the rulebook. #}
+<section class="blk">
+  <p class="lbl">The signals</p>
+  <table class="ref">
+    {% for s in signals %}
+    <tr><td><span class="sig">{{ s.id }}</span></td><td>{{ s.text }}</td></tr>
+    {% endfor %}
+  </table>
+</section>
+
+<section class="blk">
+  <p class="lbl">Intent</p>
+  <table class="ref">
+    {% for i in intents %}
+    <tr><td><span class="sig">{{ i.id }}</span></td><td>{{ i.text }}</td></tr>
+    {% endfor %}
+  </table>
+</section>
+
+<section class="blk">
+  <p class="lbl">Intent classes</p>
+  <table class="ref">
+    {% for c in classes %}
+    <tr><td><span class="sig">{{ c.id }}</span></td><td>{{ c.text }}</td></tr>
+    {% endfor %}
+  </table>
+</section>
+
+<section class="blk">
+  <p class="lbl">Order of operations</p>
+  <table class="ref">
+    {% for s in steps %}
+    <tr><td><span class="sig">{{ s.id }}</span></td><td>{{ s.text }}</td></tr>
+    {% endfor %}
+  </table>
+</section>
+
+<p><a class="btn" href="{{ base }}/">Room</a></p>
+{% endblock %}

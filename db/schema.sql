@@ -33,6 +33,10 @@ CREATE TABLE person (
   career_start_decade TEXT,            -- '1980s' … '2010s'
   prominence_tier     INTEGER CHECK (prominence_tier BETWEEN 1 AND 4),
   prominence_basis    TEXT,            -- the measured figure the tier was derived from. See vocabulary.sql.
+  -- PRD R-022 (2026-09-04 re-baseline): one measured intent for the evening, I1..I8, or NULL,
+  -- which the engine reads as I0 (unknown — coverage incomplete, never read as I8).
+  intent              TEXT CHECK (intent IN ('I1','I2','I3','I4','I5','I6','I7','I8')),
+  intent_basis        TEXT,            -- the evidence the intent was read from. Never assumed.
   created_run         TEXT NOT NULL REFERENCES run(id)
 );
 
@@ -214,6 +218,21 @@ CREATE TABLE card (
   gate_failures  TEXT,   -- JSON
   body           TEXT,
   fact_ids       TEXT,   -- JSON array: exactly which facts were rendered
+  run_id         TEXT NOT NULL REFERENCES run(id)
+);
+
+-- PRD R-060 (2026-09-04 re-baseline): the card closes the loop. Append-only, one row per logged
+-- observation, keyed to the introduction it grades — the only proof an introduction worked is
+-- what happened next.
+CREATE TABLE outcome (
+  id             TEXT PRIMARY KEY,
+  subject_id     TEXT NOT NULL REFERENCES person(id),     -- the arriving member
+  matched_id     TEXT REFERENCES person(id),              -- who the card named, if anyone
+  outcome        TEXT NOT NULL CHECK (outcome IN
+                   ('never_introduced','brief_hello','talked_a_while',
+                    'together_all_night','swapped_details')),
+  observation    TEXT,                                    -- the host's own words, optional
+  logged_at      TEXT NOT NULL,
   run_id         TEXT NOT NULL REFERENCES run(id)
 );
 

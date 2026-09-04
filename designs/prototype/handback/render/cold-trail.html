@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Arrival</title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=EB+Garamond:ital,wght@0,400;0,500;1,400&family=Inter:wght@400;500&display=swap">
+<link rel="stylesheet" href="../static/arena.css?v=4">
+</head><body class="has-rail">
+<div class="banner"><div class="inner">
+  <a class="crumb" href="room.html">&larr; Room</a>
+  <p class="eyebrow">First Round Capital · Partner</p>
+  <h1>Josh Kopelman</h1>
+  <p>Sold Half.com to eBay, then built First Round into the seed firm other seed firms copy.</p>
+</div></div>
+<main class="wrap">
+  <section class="blk">
+    <p class="lbl">Who they are</p>
+    <ul class="bullets">
+      <li>Josh Kopelman, Partner at First Round Capital.</li>
+      <li>His firm bio still carries a second-place watermelon-eating ribbon from 2011 with his own verdict attached: <span class="borrowed">&ldquo;I was robbed.&rdquo;</span></li>
+      <li>The door said Half.com, which he sold in 2000.</li>
+    </ul>
+  </section>
+  <section class="blk">
+    <p class="lbl">Who's here</p>
+    <ul class="bullets">
+      <li><b style="font-weight:500">Fred Wilson</b> — the strongest measured pair in the room, and the follow runs one way.</li>
+      <li>Wilson reads Kopelman in public and cites him; no reverse edge was found across two passes.</li>
+    </ul>
+  </section>
+  <section class="blk" id="sayblock">
+    <p class="lbl">Say this</p>
+    <p class="aloud">Ask him what happened to the urinal screens in Penn Station. He had to explain the medium to Meg Whitman and he tells it himself.</p>
+  </section>
+
+  <details class="brief">
+    <summary><span>The rest of the brief</span><span class="arw">&rarr;</span></summary>
+    <div class="inner">
+      <section class="blk">
+        <p class="lbl">The match</p>
+        <p class="match"><span class="who">Fred Wilson</span>
+       <a class="score" href="why.html">9<span class="of">/16 · why</span></a></p>
+      </section>
+      <section class="blk">
+        <p class="lbl">Sources</p>
+        <p class="ledger"><span class="for">Who's here</span><span class="chip"><span class="host">avc.com</span> · 2013-10-04</span></p>
+      </section>
+      <section class="blk">
+        <p class="lbl">Recent activity</p>
+        <p>Every expected source was reached and the newest first-person item is a Redeye post from the twelfth of November, 2014 — a gap of four thousand three hundred and thirteen days. The corpus is complete at 212 posts and it simply stops. This is a real finding, not a retrieval artifact, and nothing here is current.</p>
+      <div class="chips">
+        <span class="chip"><span class="host">redeye.firstround.com</span> · 2014-11-12</span>
+      </div>
+
+      </section>
+      <section class="blk">
+        <p class="lbl">Personal detail</p>
+        <p>He published the verbatim 2005 cold email that opened with an offer to slide a check under a door, on the day the company it funded announced a hundred-and-nineteen-million-dollar sale. He titled the post by counting the days since: two thousand nine hundred and four.</p>
+      <div class="chips">
+        <span class="chip"><span class="host">redeye.firstround.com</span> · 2013-10-01</span>
+      </div>
+      <p class="meta">1 withheld: family. Class and count only — the text of a withheld fact never reaches this page.</p>
+      </section>
+    </div>
+  </details>
+
+  <section class="fb">
+    <p class="lbl">What did you observe about the interaction?</p>
+    <p class="hint">The only proof the introduction worked is what happened next. How long did they
+       talk, and did it go anywhere — a nod on the way past, or still together at closing.</p>
+    <textarea id="fbtext-cold" aria-label="What you observed" placeholder="Twenty minutes by the bar, then he walked her over to his own table…"></textarea>
+    <div class="tags" role="group" aria-label="What you observed">
+      <button class="tag" type="button" aria-pressed="false">Never introduced</button>
+      <button class="tag" type="button" aria-pressed="false">Brief hello</button>
+      <button class="tag" type="button" aria-pressed="false">Talked a while</button>
+      <button class="tag" type="button" aria-pressed="false">Together all night</button>
+      <button class="tag" type="button" aria-pressed="false">Swapped details</button>
+    </div>
+    <div class="send">
+      <button class="btn" type="button" id="fbsend-cold">Log the outcome</button>
+      <p class="sent" id="fbsent-cold" hidden>Logged against this introduction.</p>
+    </div>
+  </section>
+  <script>
+    (function () {
+      var box = document.getElementById('fbtext-cold');
+      var btn = document.getElementById('fbsend-cold');
+      var ok = document.getElementById('fbsent-cold');
+      var tags = document.querySelectorAll('.fb .tag');
+      tags.forEach(function (t) {
+        t.addEventListener('click', function () {
+          var on = t.getAttribute('aria-pressed') === 'true';
+          t.setAttribute('aria-pressed', on ? 'false' : 'true');
+        });
+      });
+      btn.addEventListener('click', function () {
+        if (!box.value.trim() && !document.querySelector('.fb .tag[aria-pressed="true"]')) {
+          box.focus(); return;
+        }
+        ok.hidden = false;
+        btn.disabled = true;
+        btn.style.opacity = 0.5;
+      });
+    })();
+  </script>
+</main>
+<aside class="sayrail" id="sayrail" aria-hidden="true">
+  <div class="inner"><p class="lbl">Say this</p><p class="line">Ask him what happened to the urinal screens in Penn Station.</p></div>
+</aside>
+<script>
+(function(){var r=document.getElementById('sayrail');var real=document.getElementById('sayblock');
+if(!r||!real||!('IntersectionObserver' in window))return;
+new IntersectionObserver(function(e){r.classList.toggle('gone',e[0].isIntersecting);},{threshold:0.4}).observe(real);
+r.addEventListener('click',function(){real.scrollIntoView?window.scrollTo({top:real.offsetTop-20,behavior:'smooth'}):0;});})();
+</script>
+
+</body></html>

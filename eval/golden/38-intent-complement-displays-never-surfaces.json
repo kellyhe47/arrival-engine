@@ -1,0 +1,134 @@
+{
+  "schema_version": 1,
+  "id": "G-038",
+  "name": "intent-complement-displays-never-surfaces",
+  "why": "S9 is the intent signal: B has done what A is trying to do. A raising founder (I2) meeting a capital deployer (I1) is a complement, so S9 fires and adds 3 to the DISPLAYED score — but the floor reads S1-S7 only. This pair sits at floor score 5 (S1 + S5), and the S9-inflated display of 8 must not push it over the surfacing line: intent sharpens a real match, it never manufactures one. *** SYNTHETIC, and labelled as such: no member in db/roster.sql carries a measured intent yet, so the two records here are fixture-supplied. Re-ground it when ingest first measures an intent. ***",
+  "covers": [
+    "B-025"
+  ],
+  "case_type": "boundary",
+  "traces_to": [
+    "PRD-R-017",
+    "PRD-R-020",
+    "PRD-R-022"
+  ],
+  "defends_against": "An implementation that adds S9 into the score the floor reads, so a below-floor pair gets surfaced because the intents happen to complement.",
+  "time_sensitive": false,
+  "given": {
+    "inputs": {
+      "arriving_member": {
+        "id": "m_syn_ada",
+        "intent": "I2",
+        "seniority_tier": "founder",
+        "career_start_decade": "2010s",
+        "prominence_tier": 2,
+        "industries": [
+          "climate-tech"
+        ],
+        "topics_professional": [
+          "grid-storage"
+        ],
+        "topics_personal": [],
+        "contexts": [],
+        "declared_links": []
+      },
+      "present_members": [
+        {
+          "id": "m_syn_bell",
+          "intent": "I1",
+          "seniority_tier": "principal",
+          "career_start_decade": "1990s",
+          "prominence_tier": 2,
+          "industries": [
+            "climate-tech"
+          ],
+          "topics_professional": [
+            "grid-storage"
+          ],
+          "topics_personal": [],
+          "contexts": [],
+          "declared_links": []
+        }
+      ]
+    },
+    "preexisting_state": {},
+    "configuration": {
+      "bucket_weights": {
+        "SMALL": 1,
+        "MID": 2,
+        "LARGE": 3
+      },
+      "s8_requires_substrate": true,
+      "surface_min_score": 6,
+      "surface_requires_any_of": [
+        "S3",
+        "S5",
+        "S6",
+        "S7"
+      ],
+      "vocabulary": {
+        "grid-storage": {
+          "discriminating": true
+        }
+      }
+    },
+    "clock": {}
+  },
+  "when": {
+    "operation": "rank_room",
+    "input_refs": [
+      "m_syn_ada"
+    ]
+  },
+  "expect": {
+    "exact": {
+      "result": {
+        "excluded_topics": [],
+        "ranked_matches": [
+          {
+            "member_id": "m_syn_bell",
+            "rank": 1,
+            "score": 8,
+            "intent_class": "complement",
+            "surfaced": false,
+            "fired_signals": [
+              {
+                "signal_id": "S1",
+                "weight": 2
+              },
+              {
+                "signal_id": "S5",
+                "weight": 3
+              },
+              {
+                "signal_id": "S9",
+                "weight": 3
+              }
+            ]
+          }
+        ],
+        "surfaced_count": 0,
+        "room_block_kind": "honest_absence"
+      },
+      "state_changes": [],
+      "emitted_events": [],
+      "external_calls": []
+    },
+    "properties": [
+      {
+        "name": "s9-inflates-the-display-but-not-the-floor",
+        "operator": "gte",
+        "left": "result.ranked_matches.0.score",
+        "expected": 8,
+        "reason": "PRD-R-022a.5: the complement class adds S9's 3 to the displayed score, so the host sees 8, not 5."
+      },
+      {
+        "name": "floor-decision-unchanged-by-s9",
+        "operator": "eq",
+        "left": "result.ranked_matches.0.surfaced",
+        "expected": false,
+        "reason": "PRD-R-020: the floor is evaluated on S1-S7 only. This pair's floor score is 5, below 6, so nobody is named no matter how well the intents fit."
+      }
+    ]
+  }
+}

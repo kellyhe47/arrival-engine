@@ -2,7 +2,7 @@
   "schema_version": 1,
   "id": "G-017",
   "name": "tie-break-is-deterministic",
-  "why": "Two members can tie on score for genuinely different reasons. The host gets one name first, so the order must be defined by rule rather than by dictionary order. RE-GROUNDED 2026-09-03 on the only equal-score tie that exists in the audited graph: Hunter Walk scores 9 to both Fred Wilson and Brad Feld, on identical signals and identical LARGE counts, so tier 1 cannot separate them and the rule falls through to EVIDENCE RECENCY — a tier that had zero coverage before. Walk->Feld's most recent evidence is Feld's 2014-05-27 post recording that Foundry invested in Homebrew; Walk->Wilson's is Walk's 2012-03-04 post about the Uncensored anthology. Feld is newer, so Feld ranks first. Every attribute here matches db/roster.sql and every edge and context is audit-backed (AUD-06 E9, E13b).",
+  "why": "Two members can tie on score for genuinely different reasons. The host gets one name first, so the order must be defined by rule rather than by dictionary order. RE-GROUNDED 2026-09-03 on the only equal-score tie that exists in the audited graph: Hunter Walk scores 9 to both Fred Wilson and Brad Feld (S1 same industry, S3 the shared Uncensored anthology, S7 the declared citation, plus display-only S8), on identical signals and identical LARGE counts, so tier 1 cannot separate them and the rule falls through to EVIDENCE RECENCY — a tier that had zero coverage before. Walk->Feld's most recent evidence is Feld's 2014-05-27 post recording that Foundry invested in Homebrew; Walk->Wilson's is Walk's 2012-03-04 post about the Uncensored anthology. Feld is newer, so Feld ranks first. Every attribute here matches db/roster.sql and every edge and context is audit-backed (AUD-06 E9, E13b).",
   "covers": [
     "B-011"
   ],
@@ -106,15 +106,15 @@
       ],
       "signal_evidence": {
         "m_wilson": {
-          "S2": "2012-03-04",
-          "S4": "2012-03-04",
-          "S5": "2012-03-04",
+          "S1": "2012-03-04",
+          "S3": "2012-03-04",
+          "S7": "2012-03-04",
           "S8": "2026-09-03"
         },
         "m_feld": {
-          "S2": "2014-05-27",
-          "S4": "2012-03-04",
-          "S5": "2012-03-04",
+          "S1": "2014-05-27",
+          "S3": "2012-03-04",
+          "S7": "2012-03-04",
           "S8": "2026-09-03"
         }
       }
@@ -131,6 +131,7 @@
       "surface_requires_any_of": [
         "S3",
         "S5",
+        "S6",
         "S7"
       ],
       "tie_break": [
@@ -193,15 +194,15 @@
             "surfaced": true,
             "fired_signals": [
               {
-                "signal_id": "S2",
+                "signal_id": "S1",
                 "weight": 2
               },
               {
-                "signal_id": "S4",
+                "signal_id": "S3",
                 "weight": 3
               },
               {
-                "signal_id": "S5",
+                "signal_id": "S7",
                 "weight": 3
               },
               {
@@ -217,15 +218,15 @@
             "surfaced": true,
             "fired_signals": [
               {
-                "signal_id": "S2",
+                "signal_id": "S1",
                 "weight": 2
               },
               {
-                "signal_id": "S4",
+                "signal_id": "S3",
                 "weight": 3
               },
               {
-                "signal_id": "S5",
+                "signal_id": "S7",
                 "weight": 3
               },
               {

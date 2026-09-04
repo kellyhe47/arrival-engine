@@ -75,7 +75,7 @@
     },
     {
       "id": "B-003",
-      "statement": "The status-gradient signal S8 cannot fire unless a substrate signal (S2, S3, S5 or S7) has already fired; prominence breaks ties but never creates a match.",
+      "statement": "The status-gradient signal S8 cannot fire unless a substrate signal (S3, S5, S6 or S7) has already fired; prominence breaks ties but never creates a match.",
       "traces_to": [
         "AUD-LINE-16",
         "RUBRIC-4"
@@ -86,7 +86,7 @@
     },
     {
       "id": "B-004",
-      "statement": "A match is surfaced only at score >= 6 with at least one of S3/S5/S7 fired; otherwise the Room block reports no strong match rather than forcing one.",
+      "statement": "A match is surfaced only at a floor score >= 6 over S1-S7 (S8 and S9 excluded) with at least one of S3/S5/S6/S7 fired; otherwise the Room block reports no strong match rather than forcing one.",
       "traces_to": [
         "RUBRIC-3",
         "RUBRIC-4"
@@ -250,7 +250,7 @@
     },
     {
       "id": "B-016",
-      "statement": "A topic whose holder share over the member base is >= 0.40 is non-discriminating and excluded from S3/S6/S7, room-independent.",
+      "statement": "A topic whose holder share over the member base is >= 0.40 is non-discriminating and excluded from the topic signals S5/S6, room-independent.",
       "traces_to": [
         "AUD-EDGES-GENERIC",
         "RUBRIC-3"
@@ -301,6 +301,16 @@
       ],
       "required_case_types": [
         "happy"
+      ]
+    },
+    {
+      "id": "B-025",
+      "statement": "The intent-complement signal S9 fires only when the pair's intent class is complement; it is added to the displayed score and fired signals but never to the surfacing floor.",
+      "traces_to": [
+        "PRD-R-022"
+      ],
+      "required_case_types": [
+        "boundary"
       ]
     }
   ]

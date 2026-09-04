@@ -41,7 +41,7 @@ BLOCK_TITLES = {
     "Now": "Recent activity",
     "Room": "Who's here",
     "Notice": "Personal detail",
-    "Say": "Your opening line",
+    "Say": "Say this",
 }
 
 
@@ -158,7 +158,8 @@ STATE_COPY = {
         "Unknown coverage",
         "A source could not be read on the last run. No claim is made about silence in either "
         "direction."),
-    "empty_room": ("Empty room", "First one here. Not an error."),
+    "empty_room": ("First arrival", "First one here. Not an error — the first person through "
+                                    "the door still gets a full card."),
     "ingesting": ("Ingesting", "A live GREEN re-run is in progress. Unavailable sources are named."),
     "withheld": ("Withheld", "A hard gate failed. This degrades to a greeting, never to a guess."),
     "ambiguous": ("Ambiguous", "More than one corroborated candidate. The host picks; the engine "
@@ -245,22 +246,52 @@ def card_state(digest: dict, *, present_count: int, renderable_count: int) -> st
 
 
 def why_view(arriving: dict, other: dict, *, forward, reverse, excluded_topics, names) -> dict:
-    """R-046. Fired signals with weights, the ones that did NOT fire and why, the excluded generic
-    topics with their share of the stored member base, and the reverse-direction score.
+    """R-046. Four sections for one directed pair: fired signals with weights and evidence,
+    signals that did NOT fire with the one-line reason each, the excluded generic topics with
+    their holder shares, and the reverse-direction score with its own fired rows.
 
     This is the whole answer to "expose the reasoning", and it is one tap from Room — never on the
     card, where it would turn a host into a scorer (DEC-2).
     """
+    from .scoring import CEILING
     return {
         "from_name": names.get(arriving["id"], arriving["id"]),
         "to_name": names.get(other["id"], other["id"]),
-        "score": forward.score,
-        "score_excluding_s8": forward.score_excluding_s8(),
-        "ceiling": 16,
-        "fired": [s.as_dict() for s in sorted(forward.fired, key=lambda s: s.signal_id)],
+        "score": forward.display_score(),
+        "score_excluding_s8": forward.floor_score(),
+        "ceiling": CEILING,
+        "intent_class": forward.intent_class,
+        "intent_line": _intent_line(forward, arriving, other, names),
+        "fired": [s.as_dict() for s in sorted(forward.display_fired(),
+                                              key=lambda s: s.signal_id)],
         "not_fired": sorted(forward.not_fired, key=lambda s: s["signal_id"]),
-        "reverse_score": reverse.score,
-        "reverse_fired": [s.as_dict() for s in sorted(reverse.fired, key=lambda s: s.signal_id)],
+        "reverse_score": reverse.display_score(),
+        "reverse_fired": [s.as_dict() for s in sorted(reverse.display_fired(),
+                                                      key=lambda s: s.signal_id)],
         "excluded_topics": excluded_topics,
         "large_count": forward.large_count,
     }
+
+
+def _intent_line(forward, arriving: dict, other: dict, names: dict) -> str:
+    """One sentence naming the pair's intent class in the host's words."""
+    from .scoring import INTENTS
+    a = arriving.get("intent") or "I0"
+    b = other.get("intent") or "I0"
+    a_name = names.get(arriving["id"], arriving["id"])
+    b_name = names.get(other["id"], other["id"])
+    klass = forward.intent_class
+    if klass == "complement":
+        return (f"Complement — {b_name} has done what {a_name} is trying to do "
+                f"({INTENTS.get(b, b)} meets {INTENTS.get(a, a)}). S9 fires.")
+    if klass == "parallel":
+        return f"Parallel — both are {INTENTS.get(a, a)}. Same pursuit, so S9 stays quiet."
+    if klass == "open":
+        return "Open — at least one side is here to be social. Ranked on score alone."
+    if klass == "unknown":
+        return ("Unknown — intent could not be measured on at least one side, and unknown is "
+                "never read as social.")
+    if klass == "guarded":
+        return ("Guarded — the interest runs one way. Ranked last, and the card says so out "
+                "loud rather than hiding the pair.")
+    return f"Neutral — {INTENTS.get(a, a)} against {INTENTS.get(b, b)}. No intent relation."

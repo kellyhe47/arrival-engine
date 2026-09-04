@@ -70,6 +70,7 @@
       "surface_requires_any_of": [
         "S3",
         "S5",
+        "S6",
         "S7"
       ]
     },

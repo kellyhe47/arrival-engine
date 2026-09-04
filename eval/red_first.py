@@ -53,7 +53,7 @@ def _s8_without_substrate(a, b, **kw):
     return scoring.score_pair(a, b, **kw)
 
 
-def _strict_floor(pair, *, minimum=6, requires_any_of=("S3", "S5", "S7")):
+def _strict_floor(pair, *, minimum=6, requires_any_of=("S3", "S5", "S6", "S7")):
     """B-004: a strict greater-than, so a score of exactly 6 never surfaces."""
     return pair.score_excluding_s8() > minimum and bool(pair.signal_ids & set(requires_any_of))
 
@@ -63,6 +63,13 @@ def _advisory_band(narration, *, settings, facts=None, scored_pair=None, degrade
     wide = settings.__class__(**{**settings.__dict__, "word_band": (0, 10_000)})
     return card.render_card(narration, settings=wide, facts=facts, scored_pair=scored_pair,
                             degraded=degraded)
+
+
+def _floor_reads_s9(pair, *, minimum=6, requires_any_of=("S3", "S5", "S6", "S7")):
+    """B-025: let the display-only intent signal S9 leak into the surfacing floor."""
+    s9 = pair.s9.weight if pair.s9 else 0
+    return (pair.score_excluding_s8() + s9 >= minimum
+            and bool(pair.signal_ids & set(requires_any_of)))
 
 
 def _publication_date(item):
@@ -231,6 +238,8 @@ MUTATIONS = {
     "G-034": ("third_party_open content is allowed to render",
               lambda: patched((__import__("arena.operations", fromlist=["x"]), "_select",
                                _trust_everything))),
+    "G-038": ("the surfacing floor reads the display-only intent signal S9",
+              lambda: patched((ranking, "surfaces", _floor_reads_s9))),
     "G-037": ("tie-break tier 1 prefers the FEWEST large signals",
               lambda: patched((ranking, "_compare", _large_count_inverted))),
 }

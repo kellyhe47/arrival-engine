@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Room</title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=EB+Garamond:ital,wght@0,400;0,500;1,400&family=Inter:wght@400;500&display=swap">
+<link rel="stylesheet" href="../static/arena.css?v=4">
+</head><body>
+<div class="banner"><div class="inner">
+  <div class="stamp"><p class="eyebrow">Arena Hall · Austin, Texas</p></div>
+  <h1>In the room</h1>
+  <p>0 present. Ordered by arrival.</p>
+</div></div>
+<main class="wrap">
+  <section class="blk">
+    <p class="lbl">Present</p>
+    <p>Nobody here yet. The first arrival gets an honest card, not an error.</p>
+  </section>
+  <section class="blk">
+    <p class="lbl">Simulate arrival</p>
+    <div class="stack">
+      <select id="arriving" aria-label="Member">
+        <option value="empty-room.html">Brad Feld</option>
+        <option value="empty-room.html">Josh Kopelman</option>
+      </select>
+      <div><button class="btn" type="button" id="fire">Fire the webhook</button></div>
+    </div>
+    <script>
+      document.getElementById('fire').addEventListener('click', function () {
+        location.href = document.getElementById('arriving').value + '?b=' + Date.now();
+      });
+    </script>
+  </section>
+
+
+  <section class="blk">
+    <p class="lbl">Table seating</p>
+    <p>Nobody to seat yet.</p>
+  </section>
+
+  <div class="pagefoot">
+    <a href="scoring.html">How the score works</a>
+  </div>
+</main>
+
+</body></html>

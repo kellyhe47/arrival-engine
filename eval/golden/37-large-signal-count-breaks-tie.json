@@ -98,6 +98,7 @@
       "surface_requires_any_of": [
         "S3",
         "S5",
+        "S6",
         "S7"
       ],
       "tie_break": [
@@ -151,11 +152,11 @@
             "surfaced": true,
             "fired_signals": [
               {
-                "signal_id": "S4",
+                "signal_id": "S3",
                 "weight": 3
               },
               {
-                "signal_id": "S5",
+                "signal_id": "S7",
                 "weight": 3
               },
               {
@@ -179,7 +180,7 @@
                 "weight": 2
               },
               {
-                "signal_id": "S7",
+                "signal_id": "S5",
                 "weight": 3
               }
             ]
@@ -198,7 +199,7 @@
         "operator": "eq",
         "left": "result.ranked_matches.0.member_id",
         "expected": "m_ries",
-        "reason": "DEC-5: equal scores rank by count of LARGE signals (2) before any other consideration (1)."
+        "reason": "DEC-5: equal scores rank by count of LARGE signals (2: S3 and S7) before any other consideration (1: S5)."
       }
     ]
   }

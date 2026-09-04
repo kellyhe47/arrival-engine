@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ingesting</title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=EB+Garamond:ital,wght@0,400;0,500;1,400&family=Inter:wght@400;500&display=swap">
+<link rel="stylesheet" href="../static/arena.css?v=4">
+</head><body>
+<div class="banner"><div class="inner">
+  <a class="crumb" href="room.html">&larr; Room</a>
+  <div class="stamp"><p class="eyebrow">Ingesting</p></div>
+  <h1>Live re-run</h1>
+  <p>GREEN adapters only. Unavailable sources are named, not hidden.</p>
+</div></div>
+<main class="wrap">
+  <section class="blk">
+    <p class="lbl">Coverage</p>
+    <p class="match"><span class="who">Reached</span><span class="figure">3 of 6</span></p>
+    <p class="match miss"><span class="who">wayback — http_503</span><span class="figure">GREEN</span></p>
+    <p class="match miss"><span class="who">open_library — connection refused</span><span class="figure">GREEN</span></p>
+    <p class="match miss"><span class="who">instagram — not deployed, session adapter absent from registry</span><span class="figure">SESSION</span></p>
+  </section>
+  <section class="blk">
+    <p class="lbl">Per adapter</p>
+    <div class="adapter">
+      <span class="src">personal_blog_rss</span>
+      <span class="st">GREEN · ok · 3 facts</span>
+      <p class="rsn">Reached, nothing withheld.</p>
+    </div>
+    <div class="adapter">
+      <span class="src">feedburner</span>
+      <span class="st">GREEN · ok · 0 facts</span>
+      <p class="rsn">Valid 200 channel with zero items. Reached and genuinely empty — this is quiet, not unknown.</p>
+    </div>
+    <div class="adapter">
+      <span class="src">firm_bio</span>
+      <span class="st">GREEN · ok · 11 facts</span>
+      <p class="rsn">Reached, nothing withheld.</p>
+    </div>
+    <div class="adapter off">
+      <span class="src">wayback</span>
+      <span class="st">GREEN · unavailable · 0 facts</span>
+      <p class="rsn">http_503 on one retry. Could not be read, so no claim is made about what it holds.</p>
+    </div>
+    <div class="adapter off">
+      <span class="src">open_library</span>
+      <span class="st">GREEN · unavailable · 0 facts</span>
+      <p class="rsn">Connection refused.</p>
+    </div>
+    <div class="adapter off">
+      <span class="src">instagram</span>
+      <span class="st">SESSION · blocked · 0 facts</span>
+      <p class="rsn">Not deployed — the session adapter is absent from the registry, so there is nothing to disable.</p>
+    </div>
+    <p class="meta">Every attempt is recorded, not every success. This table is the only thing that
+       distinguishes “quiet” from “unknown” — a 200 with zero items is not silence.</p>
+  </section>
+  <section class="blk">
+    <p class="lbl">Outcome</p>
+    <p>Profile marked partial. The facts already collected are kept; the gap is reported so
+       nobody reads a half-built profile as a complete one.</p>
+    <p><a class="btn" href="ready.html">Open the card</a></p>
+  </section>
+</main>
+
+</body></html>

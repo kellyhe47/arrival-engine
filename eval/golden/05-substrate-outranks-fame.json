@@ -2,7 +2,7 @@
   "schema_version": 1,
   "id": "G-005",
   "name": "substrate-outranks-fame",
-  "why": "The host must be pointed at the person the member can actually talk to, not the most famous person standing nearby. A peer sharing a working thesis must outrank a celebrity sharing only a hobby.",
+  "why": "The host must be pointed at the person the member can actually talk to, not the most famous person standing nearby. A peer sharing a working thesis must outrank a celebrity who shares only demographics — and prominence with nothing under it must not fire S8. RE-BASELINED 2026-09-04: a shared hobby is now qualifying substrate (S6), so Perkins's overlap here is demographic only (same tier and cohort, S2), which keeps this the S8-without-substrate boundary case.",
   "covers": [
     "B-003",
     "B-011"
@@ -38,8 +38,8 @@
       "present_members": [
         {
           "id": "m_perkins",
-          "seniority_tier": "chief-executive",
-          "career_start_decade": "2000s",
+          "seniority_tier": "principal",
+          "career_start_decade": "1990s",
           "prominence_tier": 4,
           "industries": [
             "design-software"
@@ -47,9 +47,7 @@
           "topics_professional": [
             "product-led-growth"
           ],
-          "topics_personal": [
-            "rugby"
-          ],
+          "topics_personal": [],
           "contexts": [],
           "declared_links": []
         },
@@ -82,6 +80,7 @@
       "surface_requires_any_of": [
         "S3",
         "S5",
+        "S6",
         "S7"
       ]
     },
@@ -112,7 +111,7 @@
                 "weight": 2
               },
               {
-                "signal_id": "S7",
+                "signal_id": "S5",
                 "weight": 3
               }
             ]
@@ -120,12 +119,12 @@
           {
             "member_id": "m_perkins",
             "rank": 2,
-            "score": 1,
+            "score": 2,
             "surfaced": false,
             "fired_signals": [
               {
-                "signal_id": "S6",
-                "weight": 1
+                "signal_id": "S2",
+                "weight": 2
               }
             ]
           }
@@ -148,8 +147,8 @@
         "name": "prominence-without-substrate-does-not-fire-s8",
         "operator": "eq",
         "left": "result.ranked_matches.1.score",
-        "expected": 1,
-        "reason": "B-003: Perkins outranks Tavel in prominence, but their only overlap is the non-substrate hobby signal S6, so S8 must remain off."
+        "expected": 2,
+        "reason": "B-003: Perkins outranks Tavel in prominence, but their only overlap is the demographic signal S2, which is not substrate, so S8 must remain off and the score stays at 2."
       }
     ]
   }

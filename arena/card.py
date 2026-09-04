@@ -13,7 +13,7 @@ import re
 
 from .facts import chip_host, select_renderable_facts, suppression_notice
 from .narrator import CardPlan, Line, NarratorUnavailable, SuppliedNarrator, TemplateNarrator
-from .ranking import brokering_mode, rank_room
+from .ranking import mutuality, rank_room
 from .reason import cited_signal_ids, reason_sentence, say_context, validate_reason
 from .recency import build_now_block
 from .scoring import score_pair
@@ -148,33 +148,65 @@ def _room_plan(ranked: dict, *, settings, names: dict, pairs: dict,
         return {"kind": "no_strong_match", "cited_signal_ids": [],
                 "top_score": top["score"], "floor": settings.surface_min_score}
 
-    # R-038: one primary introduction, one backup. Everyone else collapses.
-    primary, backup = surfaced[0], (surfaced[1] if len(surfaced) > 1 else None)
+    # R-038: exactly one candidate is named. Everyone else collapses into what is true about
+    # them — the template narrator says so, and nobody below the floor is ever a "backup".
+    primary = surfaced[0]
+    primary_name = names.get(primary["member_id"], primary["member_id"])
     plan = {
         "kind": "match",
         "primary_member_id": primary["member_id"],
         "primary_sentence": reason_sentence(
-            primary["fired_signals"], names.get(primary["member_id"], primary["member_id"]),
-            labels, arriving_name),
+            primary["fired_signals"], primary_name, labels, arriving_name),
         "cited_signal_ids": cited_signal_ids(primary["fired_signals"]),
         "score": primary["score"],
+        "intent_class": primary.get("intent_class"),
     }
-    if backup:
-        plan["backup_member_id"] = backup["member_id"]
-        plan["backup_sentence"] = reason_sentence(
-            backup["fired_signals"], names.get(backup["member_id"], backup["member_id"]),
-            labels, arriving_name).replace(" is here:", " is also here:", 1)
+    # What the host physically does, in words backed by edges (R-022a). The retired
+    # mutual/broker machinery lives on only as this one sentence.
     mode = pairs.get(primary["member_id"])
     if mode:
-        plan["brokering"] = mode
-        plan["brokering_sentence"] = {
-            "mutual": "Both directions clear the bar, so introduce them and step away.",
-            "broker": "Only one direction clears the bar, so stay and carry the reason across.",
-            "light_touch": "A light touch is enough — name them and let it find its own level.",
+        plan["mutuality"] = mode
+        plan["hosting_sentence"] = {
+            "mutual": "The pull runs both ways, so make the introduction and leave them to it.",
+            "one_way": "The pull runs one way, so stay a moment and carry the reason across.",
+            "neither": "",
         }[mode]
+    if primary.get("intent_class") == "guarded":
+        plan["hosting_sentence"] = (
+            "Worth knowing: the interest here runs one way — one of them wants something the "
+            "other has set down. Make it brief and social, not a pitch.")
+    # R-034: the block covers the whole room, in one or two short sentences — never a roll call.
+    # Other above-floor pairings are counted, not named (R-038: exactly one candidate is named);
+    # everyone else is answered in aggregate, with the honest zero called out when there is one.
+    others = [m for m in ranked["ranked_matches"] if m["member_id"] != primary["member_id"]]
+    extra_surfaced = [m for m in others if m["surfaced"]]
+    below = [m for m in others if not m["surfaced"]]
+    sentences = []
+    if extra_surfaced:
+        n = len(extra_surfaced)
+        words = {1: "One", 2: "Two", 3: "Three", 4: "Four", 5: "Five",
+                 6: "Six", 7: "Seven", 8: "Eight", 9: "Nine"}
+        sentences.append(
+            f"{words.get(n, n)} other pairing{'s' if n != 1 else ''} also "
+            f"clear{'' if n != 1 else 's'} the bar; {primary_name} is the strongest tonight.")
+    if below:
+        zero = below[-1] if below[-1]["score"] == 0 else None
+        if len(below) == 1:
+            other_name = names.get(below[0]["member_id"], below[0]["member_id"])
+            sentences.append(
+                f"{other_name} is also present; nothing is measured between them." if zero else
+                f"{other_name} is also present; nothing there clears the bar.")
+        elif zero:
+            zero_name = names.get(zero["member_id"], zero["member_id"])
+            sentences.append(
+                f"On the other {len(below)} present, nothing clears the bar — "
+                f"{zero_name} shares nothing measured at all.")
+        else:
+            sentences.append(f"Nothing on the other {len(below)} present clears the bar.")
+    if sentences:
+        plan["others_sentence"] = " ".join(sentences)
     plan["say_context"] = say_context(
-        primary["fired_signals"], names.get(primary["member_id"], primary["member_id"]),
-        labels, arriving_name)
+        primary["fired_signals"], primary_name, labels, arriving_name)
     return plan
 
 
@@ -223,7 +255,7 @@ def generate_digest(inputs: dict, *, settings, clock: str, store=None, narrator=
         b = next(p for p in present if p["id"] == m["member_id"])
         reverse = score_pair(b, arriving, aliases=aliases,
                              s8_requires_substrate=settings.s8_requires_substrate)
-        pairs[m["member_id"]] = brokering_mode(
+        pairs[m["member_id"]] = mutuality(
             m["_pair"], reverse, minimum=settings.surface_min_score,
             requires_any_of=settings.surface_requires_any_of)
 
@@ -302,7 +334,8 @@ def generate_digest(inputs: dict, *, settings, clock: str, store=None, narrator=
         "renderable_fact_ids": selection["renderable_fact_ids"],
         "provenance_chips": selection["provenance_chips"],
         "recency": recency,
-        "brokering": pairs.get(room.get("primary_member_id")),
+        "mutuality": pairs.get(room.get("primary_member_id")),
+        "intent_class": room.get("intent_class"),
         "gate_failures": gated["gate_failures"],
         "gates_passed": gated["gates_passed"],
         "verdict": "pass" if gated["gates_passed"] else "fail",

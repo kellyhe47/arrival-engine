@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Why this score</title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=EB+Garamond:ital,wght@0,400;0,500;1,400&family=Inter:wght@400;500&display=swap">
+<link rel="stylesheet" href="../static/arena.css?v=4">
+</head><body>
+<div class="banner"><div class="inner">
+  <a class="crumb" href="room.html">&larr; Room</a>
+  <div class="stamp"><p class="eyebrow">Why this score</p></div>
+  <h1><span class="num" style="font-size:0.82em">10</span><span style="color:var(--cream-dim)">/16</span></h1>
+  <p>Brad Feld → Fred Wilson. <span class="num">10</span> against a floor of 6 once the status gradient is set aside.</p>
+</div></div>
+<main class="wrap">
+  <section class="blk">
+    <p class="lbl">Signals that fired</p>
+    <table class="signals">
+      <tr><th>Signal</th><th>W</th><th></th><th>Why it fired</th></tr>
+      <tr><td><span class="sig">S1</span></td><td class="w">2</td><td class="bar"><span class="stack-bar" style="width:28px"></span></td><td>Both in venture-capital; shared industry at the MID bucket.</td></tr>
+      <tr><td><span class="sig">S2</span></td><td class="w">2</td><td class="bar"><span class="stack-bar" style="width:28px"></span></td><td>Both principal tier, both career start 1980s.</td></tr>
+      <tr><td><span class="sig">S5</span></td><td class="w">3</td><td class="bar"><span class="stack-bar" style="width:42px"></span></td><td>startup-communities held by both; below the 40% generic share.</td></tr>
+      <tr><td><span class="sig">S7</span></td><td class="w">3</td><td class="bar"><span class="stack-bar" style="width:42px"></span></td><td>Declared link, cited in own writing; evidence f_feld_cites_wilson.</td></tr>
+    </table>
+    <p class="meta">The threshold is evaluated on the score EXCLUDING S8; the displayed score
+       includes it. Prominence may break a tie. It may never create a match.</p>
+  </section>
+  <section class="blk">
+    <p class="lbl">Signals that did not fire</p>
+    <table class="signals">
+      <tr class="off"><td><span class="sig">S3</span></td><td class="w">3</td><td class="bar"><span class="stack-bar" style="width:42px"></span></td><td>No shared context: boulder-co against new-york-ny.</td></tr>
+      <tr class="off"><td><span class="sig">S4</span></td><td class="w">1</td><td class="bar"><span class="stack-bar" style="width:14px"></span></td><td>No overlapping org history in the stored record.</td></tr>
+      <tr class="off"><td><span class="sig">S6</span></td><td class="w">2</td><td class="bar"><span class="stack-bar" style="width:28px"></span></td><td>No personal topic in common: ultrarunning against music-collecting.</td></tr>
+      <tr class="off"><td><span class="sig">S8</span></td><td class="w">1</td><td class="bar"><span class="stack-bar" style="width:14px"></span></td><td>Requires B's prominence tier strictly above A's; both measured at tier 4.</td></tr>
+    </table>
+  </section>
+  <section class="blk">
+    <p class="lbl">Generic topics excluded</p>
+    <table>
+      <tr><th>Topic</th><th>Held by</th><th>Share of the stored member base</th></tr>
+      <tr><td>venture-capital</td><td class="w">5 of 10</td><td class="w">50% ≥ 40%</td></tr>
+      <tr><td>artificial-intelligence</td><td class="w">4 of 10</td><td class="w">40% ≥ 40%</td></tr>
+    </table>
+    <p class="meta">Genericity is a property of the vocabulary, measured once over the member base
+       and stored. It is never recomputed from who happens to be in the room — that version was
+       non-monotonic, room-size-inverted, and failed on the only case ever measured.</p>
+  </section>
+  <section class="blk">
+    <p class="lbl">The other direction</p>
+    <p>Fred Wilson → Brad Feld scores <span class="num">8</span> of 16.
+       Scoring is directional: A's interest in B is not B's interest in A.</p>
+    <table class="signals">
+      <tr><td><span class="sig">S1</span></td><td class="w">2</td><td class="bar"><span class="stack-bar" style="width:28px"></span></td><td>Both in venture-capital; shared industry at the MID bucket.</td></tr>
+      <tr><td><span class="sig">S2</span></td><td class="w">2</td><td class="bar"><span class="stack-bar" style="width:28px"></span></td><td>Both principal tier, both career start 1980s.</td></tr>
+      <tr><td><span class="sig">S5</span></td><td class="w">3</td><td class="bar"><span class="stack-bar" style="width:42px"></span></td><td>startup-communities held by both.</td></tr>
+      <tr><td><span class="sig">S8</span></td><td class="w">1</td><td class="bar"><span class="stack-bar" style="width:14px"></span></td><td>Tie-break only; it cannot create a match.</td></tr>
+    </table>
+    <p class="meta">Brokering mode: <strong>mutual</strong>. Mutual means introduce and step away.
+       Broker means stay and carry the reason across.</p>
+  </section>
+  <p><a class="btn" href="ready.html">Back to the card</a></p>
+</main>
+
+</body></html>

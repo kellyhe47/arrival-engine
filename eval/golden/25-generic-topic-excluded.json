@@ -2,7 +2,7 @@
   "schema_version": 1,
   "id": "G-025",
   "name": "generic-topic-excluded",
-  "why": "venture-capital-craft is held by 5 of the 10 \u2014 measured, holder share 0.50 >= 0.40. It is excluded as a property of the TAG, room-independent, so a room of four VCs does not produce four strong matches on the fact that they are all VCs.",
+  "why": "venture-capital-craft is held by 5 of the 10 — measured, holder share 0.50 >= 0.40. It is excluded as a property of the TAG, room-independent, so a room of four VCs does not produce four strong matches on the fact that they are all VCs. What remains is demographics: same industry (S1) for everyone, same tier and cohort (S2) only for Walk — and S8 stays off toward Wilson because demographics are not substrate.",
   "covers": [
     "B-016"
   ],
@@ -11,7 +11,7 @@
     "AUD-EDGES-GENERIC",
     "RUBRIC-3"
   ],
-  "defends_against": "An implementation that recomputes genericity from the current room, which is non-monotonic (a fifth guest deletes the match), room-size-inverted, and lets the pair through at exactly 50% \u2014 the share actually measured.",
+  "defends_against": "An implementation that recomputes genericity from the current room, which is non-monotonic (a fifth guest deletes the match), room-size-inverted, and lets the pair through at exactly 50% — the share actually measured.",
   "time_sensitive": false,
   "given": {
     "inputs": {
@@ -91,6 +91,7 @@
       "surface_requires_any_of": [
         "S3",
         "S5",
+        "S6",
         "S7"
       ],
       "tie_break": [
@@ -148,29 +149,25 @@
             ]
           },
           {
-            "member_id": "m_wilson",
+            "member_id": "m_kopelman",
             "rank": 2,
-            "score": 3,
+            "score": 2,
             "surfaced": false,
             "fired_signals": [
               {
-                "signal_id": "S2",
+                "signal_id": "S1",
                 "weight": 2
-              },
-              {
-                "signal_id": "S8",
-                "weight": 1
               }
             ]
           },
           {
-            "member_id": "m_kopelman",
+            "member_id": "m_wilson",
             "rank": 3,
             "score": 2,
             "surfaced": false,
             "fired_signals": [
               {
-                "signal_id": "S2",
+                "signal_id": "S1",
                 "weight": 2
               }
             ]

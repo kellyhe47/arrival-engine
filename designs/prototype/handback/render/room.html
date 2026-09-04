@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Room</title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=EB+Garamond:ital,wght@0,400;0,500;1,400&family=Inter:wght@400;500&display=swap">
+<link rel="stylesheet" href="../static/arena.css?v=4">
+</head><body>
+<div class="banner"><div class="inner">
+  <p class="eyebrow">Arena Hall · Austin, Texas</p>
+  <h1>In the room</h1>
+  <p>8 present. Ordered by arrival.</p>
+</div></div>
+<main class="wrap">
+  <section class="blk">
+    <p class="lbl">Present</p>
+    <div class="row">
+      <span class="name"><a href="ready.html">Brad Feld</a></span>
+      <span class="meta num">arrived 6:18pm</span>
+      <span class="actions"><a class="btn tiny" href="room-empty.html">Mark departed</a></span>
+    </div>
+    <div class="row">
+      <span class="name"><a href="ready.html">Fred Wilson</a></span>
+      <span class="meta num">arrived 6:42pm</span>
+      <span class="actions"><a class="btn tiny" href="room-empty.html">Mark departed</a></span>
+    </div>
+    <div class="row">
+      <span class="name"><a href="cold-trail.html">Josh Kopelman</a></span>
+      <span class="meta num">arrived 6:47pm</span>
+      <span class="actions"><a class="btn tiny" href="room-empty.html">Mark departed</a></span>
+    </div>
+    <div class="row">
+      <span class="name"><a href="unknown-coverage.html">Eric Ries</a></span>
+      <span class="meta num">arrived 6:51pm</span>
+      <span class="actions"><a class="btn tiny" href="room-empty.html">Mark departed</a></span>
+    </div>
+    <div class="row">
+      <span class="name"><a href="ready.html">Melanie Perkins</a></span>
+      <span class="meta num">arrived 7:04pm</span>
+      <span class="actions"><a class="btn tiny" href="room-empty.html">Mark departed</a></span>
+    </div>
+    <div class="row">
+      <span class="name"><a href="ready.html">Sarah Tavel</a></span>
+      <span class="meta num">arrived 7:09pm</span>
+      <span class="actions"><a class="btn tiny" href="room-empty.html">Mark departed</a></span>
+    </div>
+    <div class="row">
+      <span class="name"><a href="no-strong-match.html">Emmett Shear</a></span>
+      <span class="meta num">arrived 7:21pm</span>
+      <span class="actions"><a class="btn tiny" href="room-empty.html">Mark departed</a></span>
+    </div>
+    <div class="row">
+      <span class="name"><a href="withheld.html">Steve Huffman</a></span>
+      <span class="meta num">arrived 7:33pm</span>
+      <span class="actions"><a class="btn tiny" href="room-empty.html">Mark departed</a></span>
+    </div>
+  </section>
+
+  <section class="blk">
+    <p class="lbl">Simulate arrival</p>
+    <div class="stack">
+      <select id="arriving" aria-label="Member">
+        <option value="ready.html">Reid Hoffman</option>
+        <option value="ambiguous.html">Josh K — two candidates</option>
+        <option value="empty-room.html">Naval Ravikant</option>
+      </select>
+      <div><button class="btn" type="button" id="fire">Fire the webhook</button></div>
+    </div>
+  </section>
+
+  <section class="blk">
+    <p class="lbl">Table seating</p>
+    <p>8 present. Pick a table size.</p>
+    <div class="sizes" role="group" aria-label="Seats per table">
+      <button class="size" type="button" aria-pressed="false">2</button>
+      <button class="size" type="button" aria-pressed="false">3</button>
+      <button class="size" type="button" aria-pressed="true">4</button>
+      <button class="size" type="button" aria-pressed="false">5</button>
+      <button class="size" type="button" aria-pressed="false">6</button>
+    </div>
+    <div id="seating"></div>
+  </section>
+
+  <div class="pagefoot">
+    <a href="scoring.html">How the score works</a>
+  </div>
+</main>
+<script>
+  document.getElementById('fire').addEventListener('click', function () {
+    location.href = document.getElementById('arriving').value + '?b=' + Date.now();
+  });
+
+  (function () {
+    // The eight present, in arrival order — read off the Present list above, never a separate set.
+    // The engine cuts them at the chosen size. No per-table score and no anchor: a table is not a
+    // scored object, and a pair score quoted on a table of four says nothing about the other five
+    // pairs sitting at it.
+    var ROOM = [].slice.call(document.querySelectorAll('.row .name'))
+      .map(function (n) { return n.textContent.trim(); });
+    // A reason must be true of the people actually at the table, so it is derived from the
+    // measured edges that fall INSIDE the group — never from the table's position in the cut.
+    // Position-indexed prose was asserting "consumer operators" over Eric Ries.
+    // Each edge is one measured claim, phrased as the evidence phrases it.
+    // A reason must be true of the people at the table AND useful to the host. Citation counts
+    // and "strongest pair" are facts about the instrument; what a host can act on is the shared
+    // substance — the industry, the argument, the topic both of them have gone on record about.
+    // Each string is the thing the two of them would actually talk about.
+    var EDGES = [
+      { a: 'Brad Feld', b: 'Fred Wilson',
+        say: 'Both back early-stage founders and have spent twenty years writing publicly about how startup communities are built.' },
+      { a: 'Fred Wilson', b: 'Josh Kopelman',
+        say: 'Two seed investors who each built a firm around the same early-stage thesis.' },
+      { a: 'Eric Ries', b: 'Josh Kopelman',
+        say: 'Both argue in public for long-term company governance over quarterly pressure.' },
+      { a: 'Melanie Perkins', b: 'Sarah Tavel',
+        say: 'Both took a consumer product to global scale and both write about product-led growth.' },
+      { a: 'Emmett Shear', b: 'Steve Huffman',
+        say: 'Both founded a community platform in their twenties and still run the moderation problem.' },
+      { a: 'Brad Feld', b: 'Eric Ries',
+        say: 'Shared interest in how a company is structured to survive its founders.' }
+    ];
+    var out = document.getElementById('seating');
+    var btns = [].slice.call(document.querySelectorAll('.size'));
+
+    // A last table of one is worse than no recommendation, so the remainder joins the table
+    // before it rather than sitting alone.
+    function cut(n) {
+      var t = [];
+      for (var i = 0; i < ROOM.length; i += n) t.push(ROOM.slice(i, i + n));
+      if (t.length > 1 && t[t.length - 1].length === 1) {
+        t[t.length - 2] = t[t.length - 2].concat(t.pop());
+      }
+      return t;
+    }
+
+    function render(n) {
+      out.innerHTML = cut(n).map(function (g, t) {
+        var inside = EDGES.filter(function (e) {
+          return g.indexOf(e.a) > -1 && g.indexOf(e.b) > -1;
+        });
+        var last = function (n) { return n.split(' ').pop(); };
+        var phrase = function (e) {
+          return g.length > 2
+            ? last(e.a) + ' and ' + last(e.b) + ': ' + e.say.replace(/^Both /, 'both ')
+                .replace(/^Two /, 'two ').replace(/^Shared /, 'a shared ')
+            : e.say;
+        };
+        var why = inside.length
+          ? inside.slice(0, 2).map(phrase).join(' ') +
+            (inside.length > 2 ? ' Plus ' + (inside.length - 2) + ' more measured link' +
+              (inside.length - 2 === 1 ? '' : 's') + ' at this table.' : '')
+          : 'Nothing measured between these ' + g.length + '. A host should stay.';
+        return '<div class="seat"><span class="no">Table ' + (t + 1) + ' · ' + g.length +
+          ' seat' + (g.length === 1 ? '' : 's') + '</span><p class="why">' + why + '</p><ul>' +
+          g.map(function (m) { return '<li>' + m + '</li>'; }).join('') + '</ul></div>';
+      }).join('');
+    }
+
+    btns.forEach(function (b) {
+      b.addEventListener('click', function () {
+        btns.forEach(function (x) { x.setAttribute('aria-pressed', 'false'); });
+        b.setAttribute('aria-pressed', 'true');
+        render(parseInt(b.textContent, 10));
+      });
+    });
+    render(4);
+  })();
+</script>
+</body></html>

@@ -27,7 +27,33 @@
     </div>
     {% endfor %}
   {% else %}
-    <p>Nobody here yet. The first arrival gets an honest card, not an error.</p>
+    <p>Quiet so far. The first person through the door still gets a full card.</p>
+  {% endif %}
+</section>
+
+{# R-062: table seating. Arrival order, singleton merged back, one measured line per table. #}
+<section class="blk">
+  <p class="lbl">Table seating</p>
+  {% if present|length > 1 %}
+    <p>{{ present|length }} present. Pick a table size.</p>
+    <div class="sizes">
+      {% for n in [2, 3, 4, 5, 6] %}
+      <a class="size{% if n == per %} on{% endif %}" href="{{ base }}/?per={{ n }}">{{ n }}</a>
+      {% endfor %}
+    </div>
+    {% for t in tables %}
+    <div class="table">
+      <p class="lbl small">Table {{ t.number }} · {{ t.seats }} seats</p>
+      <p>{{ t.why }}</p>
+      <ul class="seats">
+        {% for m in t.members %}<li>{{ m }}</li>{% endfor %}
+      </ul>
+    </div>
+    {% endfor %}
+  {% elif present|length == 1 %}
+    <p>One present. Seating needs two.</p>
+  {% else %}
+    <p>Nobody to seat yet.</p>
   {% endif %}
 </section>
 
@@ -74,5 +100,7 @@
      Deployed registry: {{ registry|length }} adapters, none of them SESSION. SESSION adapters are
      not disabled here — they are absent, so there is nothing to disable.</p>
 </section>
+
+<p class="meta"><a href="{{ base }}/score">How the score works</a></p>
 
 {% endblock %}

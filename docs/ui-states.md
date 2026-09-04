@@ -20,11 +20,12 @@ decides what the BODY renders.
 
 | State | Trigger | What it shows |
 |---|---|---|
-| Ready | profile cached, room scored | Five blocks, 250-350 words |
-| No strong match | no present member clears score>=6 AND S3/S5/S7 | Room block gives the anonymous top score and why it missed. No candidate name; never a recommendation. |
+| Ready | profile cached, room scored | Two layers (PRD R-034): Who they are · Who's here · Say this, then the collapsed rest of the brief (The match · Sources · Recent activity · Personal detail). 250–350 words over the whole brief. Ends with the R-060 outcome capture. |
+| No strong match | no present member clears score>=6 AND one of S3/S5/S6/S7 | Room block gives the anonymous top score and why it missed. No candidate name; never a recommendation. |
 | Cold trail | no first-person item inside 365 days | Now block states the gap in days and the last date. Never dresses old material as current. |
-| Unknown coverage | one or more expected sources was unreachable | Names the unavailable source classes, makes no silence claim, and uses a generic Say line. |
-| Empty room | roster empty | Room block says "first one here". Not an error. |
+| Unknown coverage | one or more expected sources was unreachable | Names the unread sources with their failure codes, counts coverage ("Reached 2 of 3"), and makes no silence claim in either direction. The Say line is unaffected. |
+| Empty room | roster empty | A state of the ROOM surface, not an error - a normal early evening. |
+| First arrival | exactly one present, nobody else to score | Full card. Who’s-here says they are first; The match reads "nobody present to score / no pairs"; nobody outside the roster is offered. |
 | Ingesting | live re-run triggered | Per-adapter progress, including unavailable ones |
 | Withheld | any hard gate failed | Who block only, plus the failed gate. Degrades to a greeting, never to a guess. |
 | Ambiguous | resolver has >1 corroborated candidate | Host picks. The engine never guesses identity. |
@@ -32,14 +33,17 @@ decides what the BODY renders.
 | Thin profile | identity resolved but fewer facts are available | Attempts a full card without invention; if the evidence cannot support 250 words, shows a withheld greeting with no Notice block. |
 
 ### Why-this-score
-Fired signals with weights; signals that did NOT fire and why; excluded generic topics with their
-share of the stored member base; the reverse-direction score. Room membership never changes
+The pair's intent class in one sentence; fired signals with weights and evidence; signals that
+did NOT fire and why (S9's miss is explained in intent terms); excluded generic topics with their
+share of the stored member base; the reverse-direction score with its own fired rows. Room membership never changes
 genericity. This is the whole answer to "expose the reasoning"
 and it is one tap away, never on the card.
 
 ### Room
-Current-presence list ordered by arrival time, with simulate-arrival and mark-departed controls,
-and the DEC-3 live re-run. This stands in for the webhook, which the brief says is solved. Physical
+Current-presence list ordered by arrival time (tap a name for the card), with simulate-arrival
+and mark-departed controls, the R-062 table-seating tool (size 2-6, arrival-order partition,
+singleton merged back, one measured line per table), the DEC-3 live re-run, and a footer link to
+the How-the-score-works reference screen. This stands in for the webhook, which the brief says is solved. Physical
 position is not tracked — a scope fact for the README, no longer printed on the surface.
 
 ## Actions and their outcomes

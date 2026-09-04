@@ -19,8 +19,10 @@
      write to the profile store.</p>
   {% for c in candidates %}
   <div class="row">
+    {# The tier is internal vocabulary; the tell-them-apart line a host needs is the
+       measured affiliation. #}
     <span class="name"><a href="{{ base }}/card/{{ token_for(c.id) }}">{{ c.display_name }}</a></span>
-    <span class="meta">{{ c.seniority_tier or "—" }}</span>
+    <span class="meta">{{ affiliation(labels.get(c.id, '')) or "no measured affiliation" }}</span>
   </div>
   {% endfor %}
 </section>

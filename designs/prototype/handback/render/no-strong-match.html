@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Arrival</title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=EB+Garamond:ital,wght@0,400;0,500;1,400&family=Inter:wght@400;500&display=swap">
+<link rel="stylesheet" href="../static/arena.css?v=4">
+</head><body class="has-rail">
+<div class="banner"><div class="inner">
+  <a class="crumb" href="room.html">&larr; Room</a>
+  <p class="eyebrow">Foundry · General Partner</p>
+  <h1>Brad Feld</h1>
+  <p>Venture capitalist in Boulder. Backs early-stage founders and writes about it near-daily.</p>
+</div></div>
+<main class="wrap">
+  <section class="blk">
+    <p class="lbl">Who they are</p>
+    <ul class="bullets">
+      <li>Brad Feld, General Partner at Foundry in Boulder.</li>
+      <li>His whole practice in two words: <span class="borrowed">&ldquo;Give first.&rdquo;</span></li>
+      <li>The door said Foundry Group, Techstars, Boulder — Foundry is right, the Techstars half is older than it reads.</li>
+    </ul>
+  </section>
+  <section class="blk">
+    <p class="lbl">Who's here</p>
+    <ul class="bullets">
+      <li>Nobody present clears the floor on anything that would carry a real introduction.</li>
+      <li>The strongest pairing is industry and seniority overlap with nothing personal, nothing declared and nothing cited underneath it.</li>
+    </ul>
+  <h1>Brad Feld</h1>
+  <p>Venture capitalist in Boulder. Backs early-stage founders and writes about it near-daily.</p>
+</div></div>
+<main class="wrap">
+  <section class="blk">
+    <p class="lbl">Who they are</p>
+    <ul class="bullets">
+      <li>Brad Feld, General Partner at Foundry in Boulder.</li>
+      <li>His whole practice in two words: <span class="borrowed">&ldquo;Give first.&rdquo;</span></li>
+      <li>The door said Foundry Group, Techstars, Boulder — Foundry is right, the Techstars half is older than it reads.</li>
+    </ul>
+  </section>
+  <section class="blk">
+    <p class="lbl">Who's here</p>
+    <ul class="bullets">
+      <li>Nobody present clears the floor on anything that would carry a real introduction.</li>
+      <li>The strongest pairing is industry and seniority overlap with nothing personal, nothing declared and nothing cited underneath it.</li>
+    </ul>
+    <p class="meta">No candidate is named, not even as a backup.
+       <a class="score" href="why.html">why</a> · <a class="score" href="why.html">why</a></p>
+  </section>
+  <section class="blk" id="sayblock">
+    <p class="lbl">Say this</p>
+    <p class="aloud">Ask him whether anyone has ever booked a Random Day and wasted it. He has taken those meetings for twenty years and he will have an answer ready, and it will not be the polite one.</p>
+  </section>
+
+  <details class="brief">
+    <summary><span>The rest of the brief</span><span class="arw">&rarr;</span></summary>
+    <div class="inner">
+      <section class="blk">
+        <p class="lbl">The match</p>
+        <p class="match miss"><span class="who">Top score, no candidate named</span>
+       <span class="figure">5 · needs 6</span></p>
+        
+      </section>
+      <section class="blk">
+        <p class="lbl">Recent activity</p>
+        <p>He is writing again after a gap he did not hide. His blog ran near-daily from 2005 to 2020, collapsed to a single post in all of 2024, and has come back deliberately: sixty-five posts in 2025 and thirty already this year, newest on the ninth of August. He is also serialising a novel, forty-seven chapters live, and co-writing a second blog with a collaborator his wife has nicknamed Clod.</p>
+      <div class="chips">
+        <span class="chip"><span class="host">feld.com</span> · 2026-08-09</span>
+      </div>
+
+      </section>
+      <section class="blk">
+        <p class="lbl">Personal detail</p>
+        <p>Since about 2004 he has offered a standing twenty minutes to total strangers who ask for it. He calls it Random Day. He once spent an entire day of them dressed in a Cookie Monster costume, which he wrote up himself afterwards, and he has never stopped taking the meetings.</p>
+      <div class="chips">
+        <span class="chip"><span class="host">feld.com</span> · 2013-11-01</span>
+      </div>
+
+      </section>
+    </div>
+  </details>
+
+  <section class="fb">
+    <p class="lbl">What did you observe about the interaction?</p>
+    <p class="hint">The only proof the introduction worked is what happened next. How long did they
+       talk, and did it go anywhere — a nod on the way past, or still together at closing.</p>
+    <textarea id="fbtext-nomatch" aria-label="What you observed" placeholder="Twenty minutes by the bar, then he walked her over to his own table…"></textarea>
+    <div class="tags" role="group" aria-label="What you observed">
+      <button class="tag" type="button" aria-pressed="false">Never introduced</button>
+      <button class="tag" type="button" aria-pressed="false">Brief hello</button>
+      <button class="tag" type="button" aria-pressed="false">Talked a while</button>
+      <button class="tag" type="button" aria-pressed="false">Together all night</button>
+      <button class="tag" type="button" aria-pressed="false">Swapped details</button>
+    </div>
+    <div class="send">
+      <button class="btn" type="button" id="fbsend-nomatch">Log the outcome</button>
+      <p class="sent" id="fbsent-nomatch" hidden>Logged against this introduction.</p>
+    </div>
+  </section>
+  <script>
+    (function () {
+      var box = document.getElementById('fbtext-nomatch');
+      var btn = document.getElementById('fbsend-nomatch');
+      var ok = document.getElementById('fbsent-nomatch');
+      var tags = document.querySelectorAll('.fb .tag');
+      tags.forEach(function (t) {
+        t.addEventListener('click', function () {
+          var on = t.getAttribute('aria-pressed') === 'true';
+          t.setAttribute('aria-pressed', on ? 'false' : 'true');
+        });
+      });
+      btn.addEventListener('click', function () {
+        if (!box.value.trim() && !document.querySelector('.fb .tag[aria-pressed="true"]')) {
+          box.focus(); return;
+        }
+        ok.hidden = false;
+        btn.disabled = true;
+        btn.style.opacity = 0.5;
+      });
+    })();
+  </script>
+</main>
+<aside class="sayrail" id="sayrail" aria-hidden="true">
+  <div class="inner"><p class="lbl">Say this</p><p class="line">Ask him whether anyone has ever booked a Random Day and wasted it.</p></div>
+</aside>
+<script>
+(function(){var r=document.getElementById('sayrail');var real=document.getElementById('sayblock');
+if(!r||!real||!('IntersectionObserver' in window))return;
+new IntersectionObserver(function(e){r.classList.toggle('gone',e[0].isIntersecting);},{threshold:0.4}).observe(real);
+r.addEventListener('click',function(){real.scrollIntoView?window.scrollTo({top:real.offsetTop-20,behavior:'smooth'}):0;});})();
+</script>
+
+</body></html>

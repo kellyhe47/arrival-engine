@@ -24,8 +24,9 @@
 <main class="wrap">
 {% block content %}{% endblock %}
 <footer class="meta">
-  <p>Staff instrument. Unguessable path, <span class="num">noindex</span> and a robots disallow are
-     discovery mitigations, not access control — see the README.</p>
+  {# DEC-14/R-059: no unguessable path any more — say exactly what remains, and no more. #}
+  <p>Staff instrument on an open URL. <span class="num">noindex</span> and a robots disallow keep
+     it out of search results; nothing keeps anyone out — see the README.</p>
   {% if synthetic_facts %}
   <p>Store: <span class="num">{{ measured_facts }}</span> measured facts,
      <span class="num">{{ synthetic_facts }}</span> from the synthetic demo seed. Facts from the

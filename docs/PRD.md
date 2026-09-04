@@ -6,12 +6,21 @@ behaviours they explicitly cover. For the same behaviour, precedence is: an expl
 exception → a covering golden fixture → the named domain authority → this PRD's summary. A fixture
 does not override an unrelated numbered requirement.
 
+> **Re-baseline (2026-09-04).** The clickable prototype `Arrival-Engine-Prototype.html` (repo root)
+> supersedes the previous §4 scoring model and the §6/§7 card and surface behaviour. It changes
+> requirements, not just design: a new signal set with S9 and an intent taxonomy, a restructured
+> card with outcome logging, table seating on Room, and a How-the-score-works reference screen.
+> `docs/scoring-model.md`, `docs/wireframes.html`, `docs/ui-states.md`, `db/vocabulary.sql`'s signal
+> references and the golden fixtures have **not** yet been re-synced; until they are, §§4, 6 and 7
+> of this PRD are the authority for the behaviours they state, the precedence table notwithstanding.
+
 ### Implementation sources and references
 
 | file | authority over | read it before |
 |---|---|---|
 | `eval/golden/*.json` | executable acceptance examples for the behaviours they cover | implementing or changing covered behaviour |
-| `docs/scoring-model.md` | the scoring oracle: signals, buckets, gates, threshold, ties | scoring, ranking, Room |
+| **`Arrival-Engine-Prototype.html`** | **the clickable prototype this PRD was re-baselined against (2026-09-04)** | **any surface, card or scoring work** |
+| `docs/scoring-model.md` | the scoring oracle: signals, buckets, gates, threshold, ties — **stale, pending re-sync to §4** | scoring, ranking, Room |
 | **`docs/ingest-spec.md`** | **the fetch contract: who may be collected, from where, how identity is confirmed, what a run must write** | **any scraper, adapter or ingest prompt** |
 | **`docs/IMPLEMENTATION-PROMPT.md`** | **the ordered build brief: stack decision, build order, defects to close, definition of done** | **building the application** |
 | **`docs/ingest-prompts/`** | **ten ready-to-hand-off collection prompts, one per member, plus `00-COMMON.md` (rules, auth protocol, write contract)** | **running the first ingest** |
@@ -110,56 +119,93 @@ have already read the door.
 
 ## 4. Scoring
 
-Oracle: `scoring-model.md`. Directional: `score(A→B)` ≠ `score(B→A)`.
+Oracle: `scoring-model.md` — **stale**; re-baselined 2026-09-04 against the prototype, and this
+section is normative until that file is re-synced. Directional: `score(A→B)` ≠ `score(B→A)`.
 
 **R-016** Weights bucket to exactly three values — SMALL 1, MID 2, LARGE 3. A signal
-fires at full weight or not at all.
+fires at full weight or not at all. The signal set is the prototype's:
 
 | id | signal | w | directed |
 |---|---|---|---|
-| S1 | peer tier + cohort | 2 | |
-| S2 | same-industry | 2 | |
-| S3 | cross-industry + shared professional topic | 3 | |
-| S4 | life-context overlap (place, institution, event, pursuit) | 3 | |
-| S5 | directed link — follows / cites / co-mentions | 3 | **✓** |
-| S6 | shared personal interest | 1 | |
-| S7 | shared professional thesis | 3 | |
+| S1 | same industry, bucketed — establishes context, does not carry a match | 2 | |
+| S2 | comparable seniority + career start in the same decade | 2 | |
+| S3 | shared context — a place, institution or programme, measured | 3 | |
+| S4 | overlapping organisation history | 1 | |
+| S5 | shared professional topic held by both, generics excluded | 3 | |
+| S6 | shared personal topic | 2 | |
+| S7 | declared link — A cites, follows or has written about B | 3 | **✓** |
 | S8 | status gradient | 1 | **✓** |
+| S9 | intent complement — B has done what A is trying to do | 3 | **✓** |
 
 > **Note on place.** Arena Hall is **in Austin, Texas** — measured from `arenahall.com`, whose own
 > page title reads "Arena Hall — Austin, Texas" and whose hero is captioned "A private membership
 > community in Austin, Texas." **None of the ten stand-ins are**; they are spread across New York,
 > Boulder, Philadelphia, San Francisco and Sydney. So the venue's city is real and the *members'*
-> shared-city assumption is not. S4 matches on **measured** shared place, institution, life event or
-> pursuit, never on an assumed geography — and never on "they are both at the club tonight", which is
+> shared-city assumption is not. S3 matches on **measured** shared place, institution or programme,
+> never on an assumed geography — and never on "they are both at the club tonight", which is
 > true of everyone in the room and therefore carries no information. *(was K-6)*
 
-**R-017** S2 and S3 are mutually exclusive, so the ceiling is **16**.
+**R-017** The ceiling is **16** — the sum of S1–S7. S8 is outside the ceiling: it is tie-break and
+display only (R-018). S9 is outside both the ceiling and the floor: it is added to the *displayed*
+score only where the pair's intent class is complement (R-022a step 5). The old S2/S3
+mutual-exclusion rule is retired with the old signal set.
 
-**R-018** **S8 cannot create a match.** The surfacing threshold is evaluated on the
-score **excluding S8**; S8 affects display and ranking only. Prominence breaks ties, never makes
-them. Without this the engine sends everyone to the most famous person present — *selection*, the
-Fleming failure, not service.
+**R-018** **S8 cannot create a match.** S8 fires only when B's prominence tier is strictly above
+A's. The surfacing threshold is evaluated on the score **excluding S8**; S8 affects display and
+ranking only. Prominence breaks ties, never makes them. Without this the engine sends everyone to
+the most famous person present — *selection*, the Fleming failure, not service.
 
 **R-019** **Genericity is a property of the vocabulary, not the room.** A topic is
-excluded from S3/S6/S7 when `holder_count / base_size ≥ 0.40`, measured once over the member base
-and stored in `topic.discriminating`. `venture-capital-craft` is held by 5 of 10 and is excluded.
-The prior room-statistic version was non-monotonic, room-size-inverted, and failed on its own
-justifying case. The mechanism is in `db/vocabulary.sql`.
+excluded from the topic signals S5/S6 when `holder_count / base_size ≥ 0.40`, measured once over
+the member base and stored in `topic.discriminating`. `venture-capital-craft` is held by 5 of 10
+and is excluded. The test is ≥: a topic held by exactly 4 of 10 sits at the threshold and is
+excluded. (The prototype's `artificial-intelligence` row illustrates that boundary; no such tag
+exists in the stored vocabulary — three people hold three adjacent AI tags, deliberately unmerged.) Excluded topics are reported with their holder shares, not silently
+dropped (they render on Why-this-score, R-046). The prior room-statistic version was
+non-monotonic, room-size-inverted, and failed on its own justifying case. The mechanism is in
+`db/vocabulary.sql`.
 
-**R-020** **Introduction floor = 6**, and at least one of S3/S5/S7 must have fired.
-Demographics alone is not a reason to interrupt someone. Below the floor **nobody is named** — not
-as primary, not as backup.
+**R-020** **Introduction floor = 6**, evaluated on S1–S7 (S8 and S9 both excluded), and at least
+one of S3/S5/S6/S7 must have fired — a shared context, topic, personal interest or declared link.
+S1/S2/S4 are demographics, and demographics alone is not a reason to interrupt someone: the
+measured miss is a 5 built on industry, seniority and org history with *"nothing personal, nothing
+declared and nothing cited underneath it."* Below the floor **nobody is named** — not as primary,
+not as backup.
 
 **R-021** Ties break by LARGE-signal count, then evidence recency, then id. *(G-017)*
 
-**R-022** **Brokering mode** uses the S8-excluded surfacing scores from R-018, in precedence order:
-`mutual` when both directions meet the floor → `broker` when exactly one direction meets the floor
-and the absolute score gap is ≥6 → `light_touch` otherwise. It changes what the host physically
-does — mutual means introduce and step away; broker means stay and carry the reason across.
+**R-022** **Intent.** Every member carries one intent for the evening, measured from evidence,
+never assumed:
 
-**R-023** Every fired signal carries a one-line `evidence` string naming why it fired.
-That is what makes the number arguable rather than oracular.
+`I1` deploying capital · `I2` raising or being backed · `I3` building an institution ·
+`I4` publishing a body of work · `I5` learning a domain · `I6` giving access ·
+`I7` stepping back · `I8` being social — attendance without an agenda, **a finding, never a
+residual** · `I0` unknown — coverage incomplete, **never read as I8**.
+
+Every above-floor pair then takes an **intent class**, which drives ranking and the written
+reason: **complement** (B has done what A is trying to do; S9 fires) · **parallel** (same pursuit;
+S9 does not fire — two people deploying capital are parallel, not complementary) · **open** (either
+side is I8; ranked on score alone) · **neutral** (no intent relation; score alone) · **unknown**
+(either side is I0; score alone) · **guarded** (an intent asymmetry the host should know about;
+ranked last, and the card names the asymmetry — **never suppressed**).
+
+**R-022a** **Order of operations**, verbatim from the prototype's reference screen:
+
+1. Score every pair in the room, both directions, S1–S8.
+2. Drop everything below the floor (R-020).
+3. Class every survivor. I8 on either side means open.
+4. Rank: complement, then parallel, then open / neutral / unknown on score, guarded last.
+5. Add S9 to the displayed score where the class is complement. The floor excludes it.
+6. Write the reason from the intent, not the overlap.
+
+The former `mutual` / `broker` / `light_touch` brokering machinery is retired. What the host
+physically does is carried in card prose instead: `Who's here` states mutuality or its absence in
+words backed by edges — *"Wilson cites him in public; no reverse edge was found across two
+passes"*, *"Neither needs introducing to the other, so the host can leave them to it."*
+
+**R-023** Every fired signal carries a one-line `evidence` string naming why it fired — and every
+signal that did *not* fire carries a one-line reason why not, rendered on Why-this-score. That is
+what makes the number arguable rather than oracular.
 
 ## 5. Disclosure
 
@@ -233,19 +279,32 @@ door. `not_found`, gate-withheld and other non-card responses are degraded state
 are exempt from the band; they are never padded. A thin profile attempts a full card without
 fabrication and falls back to its withheld greeting when the available evidence cannot support one.
 
-**R-034** A full card has **five ordered bare-noun blocks**, no summary, no transitions:
-`Who` (name + one borrowed attributed line, plus `person.name_respelling` when present; the narrator
-never invents a pronunciation) · `Now` · `Room` · `Notice` (the deep cut) · `Say`.
+**R-034** A full card renders in **two layers**, bare-noun labels, no summary, no transitions.
+The reading layer is three ordered blocks: `Who they are` (name + one borrowed attributed line,
+plus `person.name_respelling` when present — the narrator never invents a pronunciation; the R-015
+label correction renders here: *"The door said Foundry Group, Techstars, Boulder — Foundry is
+right, the Techstars half is older than it reads"*) · `Who's here` (the match, then the rest of
+the room answered in one or two short sentences — other above-floor pairings counted but never
+named, everyone else in aggregate with the honest zero called out; never a roll call) ·
+`Say this`. The rest of the brief collapses behind a single
+control, in order: `The match` (one candidate and the score, the score itself a one-tap link to
+Why-this-score) · `Sources` · `Recent activity` · `Personal detail` (the deep cut). The R-033 word
+band is measured over the whole brief.
 
-**R-035** The card **ends on a sayable line, not a fact** — SBAR's Recommendation slot.
-*(B-006, G-022)*
+**R-035** The reading layer **ends on a sayable line, not a fact** — SBAR's Recommendation slot.
+While the `Say this` block is less than ~40% visible in the scroll viewport, a one-line **Say
+rail** pins the condensed line to the bottom edge of the card; it retires when the real block is on
+screen rather than becoming permanent chrome over the primary action. *(B-006, G-022)*
 
 **R-036** **Reason first, score small.** *(DEC-2)*
 
 **R-037** The reason names **only signals that actually fired**. *(G-020)*
 
-**R-038** **One primary introduction, one backup. Everyone else collapses.** Candidates
-below the floor appear only as `not_named` with a reason.
+**R-038** **Exactly one candidate is named.** `The match` names one member and one score; there is
+no ranked backup slot. Other present members appear in `Who's here` prose only when something true
+is measured about them — *"Melanie Perkins is also present; nothing is measured between them."*
+Below the floor nobody is named and the match block reports the miss honestly with the number —
+*"Top score, no candidate named · 5 · needs 6."*
 
 **R-039** The intro is a **name-drop, never an instruction** — *"Eric Ries is here; his
 new book is about exactly the incentive problem you've been working on"*, not *"go talk to Eric."*
@@ -256,7 +315,10 @@ reached, genuinely nothing) · `unknown` (a source was unreachable). **Only `qui
 silence.** One unreached source downgrades to `unknown` — absence of evidence from a source you
 could not read is not evidence of absence. Ries looked dormant and had shipped a book that month;
 staleness was a retrieval artifact. Tavel's Aug-2026 podcast is a **rerun** of an Apr-2025 recording
-and must be dated by recording. *(B-009/B-021, G-014/G-033)*
+and must be dated by recording. *(B-009/B-021, G-014/G-033)* When coverage is `unknown`, `Recent
+activity` carries a coverage block: **"Reached N of M sources"**, the unread source with its
+failure code (*"wayback · http_503"*), and the sentence that no claim is made about silence in
+either direction.
 
 **R-041** A **thin profile emits fewer facts**, sets `non_obvious_fact_id: null`, and
 fabricates nothing. Kopelman is the thinnest of the ten.
@@ -267,28 +329,66 @@ obscurity either; `noindex` and the robots disallow keep it out of search result
 anyone out. This is the accepted P0-5 risk in §10. The Battery's charter already
 forbids members using presence features to watch each other.
 
+**R-060** `[new, prototype 2026-09-04]` **The card closes the loop.** Every card ends with an
+outcome capture: a free-text observation field (*"what did you observe about the interaction?"*)
+and five outcome chips — `Never introduced` · `Brief hello` · `Talked a while` · `Together all
+night` · `Swapped details` — with a single log action. The outcome is stored append-only against
+that introduction (pair, direction, run), because the only proof the introduction worked is what
+happened next. Logging is optional and never blocks any other behaviour.
+
+**R-061** `[new, prototype 2026-09-04]` **A degraded state is an answer, not a shortened happy
+path.** The withheld card emits exactly: `Who they are` as a single line, the failure notice
+(*"a hard gate failed, so the brief is withheld — this degrades to a greeting, never to a
+guess"*), a **gate table** listing each failed gate with observed and allowed values (*"Word count
+in band · 372 · 250–350"*, *"Reason cites fired only · S8 · S1, S2, S5"*), the note that retry
+re-runs render only, and the `Say` greeting. Nothing else of the BRIEF renders — no Sources with
+em-dashes, no Personal detail whose content is that there is no content. A section that says
+nothing IS padding, the exact failure this state exists to avoid. The one exception is R-060's
+outcome capture, which still closes the card (as it does in the prototype): it grades the
+greeting, not the brief.
+
 ## 7. Surfaces
 
 `wireframes.html` · `ui-states.md`.
 
 **R-043** Mobile-first. This demo has no login and, since DEC-14, no unguessable path; `noindex`
-and the robots disallow are search-visibility controls, not access control. One primary surface (the card), plus **Why-this-score** (one tap)
-and **Room**.
+and the robots disallow are search-visibility controls, not access control. One primary surface
+(the card), plus **Why-this-score** (one tap from any rendered score), **Room**, and
+**How-the-score-works** — a staff reference screen reachable from Room's footer and from
+Why-this-score, carrying the signal table, the intent taxonomy, the intent classes and the order
+of operations (R-016/R-022/R-022a) verbatim.
 
-**R-044** **Room is the current-presence list**, ordered by `arrived_at`, with each member's name and
-arrival time plus simulate-arrival and mark-departed controls. Physical position is not tracked in
-this deliverable.
+**R-044** **Room is the current-presence list**, ordered by `arrived_at`, each row a member's name
+(tap → their card) and arrival time, plus simulate-arrival and mark-departed controls. Physical
+position is not tracked in this deliverable. An **empty room is a correct outcome of the Room
+surface, not an error state** — a normal early evening, the same surface with nothing in it. The
+first person through the door still gets a full card: its `Who's here` says they are first, `The
+match` reads *"nobody present to score · no pairs"*, and **nobody outside the roster is offered**
+— the engine does not reach past the roster to find a recommendation.
+
+**R-062** `[new, prototype 2026-09-04]` **Table seating.** Room carries a seating tool, live once
+two or more members are present: the host picks a table size (2–6), members partition into tables
+in arrival order, and a trailing table of one merges into the previous table rather than seating
+anyone alone. Each table renders a one-line reason built from the measured edges *inside* that
+table — up to two spelled out, with a count of the rest (*"Plus 2 more measured links at this
+table"*). A table with no measured edges says so and tells the host what to do: *"Nothing measured
+between these four. A host should stay."* Seating reuses scored edges; it never invents one.
 
 **R-045** Across the product, every applicable state must have a defined surface: ready ·
-no-strong-match · cold trail · **unknown coverage** · empty room · ingesting · withheld · ambiguous
-· not-found · thin profile. `docs/ui-states.md` assigns each state to its surfaces and defines its
-trigger, content, actions and exit.
+no-strong-match · cold trail · **unknown coverage** · empty room · **first arrival** · ingesting ·
+withheld · ambiguous · not-found · thin profile. `docs/ui-states.md` assigns each state to its
+surfaces and defines its trigger, content, actions and exit.
 
-**R-046** **Why-this-score** shows fired signals with weights, signals that did *not*
-fire and why, excluded generic topics, and the reverse-direction score.
+**R-046** **Why-this-score** shows, for one directed pair, four sections: signals that fired with
+weights and evidence; signals that did *not* fire, each with the one-line reason it did not
+(S9's non-firing is explained in intent terms — *"both hold I1, deploying capital: parallel, not
+complement"*); excluded generic topics with their holder shares; and the reverse-direction score
+with its own fired rows. The header restates that the floor is evaluated with S8 set aside, and
+the footer restates directionality: A's interest in B is not B's interest in A.
 
 **R-047** **Retry never relaxes a gate.** The obvious implementation is
-re-render-until-pass, which converts a hard gate into a retry loop.
+re-render-until-pass, which converts a hard gate into a retry loop. The withheld card's retry
+control re-runs render only: it does not re-ingest, and it does not lower a threshold.
 
 ## 8. Architecture and storage
 
@@ -303,8 +403,10 @@ the runtime identity. Runtime logs contain identifiers and statuses, never fact 
 inner-circle expansion is an ingest-time walk that writes facts back onto the member. The SQLite
 file *is* the cache DEC-3 requires — the ingest/serve split becomes a file copy.
 
-**R-050** **Deterministic:** resolution, scoring, buckets, ranking, floor, provenance and trust
-gates and suppression class. **Probabilistic:** fact extraction at ingest and prose at
+**R-050** **Deterministic:** resolution, scoring, buckets, intent classing and ranking (R-022a —
+given the stored intents, class and rank are pure functions), floor, provenance and trust
+gates and suppression class. Intent *extraction* is ingest-time fact extraction like any other:
+probabilistic, evidence-backed, and I0 when coverage cannot support a finding. **Probabilistic:** fact extraction at ingest and prose at
 compose, including the DEC-9 judgement about whether an otherwise eligible family fact is suitable.
 No model output changes identity, score, ranking, a structural render gate or suppression class.
 Retrieved text is untrusted data, never instructions; the narrator has no tools or network
@@ -398,6 +500,7 @@ this spec claims. *(P0-5 stays accepted, and is now accepted with less in front 
 
 ## 12. Index
 
-Thesis R-001–004 · Sourcing R-005–011 · Identity R-012–015 · Scoring R-016–023 ·
-Disclosure R-024–032 (incl. R-027a) · Card R-033–042 · Surfaces R-043–047 · Architecture R-048–051 ·
-Demo R-052–054 · **Implementation R-055–059 (§11)**. Risks are K-1–K-11, not R-numbered.
+Thesis R-001–004 · Sourcing R-005–011 · Identity R-012–015 · Scoring R-016–023 (incl. R-022a) ·
+Disclosure R-024–032 (incl. R-027a) · Card R-033–042 + R-060–061 · Surfaces R-043–047 + R-062 ·
+Architecture R-048–051 · Demo R-052–054 · **Implementation R-055–059 (§11)**. Risks are K-1–K-11,
+not R-numbered. R-060–062 were added by the 2026-09-04 prototype re-baseline.

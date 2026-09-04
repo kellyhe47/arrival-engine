@@ -306,3 +306,38 @@ INSERT INTO person_topic (person_id, topic_slug, evidence_fact_id) VALUES
 -- evidence_fact_id is NULL because no content-ingest run has happened yet. The first ingest run
 -- MUST backfill it: R-025 says a fact with no source cannot render, and a topic with no evidence
 -- fact produces a reason sentence the host cannot defend.
+
+-- ── PRD R-022 (2026-09-04 re-baseline) — the measured intent for the evening ─────────────────
+-- One value per member, read from the same evidence the labels were measured from. NULL is the
+-- honest default and the engine reads it as I0 — unknown, never "being social". These drive the
+-- intent classes (complement / parallel / open / neutral / unknown / guarded) and S9.
+UPDATE person SET intent = 'I1', intent_basis =
+  'usv.com/people/fred-wilson: active GP at an operating fund; SEC IAPD scope ACTIVE (AUD-01 §1.2)'
+  WHERE id = 'm_wilson';
+UPDATE person SET intent = 'I1', intent_basis =
+  'foundry.vc/team lists him General Partner as of 2026 (AUD-01 §2.1); writing about active deals'
+  WHERE id = 'm_feld';
+UPDATE person SET intent = 'I1', intent_basis =
+  'firstround.com: listed partner at an operating seed fund (AUD-01)'
+  WHERE id = 'm_kopelman';
+UPDATE person SET intent = 'I1', intent_basis =
+  'benchmark.com: listed GP at an operating fund (AUD-01)'
+  WHERE id = 'm_tavel';
+UPDATE person SET intent = 'I1', intent_basis =
+  'homebrew.co: listed partner; hunterwalk.com bio names Homebrew as current (AUD-01)'
+  WHERE id = 'm_walk';
+UPDATE person SET intent = 'I3', intent_basis =
+  'reddit.com leadership page: CEO of the company he co-founded and returned to run (AUD-01)'
+  WHERE id = 'm_huffman';
+UPDATE person SET intent = 'I3', intent_basis =
+  'x.com/eshear og:description "CEO of Softmax" — building a new company, measured 2026-09-03'
+  WHERE id = 'm_shear';
+UPDATE person SET intent = 'I3', intent_basis =
+  'canva.com/about: co-founder and CEO of the company she is still scaling (AUD-01)'
+  WHERE id = 'm_perkins';
+UPDATE person SET intent = 'I4', intent_basis =
+  'member_label basis: "LTSE; author, Incorruptible (2026-05-26)" — a book shipped this year'
+  WHERE id = 'm_ries';
+UPDATE person SET intent = 'I5', intent_basis =
+  'nabeelqu.co: the recurring subject of his essays is how to learn and understand a domain, stated in his own words as his current project'
+  WHERE id = 'm_qureshi';

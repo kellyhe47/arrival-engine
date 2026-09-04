@@ -81,7 +81,9 @@ def public_root() -> bool:
 WORD_BAND = (250, 350)
 REQUIRED_BLOCKS = ("Who", "Now", "Room", "Notice", "Say")
 SURFACE_MIN_SCORE = 6
-SURFACE_REQUIRES_ANY_OF = ("S3", "S5", "S7")
+#: R-020's qualifying set: a shared context, topic, personal interest or declared link.
+#: Demographics (S1/S2/S4) alone never name anyone.
+SURFACE_REQUIRES_ANY_OF = ("S3", "S5", "S6", "S7")
 TIE_BREAK = ("large_signal_count_desc", "evidence_recency_desc", "member_id_asc")
 STALE_AFTER_DAYS = 365
 RENDER_TRUST_CLASSES = ("subject_authored", "publisher")

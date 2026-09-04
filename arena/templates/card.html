@@ -99,91 +99,139 @@
   </section>
 
 {% else %}
-  {% for b in digest.card.blocks %}
-  <section class="blk">
+  {# R-034: two layers. The reading layer is Who they are · Who's here · Say this — what a host
+     can absorb in the walk from the desk to the door. Everything else collapses behind one
+     control. The word band is still measured over the whole brief. #}
+  {% set by_label = {} %}
+  {% for b in digest.card.blocks %}{% if by_label.update({b.label: b}) %}{% endif %}{% endfor %}
+
+  {% for label in ['Who', 'Room', 'Say'] %}{% set b = by_label.get(label) %}{% if b %}
+  <section class="blk{% if label == 'Say' %} say{% endif %}">
     <p class="lbl">{{ block_title(b.label) }}</p>
 
     {% if b.label == 'Who' %}
-      {# R-034's borrowed attributed line is the first of the two places the host reads ALOUD, so
-         it gets the italic-gold device inline. `mark_borrowed` escapes first and only then wraps
-         what is already inside curly quotes — it is a typographic pass, not a content one. #}
-      {# No stale_note here on purpose. The narrator's Who prose already carries the correction
-         ("Worth knowing before you open: the door said Twitch; it is Softmax now"), and adding
-         the note beside it printed the same sentence twice in a row. The note is for the
-         DEGRADED paths, where there is no prose to carry it. #}
+      {# R-034's borrowed attributed line is one of the two places the host reads ALOUD, so it
+         gets the italic-gold device inline. `mark_borrowed` escapes first and only then wraps
+         what is already inside curly quotes — a typographic pass, not a content one. The stale
+         note is not repeated here: the narrator's Who prose already carries the correction. #}
       <p>{{ b.text | mark_borrowed }}</p>
-
     {% elif b.label == 'Say' %}
       <p class="aloud">{{ b.text }}</p>
-
     {% else %}
       <p>{{ b.text }}</p>
     {% endif %}
 
     {{ chips_for(b) }}
 
-    {% if b.label == 'Room' %}
-      {# A-3 / R-036: reason first, score small. The integer is right-set on its own hairline row,
-         tabular, so a sentence is never interrupted by a number. #}
+    {% if b.label == 'Room' and not digest.surfaced_count %}
+      {# R-038: below the floor NOBODY is named, and the miss is reported with the number. #}
+      {% set top = digest.ranked_matches[0] if digest.ranked_matches else None %}
+      {% if top %}
+      <p class="match miss">
+        <span class="who">Top score, no candidate named</span>
+        <a class="score" href="{{ base }}/why/{{ token }}/{{ token_for(top.member_id) }}"
+           >{{ top.score }} · needs {{ floor }}</a>
+      </p>
+      {% endif %}
+      {# An empty room needs no extra row — the prose above already says they are first. #}
+    {% endif %}
+  </section>
+  {% endif %}{% endfor %}
+
+  {# The rest of the brief — The match · Sources · Recent activity · Personal detail. #}
+  <details class="rest">
+    <summary><span class="lbl">The rest of the brief</span><span class="arrow">→</span></summary>
+
+    <section class="blk">
+      <p class="lbl">The match</p>
       {% if digest.surfaced_count %}
-        {% for m in digest.ranked_matches if m.surfaced %}
+        {% set m = (digest.ranked_matches | selectattr('surfaced') | first) %}
         <p class="match">
           <span class="who">{{ names.get(m.member_id, m.member_id) }}</span>
           <a class="score" href="{{ base }}/why/{{ token }}/{{ token_for(m.member_id) }}"
-             >{{ m.score }}<span class="of">/16 · why</span></a>
+             >{{ m.score }}<span class="of">/{{ ceiling }} · why</span></a>
         </p>
-        {% endfor %}
-        {% if digest.brokering %}
-        <p class="meta">Brokering: {{ digest.brokering.replace('_', ' ') }}.</p>
-        {% endif %}
-      {% else %}
-        {# R-038 still holds: NOBODY is named here, not even as a backup. But a row of identical
-           `why` links is not a choice a host can make — nine of them, and four pointing at the
-           same person, is a list you can only tap at random. A rank and the pair's own score
-           distinguish them without naming anyone; the anonymous figure is already the device the
-           top row uses. #}
-        {% set top = digest.ranked_matches[0] if digest.ranked_matches else None %}
-        {% if top %}
+      {% elif digest.ranked_matches %}
         <p class="match miss">
           <span class="who">Top score, no candidate named</span>
-          <span class="figure">{{ top.score }} · needs {{ floor }}</span>
+          <a class="score" href="{{ base }}/why/{{ token }}/{{ token_for(digest.ranked_matches[0].member_id) }}"
+             >{{ digest.ranked_matches[0].score }} · needs {{ floor }}</a>
         </p>
-        {% for m in digest.ranked_matches %}
-        <p class="match miss">
-          <span class="who"><span class="rank">{{ loop.index }}.</span> Scored, not surfaced</span>
-          <a class="score" href="{{ base }}/why/{{ token }}/{{ token_for(m.member_id) }}"
-             >{{ m.score }}<span class="of">/16 · why</span></a>
-        </p>
-        {% endfor %}
-        {% else %}
-        <p class="match miss"><span class="who">Nobody present to score</span></p>
-        {% endif %}
+      {% else %}
+        <p class="match miss"><span class="who">Nobody present to score</span>
+           <span class="figure">no pairs</span></p>
       {% endif %}
+    </section>
 
-    {% elif b.label == 'Notice' and digest.withheld_count %}
-      <p class="meta">{{ digest.suppression_notice }}. Class and count only — the text of a withheld
-         fact never reaches this page.</p>
-
-    {% elif b.label == 'Now' and digest.recency.recency_state == 'unknown' %}
-      {# A-4. The one visual difference this product exists to protect. `unknown` gets a bronze
-         gutter and a COUNTED coverage line; `quiet` gets neither, because it is an answer. #}
-      <div class="coverage">
-        <span class="count">Reached {{ coverage.reached }} of {{ coverage.total }}</span>
-        <p>No claim is made about silence in either direction — absence of evidence from a source
-           you could not read is not evidence of absence.</p>
-        {# The sources that WERE read are the denominator and nothing more; naming twenty of them
-           on a phone buries the one line that matters. Only the gap is named. #}
-        <p class="srcs">Not read: {% for s in coverage.out %}<span class="out">{{ s }}</span
-          >{% if not loop.last %} · {% endif %}{% endfor %}</p>
+    <section class="blk">
+      <p class="lbl">Sources</p>
+      {% set seen = [] %}
+      <div class="chips">
+      {% for c in digest.provenance_chips %}
+        {% if c.source_host and c.source_host not in seen %}
+          {% if seen.append(c.source_host) %}{% endif %}
+          <span class="chip{% if chips.get(c.fact_id) and chips[c.fact_id].synthetic %} synthetic{% endif %}">
+            <span class="host">{{ c.source_host }}</span>
+            {% if c.source_date %} · {{ c.source_date }}{% endif %}
+          </span>
+        {% endif %}
+      {% endfor %}
       </div>
-    {% endif %}
-  </section>
-  {% endfor %}
+    </section>
+
+    {% for label in ['Now', 'Notice'] %}{% set b = by_label.get(label) %}{% if b %}
+    <section class="blk">
+      <p class="lbl">{{ block_title(b.label) }}</p>
+      <p>{{ b.text }}</p>
+      {{ chips_for(b) }}
+
+      {% if b.label == 'Notice' and digest.withheld_count %}
+        <p class="meta">{{ digest.suppression_notice }}. Class and count only — the text of a
+           withheld fact never reaches this page.</p>
+      {% elif b.label == 'Now' and digest.recency.recency_state == 'unknown' %}
+        {# A-4. The one visual difference this product exists to protect. `unknown` gets a bronze
+           gutter and a COUNTED coverage line; `quiet` gets neither, because it is an answer. #}
+        <div class="coverage">
+          <span class="count">Reached {{ coverage.reached }} of {{ coverage.total }}</span>
+          <p>No claim is made about silence in either direction — absence of evidence from a
+             source you could not read is not evidence of absence.</p>
+          <p class="srcs">Not read: {% for s in coverage.out %}<span class="out">{{ s.id }} ·
+            {{ s.code }}</span>{% if not loop.last %} — {% endif %}{% endfor %}</p>
+        </div>
+      {% endif %}
+    </section>
+    {% endif %}{% endfor %}
+  </details>
 
   <p class="meta"><span class="num">{{ digest.card.word_count }}</span> words · band
      250–350 · gates passed · grade
      <span class="num">{{ digest.content_grade.scored }}/{{ digest.content_grade.possible }}</span>
      {% if digest.content_grade.failed %} ({{ digest.content_grade.failed|join(', ') }}){% endif %}</p>
+{% endif %}
+
+{# R-060: the card closes the loop. On every card with a member, even degraded ones. #}
+{% if member %}
+<section class="blk outcome">
+  <p class="lbl">What happened</p>
+  <p class="meta">The only proof the introduction worked is what came next. A line and a tap;
+     both optional.</p>
+  {% if logged %}
+  <p class="note">Logged against this introduction.</p>
+  {% endif %}
+  <form method="post" action="{{ base }}/outcome" class="stack">
+    <input type="hidden" name="token" value="{{ token }}">
+    <input type="hidden" name="matched_id" value="{{ matched_id or '' }}">
+    <textarea name="observation" rows="3"
+      placeholder="Twenty minutes by the bar, then he walked her over to his own table…"></textarea>
+    <div class="chips picks">
+      {% for slug, label_text in outcomes %}
+      <label class="pick"><input type="radio" name="outcome" value="{{ slug }}" required>
+        <span>{{ label_text }}</span></label>
+      {% endfor %}
+    </div>
+    <div><button class="btn" type="submit">Log the outcome</button></div>
+  </form>
+</section>
 {% endif %}
 
 {% endblock %}
@@ -202,8 +250,7 @@
 <script>
 (function () {
   var rail = document.getElementById('sayrail');
-  var blocks = document.querySelectorAll('.blk');
-  var real = blocks[blocks.length - 1];
+  var real = document.querySelector('.blk.say');
   if (!rail || !real || !('IntersectionObserver' in window)) return;
   new IntersectionObserver(function (entries) {
     rail.classList.toggle('gone', entries[0].isIntersecting);

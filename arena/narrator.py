@@ -208,17 +208,17 @@ class TemplateNarrator:
     def _room(self, plan: CardPlan) -> str:
         room = plan.room or {}
         if room.get("kind") == "empty":
-            return ("First one here. There is nobody to introduce yet, and inventing a reason to "
-                    "wait for someone would be worse than saying so.")
+            return ("First one here. Nobody to introduce yet — and nobody outside the building "
+                    "is offered, because the engine does not reach past the roster.")
         if room.get("kind") == "no_strong_match":
-            return (f"Nobody in the room clears the bar tonight. The closest pairing scored "
-                    f"{room.get('top_score')} against a floor of {room.get('floor')}, so no name "
-                    f"is offered — a weak introduction spends credibility a strong one will need.")
+            return (f"Nobody here clears the bar tonight — the closest pairing scored "
+                    f"{room.get('top_score')} and needs {room.get('floor')}. No name is offered; "
+                    f"a weak introduction spends credibility a strong one will need.")
         parts = [room.get("primary_sentence", "")]
-        if room.get("backup_sentence"):
-            parts.append(room["backup_sentence"])
-        if room.get("brokering_sentence"):
-            parts.append(room["brokering_sentence"])
+        if room.get("hosting_sentence"):
+            parts.append(room["hosting_sentence"])
+        if room.get("others_sentence"):
+            parts.append(room["others_sentence"])
         return " ".join(p for p in parts if p)
 
     def _notice(self, plan: CardPlan) -> str:
@@ -226,18 +226,20 @@ class TemplateNarrator:
             return ("Nothing here rises to a deep cut that is both sourced and worth saying out "
                     "loud, so this block stays empty rather than reaching for something thin.")
         chip = plan.deep_cut.chip or {}
+        # No pronoun is ever guessed. "Their own" is direct enough and wrong about nobody.
         return (f"{plan.deep_cut.text} "
-                f"That is his own {chip.get('source_host', 'record')}, dated "
+                f"That is their own {chip.get('source_host', 'record')}, dated "
                 f"{chip.get('source_date', 'undated')}.")
 
     def _say(self, plan: CardPlan) -> str:
+        first = plan.display_name.split()[0]
         if plan.deep_cut:
             chip = plan.deep_cut.chip or {}
-            return (f"Ask him about it directly rather than around it — he wrote it himself on "
-                    f"{chip.get('source_host', 'the record')}, so the question reads as interest "
-                    f"rather than research, and he will have the answer ready.")
-        return ("Greet him by name, tell him what is happening in the room tonight, and let him "
-                "choose what he wants to talk about.")
+            return (f"Ask {first} about the story under Personal detail — it is their own "
+                    f"telling, on {chip.get('source_host', 'the record')}, so the question "
+                    f"reads as interest, not research.")
+        return (f"Greet {first} by name, say who else is in tonight, and let the "
+                f"conversation pick its own subject.")
 
 
 DEFAULT_NARRATOR_MODEL = "gpt-5.4-mini"

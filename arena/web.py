@@ -1,8 +1,9 @@
 """Three surfaces: Card (primary), Why-this-score (one tap from Room), Room (presence + webhook).
 
-Mobile-first, server-rendered, no build step, no login. Discovery mitigations only — an unguessable
-path, `X-Robots-Tag: noindex`, a `robots.txt` disallow, and no member name in any URL or page title
-(R-059). That is not access control, and the README says so in plain words.
+Mobile-first, server-rendered, no build step, no login. Since DEC-14 the surfaces answer at the
+root: what remains is search-visibility control only — `X-Robots-Tag: noindex`, a `robots.txt`
+disallow, and no member name in any URL or page title (R-059). That is not access control, and
+the README says so in plain words. (`ARENA_PUBLIC_ROOT=0` restores the path-obscurity option.)
 
 The serving path makes no source-adapter calls. Its one permitted external dependency is the
 narrator that writes the Say line; adapters remain recorded and the store is a local SQLite file.
@@ -27,8 +28,8 @@ from .card import generate_digest
 from .config import Settings, card_path_secret, public_root, store_path
 from .ingest import run_ingestion
 from .narrator import close_live_narrator, live_narrator
-from .ranking import brokering_mode
-from .scoring import score_pair
+from .ranking import seat_tables
+from .scoring import CEILING, INTENTS, score_pair
 from .store import Store, StoreUnavailable
 from .view import (STATE_COPY, affiliation_line, block_title, card_banner, card_state,
                    mark_borrowed, resolve_token, token_for, why_view)
@@ -46,6 +47,7 @@ ROUTES = (
     ("GET", "", "room"), ("GET", "/", "room"),
     ("POST", "/arrive", "arrive"), ("POST", "/depart", "depart"),
     ("GET", "/card/{token}", "card"), ("GET", "/why/{token}/{other}", "why"),
+    ("GET", "/score", "score"), ("POST", "/outcome", "outcome"),
     ("POST", "/reingest", "reingest"), ("GET", "/resolve", "resolve"),
     ("POST", "/webhook/arrival", "webhook_arrival"),
 )
@@ -115,11 +117,11 @@ def _ctx(store: Store, request: Request | None = None, **extra) -> dict:
 # ── Room ──────────────────────────────────────────────────────────────────────
 @app.get("/" + SECRET, response_class=HTMLResponse)
 @app.get("/" + SECRET + "/", response_class=HTMLResponse)
-def room(request: Request):
+def room(request: Request, per: int = 4):
     """R-044. Current presence, ordered by arrival, plus simulate-arrival and mark-departed.
 
     This stands in for the webhook, which the brief says is solved. Physical position is not
-    tracked in this deliverable.
+    tracked in this deliverable. `per` is the table size the host picked for seating (R-062).
     """
     store = _store()
     present = store.roster_rows()
@@ -128,8 +130,14 @@ def room(request: Request):
         {"id": mid, "display_name": (store.member(mid) or {}).get("display_name", mid)}
         for mid in store.member_ids() if mid not in present_ids
     ]
+    per = per if per in (2, 3, 4, 5, 6) else 4
+    seated = [m for m in (store.member(r["person_id"]) for r in present) if m]
+    tables = seat_tables(seated, per=per, settings=Settings(vocabulary=store.vocabulary()),
+                         aliases=store.aliases(),
+                         labels={s: v.get("label") for s, v in store.vocabulary().items()})
     return templates.TemplateResponse(request, "room.html", _ctx(
-        store, request, present=present, absent=absent, registry=sorted(deployed_registry())))
+        store, request, present=present, absent=absent, per=per, tables=tables,
+        registry=sorted(deployed_registry())))
 
 
 @app.post("/" + SECRET + "/arrive")
@@ -151,7 +159,7 @@ def depart(request: Request, person_id: str = Form(...)):
 
 # ── Card ──────────────────────────────────────────────────────────────────────
 @app.get("/" + SECRET + "/card/{token}", response_class=HTMLResponse)
-def card(request: Request, token: str, retry: int = 0):
+def card(request: Request, token: str, retry: int = 0, logged: int = 0):
     """The primary surface. Retry re-runs render only: it does not re-ingest and it does not
     relax a gate (R-047)."""
     store = _store()
@@ -163,7 +171,9 @@ def card(request: Request, token: str, retry: int = 0):
             copy=card_banner(None, None, "not_found", industry_labels={}, vocabulary={}),
             digest=None, member=None, chips=[], token=token), status_code=404)
 
-    settings = Settings()
+    # R-019: the vocabulary rides in so generic topics are actually excluded on the serving
+    # path, not only in fixtures. Without it `venture-capital-craft` (5 of 10) fires S5.
+    settings = Settings(vocabulary=store.vocabulary())
     present_ids = [p for p in store.present_ids() if p != member_id]
 
     digest = generate_digest(
@@ -188,7 +198,20 @@ def card(request: Request, token: str, retry: int = 0):
     # "reached 2 of 3". A bare list of unreachable source ids does not tell a host how much of the
     # profile it is looking at. The denominator is every source attempted on the last run.
     attempted = store.source_status(member_id)
-    out = sorted(set((digest.get("recency") or {}).get("unavailable_source_ids") or []))
+    out_ids = sorted(set((digest.get("recency") or {}).get("unavailable_source_ids") or []))
+    # R-040: the unread source carries its failure code — "wayback · http_503" — because a host
+    # deciding how much to trust the card deserves to know HOW the read failed.
+    by_id = {s["source_id"]: s for s in attempted}
+    out = []
+    for sid in out_ids:
+        s = by_id.get(sid) or {}
+        reason = (s.get("reason") or "").strip()
+        # A code, not a story: "http_503" or a short slug. A long free-text reason belongs in
+        # the ingest report, not on a card a host reads standing up.
+        code = (f"http_{s['http_code']}" if s.get("http_code")
+                else reason if reason and " " not in reason and len(reason) <= 24
+                else "unreached")
+        out.append({"id": sid, "code": code})
     total = len({s["source_id"] for s in attempted})
     coverage = {"total": total, "out": out, "reached": total - len(out)}
 
@@ -206,10 +229,19 @@ def card(request: Request, token: str, retry: int = 0):
             fact_ids=sorted(renderable), run_id="run_serving")
         writable.close()
 
+    # R-060: the outcome capture at the foot of every card. The match's id rides along so the
+    # logged row names the introduction it grades.
+    primary_id = None
+    for m in digest.get("ranked_matches") or []:
+        if m.get("surfaced"):
+            primary_id = m["member_id"]
+            break
+
     return templates.TemplateResponse(request, "card.html", _ctx(
         store, request, state=state, copy=copy, digest=digest, member=member,
         label=label, chips=chips, names=names, token=token, retry=retry,
-        coverage=coverage, floor=settings.surface_min_score))
+        coverage=coverage, floor=settings.surface_min_score,
+        outcomes=OUTCOMES, matched_id=primary_id, logged=logged, ceiling=CEILING))
 
 
 # ── Why this score ────────────────────────────────────────────────────────────
@@ -231,9 +263,88 @@ def why(request: Request, token: str, other: str):
     names = {a_id: a["display_name"], b_id: b["display_name"]}
     view = why_view(a, b, forward=forward, reverse=reverse,
                     excluded_topics=excluded_topic_records(vocabulary), names=names)
-    view["brokering"] = brokering_mode(forward, reverse)
     return templates.TemplateResponse(request, "why.html", _ctx(
         store, request, why=view, token=token, other=other, floor=6))
+
+
+# ── How the score works (R-043) ───────────────────────────────────────────────
+@app.get("/" + SECRET + "/score", response_class=HTMLResponse)
+def score(request: Request):
+    """The staff reference screen: the signal table, the intent taxonomy, the intent classes and
+    the order of operations, verbatim from the PRD. Reached from Room's footer and from
+    Why-this-score. Reference, not per-pair — Why-this-score is the per-pair surface."""
+    store = _store()
+    signals = [
+        {"id": "S1", "text": "Same industry, bucketed. Weight 2. Establishes context; "
+                             "does not carry a match."},
+        {"id": "S2", "text": "Comparable seniority and a career starting in the same decade. "
+                             "Weight 2."},
+        {"id": "S3", "text": "A shared context — city, institution, programme. Weight 3."},
+        {"id": "S4", "text": "Overlapping organisation history. Weight 1."},
+        {"id": "S5", "text": "A specific professional topic held by both, generics excluded. "
+                             "Weight 3."},
+        {"id": "S6", "text": "A personal topic in common. Weight 2."},
+        {"id": "S7", "text": "A declared link — one cites, follows or has written about the "
+                             "other. Weight 3."},
+        {"id": "S8", "text": "Status gradient. Weight 1. Breaks ties, never creates a match."},
+        {"id": "S9", "text": "Intent complement — B has done what A is trying to do. "
+                             "Weight 3, one-way."},
+    ]
+    intents = [{"id": i, "text": INTENTS[i][0].upper() + INTENTS[i][1:] + "."}
+               for i in ("I1", "I2", "I3", "I4", "I5", "I6", "I7")]
+    intents.append({"id": "I8", "text": "Being social — attendance without an agenda. "
+                                        "A finding, never a residual."})
+    intents.append({"id": "I0", "text": "Unknown. Coverage incomplete. Never read as I8."})
+    classes = [
+        {"id": "1", "text": "Complement — surfaced first. S9 fires."},
+        {"id": "2", "text": "Parallel — after complements. S9 does not fire."},
+        {"id": "3", "text": "Open — either side is I8. Ranked on score alone."},
+        {"id": "4", "text": "Neutral — no relation. Score alone."},
+        {"id": "5", "text": "Unknown — either side is I0. Score alone."},
+        {"id": "6", "text": "Guarded — ranked last, and the card names the asymmetry. "
+                            "Not suppressed."},
+    ]
+    steps = [
+        {"id": "1", "text": "Score every pair in the room, both directions, S1–S8."},
+        {"id": "2", "text": "Drop everything below the floor."},
+        {"id": "3", "text": "Class every survivor. I8 on either side means Open."},
+        {"id": "4", "text": "Rank: complement, then parallel, then open / neutral / unknown on "
+                            "score, guarded last."},
+        {"id": "5", "text": "Add S9 to the displayed score where the class is complement. "
+                            "The floor excludes it."},
+        {"id": "6", "text": "Write the reason from the intent, not the overlap."},
+    ]
+    return templates.TemplateResponse(request, "score.html", _ctx(
+        store, request, signals=signals, intents=intents, classes=classes, steps=steps,
+        ceiling=CEILING))
+
+
+# ── Outcome logging (R-060) ───────────────────────────────────────────────────
+OUTCOMES = (
+    ("never_introduced", "Never introduced"),
+    ("brief_hello", "Brief hello"),
+    ("talked_a_while", "Talked a while"),
+    ("together_all_night", "Together all night"),
+    ("swapped_details", "Swapped details"),
+)
+
+
+@app.post("/" + SECRET + "/outcome")
+def outcome(request: Request, token: str = Form(...), outcome: str = Form(...),
+            matched_id: str = Form(default=""), observation: str = Form(default="")):
+    """R-060: the card closes the loop. Append-only; logging is optional and blocks nothing."""
+    store = _store()
+    member_id = resolve_token(token, store.member_ids(), SECRET)
+    if member_id is None or outcome not in {slug for slug, _ in OUTCOMES}:
+        raise HTTPException(status_code=400)
+    matched = matched_id if matched_id in store.member_ids() else None
+    writable = _store(writable=True)
+    writable.record_outcome(
+        outcome_id=str(uuid.uuid4()), subject_id=member_id, matched_id=matched,
+        outcome=outcome, observation=observation.strip() or None, logged_at=_now(),
+        run_id="run_serving")
+    writable.close()
+    return RedirectResponse(f"{_base(request)}/card/{token}?logged=1", status_code=303)
 
 
 # ── Ingesting (DEC-3: one live re-run, GREEN adapters only) ───────────────────
@@ -321,11 +432,13 @@ def resolve(request: Request, name: str = ""):
     """
     store = _store()
     members = [m for m in (store.member(mid) for mid in store.member_ids()) if m]
-    outcome = resolve_arrival_name(name, members)
-    state = outcome["resolution"]
+    result = resolve_arrival_name(name, members)
+    state = result["resolution"]
+    labels = {c["id"]: (store.label(c["id"]) or {}).get("current_label", "")
+              for c in result["candidates"]}
     return templates.TemplateResponse(request, "resolve.html", _ctx(
         store, request, state=state, copy=STATE_COPY[state], supplied=name,
-        candidates=outcome["candidates"]))
+        candidates=result["candidates"], labels=labels))
 
 
 # ── the root mount ────────────────────────────────────────────────────────────

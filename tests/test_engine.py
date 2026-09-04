@@ -28,9 +28,9 @@ from arena.identity import resolve_identity  # noqa: E402
 from arena.labels import resolve_label  # noqa: E402
 from arena.narrator import (  # noqa: E402
     CardPlan, ModelNarrator, NarratorUnavailable, OpenAISayWriter, validate_say_line)
-from arena.ranking import brokering_mode, evidence_recency  # noqa: E402
+from arena.ranking import evidence_recency, mutuality  # noqa: E402
 from arena.reason import say_context  # noqa: E402
-from arena.scoring import CEILING, WEIGHTS, score_pair, surfaces  # noqa: E402
+from arena.scoring import CEILING, WEIGHTS, intent_class, score_pair, surfaces  # noqa: E402
 from arena.store import Store  # noqa: E402
 from arena.view import resolve_token, token_for  # noqa: E402
 
@@ -119,17 +119,27 @@ def test_weights_are_exactly_three_buckets_and_the_ceiling_is_sixteen():
 
 # ── R-018: S8 may break a tie, never create a match ──────────────────────────
 def test_s8_is_silent_without_substrate_and_excluded_from_the_threshold():
+    a = {"id": "a", "prominence_tier": 1, "industries": ["venture-capital"],
+         "topics_professional": [], "topics_personal": [], "contexts": [], "declared_links": []}
+    b = {"id": "b", "prominence_tier": 4, "industries": ["venture-capital"],
+         "topics_professional": [], "topics_personal": [], "contexts": [], "declared_links": []}
+    assert "S8" not in score_pair(a, b).signal_ids           # only demographic S1: no substrate
+
+    c = dict(a, topics_professional=["seed-stage-financing"])
+    d = dict(b, topics_professional=["seed-stage-financing"])
+    pair = score_pair(c, d)                                  # S5 is substrate, so S8 may fire
+    assert "S8" in pair.signal_ids
+    assert pair.score_excluding_s8() == pair.score - 1
+
+
+def test_a_shared_hobby_is_substrate_now():
+    """S6 joined the qualifying set: a real shared pursuit is a reason to talk, unlike a tier."""
     a = {"id": "a", "prominence_tier": 1, "industries": [], "topics_professional": [],
          "topics_personal": ["chess"], "contexts": [], "declared_links": []}
     b = {"id": "b", "prominence_tier": 4, "industries": [], "topics_professional": [],
          "topics_personal": ["chess"], "contexts": [], "declared_links": []}
-    assert "S8" not in score_pair(a, b).signal_ids           # only S6 fired: no substrate
-
-    c = dict(a, industries=["venture-capital"], topics_professional=["seed-stage-financing"])
-    d = dict(b, industries=["venture-capital"], topics_professional=["seed-stage-financing"])
-    pair = score_pair(c, d)
-    assert "S8" in pair.signal_ids
-    assert pair.score_excluding_s8() == pair.score - 1
+    pair = score_pair(a, b)
+    assert {"S6", "S8"} <= pair.signal_ids
 
 
 def test_prominence_unmeasured_keeps_s8_silent_in_both_directions():
@@ -143,15 +153,15 @@ def test_prominence_unmeasured_keeps_s8_silent_in_both_directions():
 
 
 # ── AUD-07-6: an unresolved context never matches ────────────────────────────
-def test_unresolved_context_never_fires_s4():
+def test_unresolved_context_never_fires_s3():
     venice = {"type": "place", "value": "Venice", "resolved": 0}
     a = {"id": "a", "industries": [], "topics_professional": [], "topics_personal": [],
          "contexts": [venice], "declared_links": []}
     b = {"id": "b", "industries": [], "topics_professional": [], "topics_personal": [],
          "contexts": [venice], "declared_links": []}
-    assert "S4" not in score_pair(a, b).signal_ids
+    assert "S3" not in score_pair(a, b).signal_ids
     resolved = dict(venice, resolved=1)
-    assert "S4" in score_pair(dict(a, contexts=[resolved]), dict(b, contexts=[resolved])).signal_ids
+    assert "S3" in score_pair(dict(a, contexts=[resolved]), dict(b, contexts=[resolved])).signal_ids
 
 
 # ── R-019: topic aliases fold, so one thesis is not scored as two ────────────
@@ -171,18 +181,52 @@ def test_s8_is_excluded_from_evidence_recency():
     assert evidence_recency(ev, "m_x", {"S5", "S8"}) == "2012-03-04"
 
 
-# ── R-022: brokering mode ────────────────────────────────────────────────────
-def test_brokering_mode_precedence():
+# ── R-022a: mutuality replaces the retired brokering machinery ───────────────
+def test_mutuality_states():
     strong = {"id": "b", "industries": ["vc"], "topics_professional": ["seed-stage-financing"],
               "topics_personal": [], "contexts": [{"type": "place", "value": "nyc"}],
               "declared_links": [{"to": "a"}], "prominence_tier": 3, "seniority_tier": "principal",
               "career_start_decade": "1990s"}
     other = dict(strong, id="a", declared_links=[{"to": "b"}])
-    assert brokering_mode(score_pair(other, strong), score_pair(strong, other)) == "mutual"
+    assert mutuality(score_pair(other, strong), score_pair(strong, other)) == "mutual"
+
+    # Only the directed link separates the directions: 7 forward, 4 back.
+    thin = {"id": "a", "industries": ["vc"], "topics_professional": [], "topics_personal": [],
+            "contexts": [], "prominence_tier": 3, "seniority_tier": "principal",
+            "career_start_decade": "1990s", "declared_links": [{"to": "d"}]}
+    peer = dict(thin, id="d", declared_links=[])
+    assert mutuality(score_pair(thin, peer), score_pair(peer, thin)) == "one_way"
 
     quiet = {"id": "c", "industries": [], "topics_professional": [], "topics_personal": [],
              "contexts": [], "declared_links": []}
-    assert brokering_mode(score_pair(other, quiet), score_pair(quiet, other)) == "light_touch"
+    assert mutuality(score_pair(other, quiet), score_pair(quiet, other)) == "neither"
+
+
+# ── R-022 / R-022a.5: intent classes and the display-only S9 ─────────────────
+def test_intent_class_precedence():
+    assert intent_class(None, "I1") == "unknown"
+    assert intent_class("I0", "I1") == "unknown"
+    assert intent_class("I8", "I7") == "open"
+    assert intent_class("I2", "I1") == "complement"
+    assert intent_class("I1", "I2") != "complement"          # the map is directed
+    assert intent_class("I2", "I7") == "guarded"
+    assert intent_class("I7", "I5") == "guarded"
+    assert intent_class("I1", "I1") == "parallel"
+    assert intent_class("I1", "I4") == "neutral"
+
+
+def test_s9_is_displayed_but_never_reaches_the_floor():
+    a = {"id": "a", "intent": "I2", "industries": ["climate"], "topics_professional": ["grid"],
+         "topics_personal": [], "contexts": [], "declared_links": []}
+    b = {"id": "b", "intent": "I1", "industries": ["climate"], "topics_professional": ["grid"],
+         "topics_personal": [], "contexts": [], "declared_links": []}
+    pair = score_pair(a, b)
+    assert pair.intent_class == "complement"
+    assert pair.display_score() == pair.score + 3            # S1 + S5 = 5, displayed 8
+    assert pair.floor_score() == 5
+    assert surfaces(pair) is False                           # 8 on the card, 5 at the floor
+    assert [s.signal_id for s in pair.display_fired()] == ["S1", "S5", "S9"]
+    assert pair.as_dict()["intent_class"] == "complement"
 
 
 # ── R-012 / R-056: corroboration, and refusal by table ───────────────────────
@@ -281,8 +325,8 @@ def test_sayable_accepts_a_vocative_when_it_knows_who_is_addressed(text, ok):
 
 def test_match_say_context_carries_the_strongest_useful_fact_without_writing_the_line():
     signals = [
-        {"signal_id": "S7", "detail": {"topic": "venture-investing-craft"}},
-        {"signal_id": "S5", "detail": {"kind": "cited_in_own_writing"}},
+        {"signal_id": "S5", "detail": {"topic": "venture-investing-craft"}},
+        {"signal_id": "S7", "detail": {"kind": "cited_in_own_writing"}},
     ]
 
     assert say_context(signals, "Fred Wilson", arriving_name="Brad Feld") == {
@@ -602,6 +646,8 @@ def test_the_floor_is_inclusive_and_needs_a_qualifying_substrate():
         def signal_ids(self): return self._s
 
         def score_excluding_s8(self): return self.score - (1 if "S8" in self._s else 0)
+
+        def floor_score(self): return self.score_excluding_s8()
 
     assert surfaces(P(6, {"S3", "S7"})) is True
     assert surfaces(P(7, {"S1", "S2", "S4"})) is False       # no qualifying substrate

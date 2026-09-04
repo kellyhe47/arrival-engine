@@ -1,16 +1,31 @@
-"""Ordering the room, and the three tie-break tiers.
+"""Ordering the room: the R-022a pipeline, and the three tie-break tiers.
 
-Tier 2 is the one with the trap. Signals are computed from member attribute SETS, which carry no
-dates — only facts have `source_date`. So a fired signal's date comes from the fact backing it, and
-a match's recency is the LATEST such date across its fired signals. S8 is EXCLUDED from that
-maximum: its date is when a follower count was last read, not a dated event between two people, and
-including it makes every match tie at today's date, silently collapsing tier 2 into tier 3.
+The order of operations, verbatim from the PRD:
+
+    1. Score every pair in the room, both directions, S1–S8.
+    2. Drop everything below the floor.
+    3. Class every survivor. I8 on either side means open.
+    4. Rank: complement, then parallel, then open / neutral / unknown on score, guarded last.
+    5. Add S9 to the displayed score where the class is complement. The floor excludes it.
+    6. Write the reason from the intent, not the overlap.
+
+Tie-break tier 2 is the one with the trap. Signals are computed from member attribute SETS, which
+carry no dates — only facts have `source_date`. So a fired signal's date comes from the fact
+backing it, and a match's recency is the LATEST such date across its fired signals. S8 is EXCLUDED
+from that maximum: its date is when a follower count was last read, not a dated event between two
+people, and including it makes every match tie at today's date, silently collapsing tier 2 into
+tier 3.
 """
 from __future__ import annotations
 
 import functools
 
-from .scoring import PairScore, WEIGHTS, excluded_topic_records, excluded_topic_slugs, score_pair, surfaces
+from .scoring import (PairScore, WEIGHTS, excluded_topic_records, excluded_topic_slugs,
+                      score_pair, surfaces)
+
+#: R-022a step 4. Complement first, parallel next, open/neutral/unknown together on score,
+#: guarded last — ranked, never suppressed: the card names the asymmetry instead.
+CLASS_ORDER = {"complement": 0, "parallel": 1, "open": 2, "neutral": 2, "unknown": 2, "guarded": 3}
 
 
 def evidence_recency(signal_evidence: dict, member_id: str, fired_ids: set[str]) -> str | None:
@@ -25,7 +40,16 @@ def evidence_recency(signal_evidence: dict, member_id: str, fired_ids: set[str])
 
 
 def _compare(x: dict, y: dict):
-    """Total order over matches: score desc, LARGE count desc, evidence recency desc, id asc."""
+    """Total order over matches.
+
+    Surfaced matches come first, ordered by intent class (R-022a.4), then score desc, then the
+    tie-break tiers. Below-floor matches trail in plain score order — they are listed for honesty
+    on Why-this-score, never named.
+    """
+    if x["surfaced"] != y["surfaced"]:
+        return -1 if x["surfaced"] else 1
+    if x["surfaced"] and x["_class_order"] != y["_class_order"]:
+        return -1 if x["_class_order"] < y["_class_order"] else 1
     if x["score"] != y["score"]:
         return -1 if x["score"] > y["score"] else 1
     if x["_large"] != y["_large"]:
@@ -83,11 +107,15 @@ def rank_room(
         fired_ids = pair.signal_ids
         matches.append({
             "member_id": b["id"],
-            "score": pair.score,
+            # R-022a.5: the displayed score carries S9 where the class is complement. The floor
+            # was already tested without it inside `surfaces`.
+            "score": pair.display_score(),
+            "intent_class": pair.intent_class,
             "surfaced": surfaces(pair, minimum=settings.surface_min_score,
                                  requires_any_of=settings.surface_requires_any_of),
             "fired_signals": pair.as_dict()["fired_signals"],
             "_large": pair.large_count,
+            "_class_order": CLASS_ORDER.get(pair.intent_class, 2),
             "_recency": evidence_recency(signal_evidence or {}, b["id"], fired_ids),
             "_pair": pair,
         })
@@ -97,7 +125,7 @@ def rank_room(
     tie_broken_by = None
     for i in range(len(matches) - 1):
         hi, lo = matches[i], matches[i + 1]
-        if hi["score"] == lo["score"]:
+        if hi["score"] == lo["score"] and hi["_class_order"] == lo["_class_order"]:
             tie_broken_by = _tier_that_decided(hi, lo)
             break
 
@@ -107,6 +135,7 @@ def rank_room(
             "member_id": m["member_id"],
             "rank": i,
             "score": m["score"],
+            "intent_class": m["intent_class"],
             "surfaced": m["surfaced"],
             "fired_signals": m["fired_signals"],
         })
@@ -118,25 +147,90 @@ def rank_room(
         "surfaced_count": surfaced_count,
         "pairs_scored": len(candidates),
         "tie_broken_by": tie_broken_by,
-        # R-038: one primary, one backup, everyone else collapses. An empty or all-below-floor room
-        # is an honest absence, never an error and never a forced recommendation.
+        # R-038: exactly one candidate is named. An empty or all-below-floor room is an honest
+        # absence, never an error and never a forced recommendation.
         "room_block_kind": "match" if surfaced_count else "honest_absence",
         "_matches": matches,
     }
 
 
-def brokering_mode(forward: PairScore, reverse: PairScore, *, minimum: int = 6,
-                   requires_any_of=("S3", "S5", "S7")) -> str:
-    """R-022. Computed from the S8-EXCLUDED surfacing scores, in precedence order.
+def seat_tables(present: list[dict], *, per: int, settings, aliases: dict | None = None,
+                labels: dict | None = None) -> list[dict]:
+    """R-062. Partition the present members into tables of `per`, in arrival order, and give each
+    table a one-line reason built only from the measured edges INSIDE it.
 
-    It changes what the host physically does: `mutual` means introduce and step away; `broker`
-    means stay and carry the reason across.
+    A trailing table of one merges into the previous table rather than seating anyone alone. A
+    table with no measured edges says so and tells the host to stay. Seating reuses scored edges;
+    it never invents one.
+    """
+    from .reason import _clause
+    from .scoring import excluded_topic_slugs
+
+    if per < 2 or len(present) < 2:
+        return []
+    excluded = excluded_topic_slugs(settings.vocabulary)
+
+    groups: list[list[dict]] = [present[i:i + per] for i in range(0, len(present), per)]
+    if len(groups) > 1 and len(groups[-1]) == 1:
+        groups[-2].extend(groups.pop())
+
+    def last(name: str) -> str:
+        return name.split()[-1]
+
+    tables = []
+    for i, g in enumerate(groups, start=1):
+        links: list[str] = []
+        for x in range(len(g)):
+            for y in range(x + 1, len(g)):
+                a, b = g[x], g[y]
+                found = None
+                for src, dst in ((a, b), (b, a)):
+                    pair = score_pair(src, dst, excluded_topics=excluded, aliases=aliases,
+                                      s8_requires_substrate=settings.s8_requires_substrate)
+                    fired = {s.signal_id: s for s in pair.fired}
+                    for sid in ("S7", "S5", "S3", "S6"):    # substance first, strongest first
+                        if sid in fired:
+                            clause = _clause(fired[sid].as_dict(),
+                                             last(src.get("display_name") or src["id"]),
+                                             last(dst.get("display_name") or dst["id"]), labels)
+                            if clause:
+                                found = (src, dst, clause)
+                                break
+                    if found:
+                        break
+                if found:
+                    src, dst, clause = found
+                    links.append(f"{last(src.get('display_name') or src['id'])} and "
+                                 f"{last(dst.get('display_name') or dst['id'])}: {clause}.")
+        if links:
+            why = " ".join(links[:2])
+            extra = len(links) - 2
+            if extra > 0:
+                why += (f" Plus {extra} more measured link{'s' if extra != 1 else ''} "
+                        f"at this table.")
+        else:
+            why = f"Nothing measured between these {len(g)}. A host should stay."
+        tables.append({
+            "number": i,
+            "seats": len(g),
+            "members": [m.get("display_name") or m["id"] for m in g],
+            "why": why,
+        })
+    return tables
+
+
+def mutuality(forward: PairScore, reverse: PairScore, *, minimum: int = 6,
+              requires_any_of=("S3", "S5", "S6", "S7")) -> str:
+    """Whether the pull runs both ways, for the card's Who's-here prose.
+
+    The brokering machinery is retired (PRD R-022a); what the host physically does is carried in
+    words backed by edges instead. `mutual` reads "leave them to it"; `one_way` reads "stay and
+    carry the reason across"; `neither` never reaches a card, because nobody was named.
     """
     f_ok = surfaces(forward, minimum=minimum, requires_any_of=requires_any_of)
     r_ok = surfaces(reverse, minimum=minimum, requires_any_of=requires_any_of)
     if f_ok and r_ok:
         return "mutual"
-    gap = abs(forward.score_excluding_s8() - reverse.score_excluding_s8())
-    if (f_ok or r_ok) and gap >= 6:
-        return "broker"
-    return "light_touch"
+    if f_ok or r_ok:
+        return "one_way"
+    return "neither"
