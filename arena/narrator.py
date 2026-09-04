@@ -263,14 +263,9 @@ class TemplateNarrator:
                 f"{chip.get('source_date', 'undated')}.")
 
     def _say(self, plan: CardPlan) -> str:
-        first = plan.display_name.split()[0]
-        if plan.deep_cut:
-            chip = plan.deep_cut.chip or {}
-            return (f"Ask {first} about the story under Personal detail — it is their own "
-                    f"telling, on {chip.get('source_host', 'the record')}, so the question "
-                    f"reads as interest, not research.")
-        return (f"Greet {first} by name, say who else is in tonight, and let the "
-                f"conversation pick its own subject.")
+        # No match means no manufactured move (operator, 2026-09-04): one generic, warm default
+        # for everyone rather than a question conjured from the file.
+        return "Welcome them in warmly — no introductions to make just yet."
 
 
 DEFAULT_NARRATOR_MODEL = "gpt-5.4-mini"
