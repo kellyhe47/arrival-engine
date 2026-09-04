@@ -449,13 +449,24 @@ def _build_plan(member_id, arriving, store, renderable, chips, recency, room, su
                 store.candidate_facts(match_id), settings=settings)
             eligible_ids = set(match_facts["renderable_fact_ids"])
             # A profile page read on audit day is not "activity"; their published work is.
+            # And the item TEXT must be user-facing content — what the research concluded —
+            # never a developer-looking log line (operator, 2026-09-04).
+            log_like = re.compile(
+                r"\bprofile\b|\bAPI\b|og:|\bheadline\b|@\w{3,}|\bfollowers?\b|"
+                r"\bfollowing list\b|\bSEC\b|\bfilings?\b|\bForm (?:D|ADV|4)\b|"
+                r"\bCRD\b|https?://|\bidentifies\b|\bmeasured\b|\brendered\b|"
+                r"\bcorroborat|\bLinkedIn\b|\bcrawl|\bscrape|"
+                r"\bfeed\b|\bfull-text\b|\bposts? (?:in|between|through|since)\b|"
+                r"\bitems\b|\bcadence\b|\bcorpus\b", re.IGNORECASE)
             profile_hosts = {"linkedin.com", "x.com", "api.fxtwitter.com",
                              "en.wikipedia.org", "news.ycombinator.com"}
             candidates_r = [i for i in store.items(match_id)
-                            if i.get("item_id") in eligible_ids]
+                            if i.get("item_id") in eligible_ids
+                            and not i.get("via_edge_type")     # the household's doings, not theirs
+                            and not log_like.search(i.get("text") or "")]
             candidates_r.sort(key=lambda i: i.get("published_at") or "", reverse=True)
             candidates_r.sort(key=lambda i: chip_host(i.get("source_url") or "") in profile_hosts)
-            recent_items = candidates_r[:3]
+            recent_items = candidates_r[:5]
             if recent_items:
                 say_ctx["match_recent_activity"] = {
                     "member": say_ctx.get("person_here"),
@@ -465,7 +476,8 @@ def _build_plan(member_id, arriving, store, renderable, chips, recency, room, su
                               for i in recent_items]}
             else:
                 fallback = [f for f in store.candidate_facts(match_id)
-                            if (f.get("fact_id") or f.get("id")) in eligible_ids][:3]
+                            if (f.get("fact_id") or f.get("id")) in eligible_ids
+                            and not log_like.search(f.get("text") or "")][:3]
                 if fallback:
                     say_ctx["match_recent_activity"] = {
                         "member": say_ctx.get("person_here"),

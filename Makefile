@@ -36,6 +36,9 @@ test-golden:  ## drive the REAL implementation against every fixture, four obser
 red:  ## prove every fixture is load-bearing by breaking the rule it defends
 	$(PY) eval/red_first.py
 
+eval-say:  ## LLM-judge eval: is every Say line human, coherent, interesting, attributed? Needs OPENAI_API_KEY
+	$(PY) eval/say_eval.py
+
 test: validate-spec test-golden red  ## everything
 	$(PY) -m pytest tests -q
 
