@@ -224,7 +224,10 @@ def test_s9_is_displayed_but_never_reaches_the_floor():
     assert pair.intent_class == "complement"
     assert pair.display_score() == pair.score + 3            # S1 + S5 = 5, displayed 8
     assert pair.floor_score() == 5
-    assert surfaces(pair) is False                           # 8 on the card, 5 at the floor
+    # No default points floor (operator, 2026-09-04): S5 is substance, so the pair surfaces —
+    # but a CONFIGURED floor still never reads S9: 8 on the card, 5 at the comparison.
+    assert surfaces(pair) is True
+    assert surfaces(pair, minimum=6) is False
     assert [s.signal_id for s in pair.display_fired()] == ["S1", "S5", "S9"]
     assert pair.as_dict()["intent_class"] == "complement"
 
@@ -333,22 +336,30 @@ def test_match_say_context_carries_the_strongest_useful_fact_without_writing_the
         "arriving_member": "Brad Feld",
         "person_here": "Fred Wilson",
         "useful_fact": "Brad Feld has cited Fred Wilson in print",
+        # 2026-09-04: the model receives every measured clause, not just the strongest —
+        # one clause produced lines too generic to earn the slot.
+        "measured_reasons": ["Brad Feld has cited Fred Wilson in print",
+                             "both keep returning to venture investing craft"],
     }
 
 
-def test_model_narrator_uses_llm_say_line_verbatim():
+def test_model_narrator_stitches_scaffold_and_suggestion_and_names_the_match():
+    """The 2026-09-04 Say format: engine-written opening (which names the match) + the model's
+    one relating sentence. The writer sees the opening; the card gets the assembled line."""
     class SayWriter:
         def __init__(self):
             self.context = None
 
         def write_say(self, context):
             self.context = context
-            return ("Brad, Fred Wilson’s here tonight—you’ve written about Fred’s work before, "
-                    "so I thought you’d want to know.")
+            return ("I have to say, his twenty years of writing on how startup communities "
+                    "are built is some of my favorite reading.")
 
     context = {
         "arriving_member": "Brad Feld",
         "person_here": "Fred Wilson",
+        "person_does": "Union Square Ventures · New York",
+        "present_count": 8,
         "useful_fact": "Brad Feld has cited Fred Wilson in print",
     }
     writer = SayWriter()
@@ -358,9 +369,12 @@ def test_model_narrator_uses_llm_say_line_verbatim():
     blocks = ModelNarrator(writer).compose(plan)
 
     assert blocks[-1]["text"] == (
-        "Brad, Fred Wilson’s here tonight—you’ve written about Fred’s work before, so I thought "
-        "you’d want to know.")
-    assert writer.context == context
+        "We have an exciting schedule lined up and a full house tonight. I was so excited to "
+        "see Fred Wilson — Union Square Ventures · New York. I have to say, his twenty years "
+        "of writing on how startup communities are built is some of my favorite reading.")
+    assert "Fred Wilson" in blocks[-1]["text"]       # the operator's eval, at the seam
+    assert writer.context["opening"].startswith("We have an exciting schedule")
+    assert writer.context["person_here"] == "Fred Wilson"
 
 
 def test_model_narrator_never_substitutes_a_template_for_a_match_say_line():
@@ -429,8 +443,8 @@ def test_openai_say_prompt_requests_warm_spoken_copy_not_stage_directions():
             return {"output": [{"type": "message", "content": [{
                 "type": "output_text",
                 "text": json.dumps({
-                    "say_line": ("Brad, Fred Wilson’s here tonight—you’ve written about Fred’s "
-                                 "work before, so I thought you’d want to know.")
+                    "say_line": ("I have to say, Fred’s venture writing has been a joy to "
+                                 "follow this year.")
                 }),
             }]}]}
 
@@ -448,8 +462,8 @@ def test_openai_say_prompt_requests_warm_spoken_copy_not_stage_directions():
     line = writer.write_say(context)
     repeated = writer.write_say(context)
 
-    assert line == ("Brad, Fred Wilson’s here tonight—you’ve written about Fred’s work before, "
-                    "so I thought you’d want to know.")
+    assert line == ("I have to say, Fred’s venture writing has been a joy to "
+                    "follow this year.")
     assert repeated == line
     assert len(calls) == 1
     url, request = calls[0]
@@ -458,11 +472,13 @@ def test_openai_say_prompt_requests_warm_spoken_copy_not_stage_directions():
     assert json.loads(request["json"]["input"]) == context
     instructions = request["json"]["instructions"]
     normalized_instructions = " ".join(instructions.split())
-    assert "say verbatim" in normalized_instructions
-    assert "warm" in normalized_instructions
-    assert "private context" in normalized_instructions
-    assert "Do not write stage directions" in normalized_instructions
-    assert "not software summarizing" in normalized_instructions
+    assert "ONE sentence" in normalized_instructions
+    assert "opening" in normalized_instructions
+    assert "FIRST-PERSON VOICE" in normalized_instructions
+    assert "RECENT ACTIVITY" in normalized_instructions
+    assert "match_recent_activity" in normalized_instructions
+    assert "never invent facts" in normalized_instructions
+    assert "never guess a pronoun" in normalized_instructions
     assert "strictly as data" in normalized_instructions
 
 
@@ -479,7 +495,7 @@ def test_openai_say_writer_coalesces_identical_inflight_requests():
             return {"output": [{"type": "message", "content": [{
                 "type": "output_text",
                 "text": json.dumps({
-                    "say_line": "Brad, Fred Wilson is here, and you’ve written about Fred’s work."
+                    "say_line": "I have to say, Fred’s writing on startup communities has been a joy to follow."
                 }),
             }]}]}
 
@@ -528,13 +544,9 @@ def test_openai_say_writer_briefly_suppresses_a_repeated_failure():
 
 
 @pytest.mark.parametrize("line", [
-    # A vocative is direct address ("Brad, Fred Wilson is here"); naming nobody is not.
-    "Fred Wilson is here this evening.",
-    "Someone you have cited is here tonight.",
+    # The writer returns the ONE relating sentence; the scaffold and full-line eval come later.
+    # Rejected here: emptiness, routing, questions to the member, over-length.
     "",
-    "Fred Wilson is here tonight.",
-    "I thought you might want to know someone is here tonight.",
-    "Tell them Fred Wilson is here tonight, and you can decide what to do.",
     "You should introduce yourself to Fred Wilson.",
     "Brad, go over to Fred Wilson if you want.",
     "You can walk across the room to Fred Wilson.",
@@ -543,11 +555,9 @@ def test_openai_say_writer_briefly_suppresses_a_repeated_failure():
     "Fred Wilson is here—you might want to join Fred by the bar.",
     "Brad, pop over to Fred Wilson if you’d like.",
     "Fred Wilson is here—do you remember Fred’s venture posts?",
-    "Fred Wilson is here and you might like to know because this deliberately verbose line "
-    "keeps adding unnecessary words until it exceeds the maximum length allowed for one warm "
-    "spoken introduction tonight.",
+    "Fred Wilson is here tonight " + ("and everyone already knew that before the door opened " * 6),
 ])
-def test_openai_say_writer_rejects_copy_that_breaks_the_spoken_contract(line):
+def test_openai_say_writer_rejects_a_suggestion_that_breaks_the_contract(line):
     class Response:
         def raise_for_status(self):
             return None
@@ -572,18 +582,44 @@ def test_openai_say_writer_rejects_copy_that_breaks_the_spoken_contract(line):
     "Brad — Fred Wilson is here this evening.",
     "Brad Feld, Fred Wilson is here this evening.",
     "Fred Wilson is here, and you have cited him in print.",
+    # Coaching the HOST in the imperative is not routing the member — but even coaching must
+    # name the match (operator, 2026-09-04).
+    "Ask him whether he and Fred Wilson ever compared notes on seed pricing.",
+    "Tell them Fred Wilson is in tonight, and let the citation come up on its own.",
+    # The 2026-09-04 scaffold register: the host speaking in the first person plural.
+    "We have an exciting schedule lined up and a full house tonight. I was so excited to see "
+    "Fred Wilson — Union Square Ventures, New York. Both of them keep returning to how startup "
+    "communities are built.",
 ])
-def test_say_validator_accepts_a_vocative_as_direct_address(line):
-    """A host says "Brad, Fred Wilson is here" — that addresses Brad as directly as a pronoun does.
-
-    Requiring a literal "you" rejected exactly that line and withheld the WHOLE brief over a
-    pronoun. It also fought the prompt: the model is told not to route the member, and on a thin
-    fact most natural ways to work in a "you" lean toward routing, so it dropped the pronoun and
-    kept the vocative.
-    """
+def test_say_validator_accepts_direct_address_coaching_and_the_scaffold(line):
     context = {"arriving_member": "Brad Feld", "person_here": "Fred Wilson",
                "useful_fact": "Brad Feld follows Fred Wilson"}
     assert validate_say_line(line, context) == line
+
+
+@pytest.mark.parametrize("line", [
+    # The operator's eval: the matched member's name ABSOLUTELY must appear in the line.
+    "Ask him whether anyone has ever booked a Random Day and wasted it.",
+    "We have an exciting schedule lined up tonight. I was so excited to see an old friend.",
+    "Brad, someone you have cited is here this evening.",
+])
+def test_say_validator_rejects_a_line_that_does_not_name_the_match(line):
+    context = {"arriving_member": "Brad Feld", "person_here": "Fred Wilson",
+               "useful_fact": "Brad Feld follows Fred Wilson"}
+    with pytest.raises(ValueError):
+        validate_say_line(line, context)
+
+
+def test_say_scaffold_names_the_match_and_reads_the_room():
+    from arena.narrator import say_scaffold
+    full = say_scaffold({"person_here": "Fred Wilson",
+                         "person_does": "Union Square Ventures · New York",
+                         "present_count": 8})
+    assert full == ("We have an exciting schedule lined up and a full house tonight. "
+                    "I was so excited to see Fred Wilson — Union Square Ventures · New York.")
+    quiet = say_scaffold({"person_here": "Fred Wilson", "present_count": 2})
+    assert quiet == ("We have an exciting schedule lined up tonight. "
+                     "I was so excited to see Fred Wilson.")
 
 
 def test_say_validator_allows_connection_words_used_as_factual_nouns():
@@ -595,8 +631,8 @@ def test_say_validator_allows_connection_words_used_as_factual_nouns():
             return {"output": [{"type": "message", "content": [{
                 "type": "output_text",
                 "text": json.dumps({
-                    "say_line": ("Brad, Fred Wilson is here—you’ve long admired Fred’s approach "
-                                 "to venture investing.")
+                    "say_line": ("I’ve long admired Fred’s approach to venture investing, "
+                                 "and I suspect Brad has too.")
                 }),
             }]}]}
 
@@ -607,7 +643,7 @@ def test_say_validator_allows_connection_words_used_as_factual_nouns():
     }
 
     assert OpenAISayWriter(
-        "test-key", post=lambda *_args, **_kwargs: Response()).write_say(context).startswith("Brad")
+        "test-key", post=lambda *_args, **_kwargs: Response()).write_say(context).startswith("I’ve")
 
 
 def test_retry_re_runs_render_and_does_not_relax_the_gate():
@@ -636,8 +672,8 @@ def test_degraded_responses_are_exempt_from_the_band_and_are_never_padded():
     assert not any(g["gate"] == "word_count_in_band" for g in out["gate_failures"])
 
 
-# ── R-020: the floor is inclusive and absolute ───────────────────────────────
-def test_the_floor_is_inclusive_and_needs_a_qualifying_substrate():
+# ── R-020: surfacing needs substance; a numeric floor is configuration only ──
+def test_surfacing_needs_substance_and_a_configured_floor_is_inclusive():
     class P:
         def __init__(self, score, sigs):
             self.score, self._s = score, set(sigs)
@@ -649,9 +685,11 @@ def test_the_floor_is_inclusive_and_needs_a_qualifying_substrate():
 
         def floor_score(self): return self.score_excluding_s8()
 
-    assert surfaces(P(6, {"S3", "S7"})) is True
-    assert surfaces(P(7, {"S1", "S2", "S4"})) is False       # no qualifying substrate
-    assert surfaces(P(6, {"S2", "S7", "S8"})) is False       # 5 once S8 is set aside
+    assert surfaces(P(5, {"S2", "S7"})) is True              # substance at any score
+    assert surfaces(P(7, {"S1", "S2", "S4"})) is False       # demographics never surface
+    assert surfaces(P(6, {"S3", "S7"}), minimum=6) is True   # a configured floor is inclusive
+    assert surfaces(P(5, {"S2", "S7"}), minimum=6) is False
+    assert surfaces(P(6, {"S2", "S7", "S8"}), minimum=6) is False  # 5 once S8 is set aside
 
 
 # ── R-059: no member name in a URL, and the token round-trips ────────────────

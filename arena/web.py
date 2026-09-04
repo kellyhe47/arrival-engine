@@ -268,7 +268,7 @@ def why(request: Request, token: str, other: str):
     mode = mutuality(forward, reverse)
     view["brokering"] = {"mutual": "mutual", "one_way": "broker"}.get(mode)
     return templates.TemplateResponse(request, "why.html", _ctx(
-        store, request, why=view, token=token, other=other, floor=6))
+        store, request, why=view, token=token, other=other))
 
 
 # ── How the score works (R-043) ───────────────────────────────────────────────

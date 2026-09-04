@@ -86,7 +86,7 @@
     },
     {
       "id": "B-004",
-      "statement": "A match is surfaced only at a floor score >= 6 over S1-S7 (S8 and S9 excluded) with at least one of S3/S5/S6/S7 fired; otherwise the Room block reports no strong match rather than forcing one.",
+      "statement": "A match surfaces on substance: at least one of S3/S5/S6/S7 fired. There is no default points floor (removed 2026-09-04); a configured surface_min_score is evaluated over S1-S7 with S8 and S9 excluded. Otherwise the Room block reports no strong match rather than forcing one.",
       "traces_to": [
         "RUBRIC-3",
         "RUBRIC-4"

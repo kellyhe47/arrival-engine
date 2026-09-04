@@ -21,7 +21,7 @@ decides what the BODY renders.
 | State | Trigger | What it shows |
 |---|---|---|
 | Ready | profile cached, room scored | Two layers (PRD R-034): Who they are · Who's here · Say this, then the collapsed rest of the brief (The match · Sources · Recent activity · Personal detail). 250–350 words over the whole brief. Ends with the R-060 outcome capture. |
-| No strong match | no present member clears score>=6 AND one of S3/S5/S6/S7 | Room block gives the anonymous top score and why it missed. No candidate name; never a recommendation. |
+| No strong match | no present member shares a qualifying signal (one of S3/S5/S6/S7; the 6-point floor is removed) | Room block gives the anonymous top score and why it missed. No candidate name; never a recommendation. |
 | Cold trail | no first-person item inside 365 days | Now block states the gap in days and the last date. Never dresses old material as current. |
 | Unknown coverage | one or more expected sources was unreachable | Names the unread sources with their failure codes, counts coverage ("Reached 2 of 3"), and makes no silence claim in either direction. The Say line is unaffected. |
 | Empty room | roster empty | A state of the ROOM surface, not an error - a normal early evening. |
@@ -40,10 +40,12 @@ genericity. This is the whole answer to "expose the reasoning"
 and it is one tap away, never on the card.
 
 ### Room
-Current-presence list ordered by arrival time (tap a name for the card), with simulate-arrival
-and mark-departed controls, the R-062 table-seating tool (size 2-6, arrival-order partition,
-singleton merged back, one measured line per table), the DEC-3 live re-run, and a footer link to
-the How-the-score-works reference screen. This stands in for the webhook, which the brief says is solved. Physical
+Current-presence list ordered by arrival time (tap a name for the card), with mark-departed
+controls, then simulate-arrival, then the R-062 table-seating tool (size 2-6, arrival-order
+partition, singleton merged back, one measured line per table), and a footer link to the
+How-the-score-works reference screen. The DEC-3 live re-run and the resolve chooser keep their
+routes (/reingest, /resolve) but no longer have controls on Room (operator instruction,
+2026-09-04); the chooser is reached by the webhook's ambiguous outcome. This stands in for the webhook, which the brief says is solved. Physical
 position is not tracked — a scope fact for the README, no longer printed on the surface.
 
 ## Actions and their outcomes
@@ -76,7 +78,7 @@ The ids are the domain vocabulary and the gate contract; the titles are render-t
   [supplied]; it is [current] now.” Omitted when the label is current.
 - Suppression: directly below Notice when nonzero, as one class-and-count line. Suppressed text never
   appears.
-- A miss: stated explicitly ("top score 5, needs 6") without naming the candidate, never hidden as
+- A miss: stated explicitly (the top score, with a why link) without naming the candidate, never hidden as
   an empty section.
 - An unavailable source: named on the ingesting screen with its reason, and on the card as a
   bronze-gutter coverage block with a count ("reached 19 of 20") naming the source that was not

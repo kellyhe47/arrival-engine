@@ -117,9 +117,12 @@ with *"so, Twitch…"* has damaged the relationship before the handshake. Suppli
 for all ten are in `member_label` (`db/roster.sql`); Shear is the one row flagged `stale`. Keying on
 "Twitch" also loses his strongest edge — the YC S2005 tie is Kiko↔Reddit, not Twitch↔Reddit.
 
-**R-015** The brief emits `label_correction {supplied, current, stale}`. When stale,
-the card shows it explicitly — *"the door said Twitch; it's Softmax now"* — because the host may
-have already read the door.
+**R-015** The brief emits `label_correction {supplied, current, stale}`. `[operator,
+2026-09-04: "the door said" phrasing is retired — the supplied label is stated as FACT.]` The
+supplied label was written down, so it is most likely true; when the research says it no longer
+holds, it renders with exactly one word in front of it: **"Former"** — *Emmett Shear, "Former
+Twitch"; it is Softmax now.* The stale correction still renders explicitly, because the host may
+already have read the supplied label at arrival.
 
 ## 4. Scoring
 
@@ -150,13 +153,12 @@ fires at full weight or not at all. The signal set is the prototype's:
 > true of everyone in the room and therefore carries no information. *(was K-6)*
 
 **R-017** The ceiling is **16** — the sum of S1–S7. S8 is outside the ceiling: it is tie-break and
-display only (R-018). S9 is outside both the ceiling and the floor: it is added to the *displayed*
+display only (R-018). S9 is outside the ceiling and never decides surfacing: it is added to the *displayed*
 score only where the pair's intent class is complement (R-022a step 5). The old S2/S3
 mutual-exclusion rule is retired with the old signal set.
 
 **R-018** **S8 cannot create a match.** S8 fires only when B's prominence tier is strictly above
-A's. The surfacing threshold is evaluated on the score **excluding S8**; S8 affects display and
-ranking only. Prominence breaks ties, never makes them. Without this the engine sends everyone to
+A's. Surfacing never reads S8 — it affects display and ranking only. Prominence breaks ties, never makes them. Without this the engine sends everyone to
 the most famous person present — *selection*, the Fleming failure, not service.
 
 **R-019** **Genericity is a property of the vocabulary, not the room.** A topic is
@@ -169,17 +171,18 @@ dropped (they render on Why-this-score, R-046). The prior room-statistic version
 non-monotonic, room-size-inverted, and failed on its own justifying case. The mechanism is in
 `db/vocabulary.sql`.
 
-**R-020** **Introduction floor = 6**, evaluated on S1–S7 (S8 and S9 both excluded), and at least
-one of S3/S5/S6/S7 must have fired — a shared context, topic, personal interest or declared link.
-S1/S2/S4 are demographics, and demographics alone is not a reason to interrupt someone: the
-measured miss is a 5 built on industry, seniority and org history with *"nothing personal, nothing
-declared and nothing cited underneath it."* Below the floor **nobody is named** — not as primary,
-not as backup.
+**R-020** `[amended, operator 2026-09-04: the 6-point floor is REMOVED]` **Surfacing needs
+substance, not points.** A match may surface whenever at least one of S3/S5/S6/S7 has fired — a
+shared context, topic, personal interest or declared link. S1/S2/S4 are demographics, and
+demographics alone is not a reason to interrupt someone; S8 and S9 never decide surfacing. When
+nobody present shares anything specific, **nobody is named** — not as primary, not as backup. A
+numeric threshold survives as configuration only (`surface_min_score`, default 0); the product
+ships without one.
 
 **R-021** Ties break by LARGE-signal count, then evidence recency, then id. *(G-017)*
 
 **R-022** **Intent.** Intent is what a member is currently trying to do, derived from their own
-first-person material — and it is the north star: among candidates that already clear the floor,
+first-person material — and it is the north star: among candidates that already share something specific,
 intent decides who is surfaced.
 
 `I1` deploying capital · `I2` raising or being backed · `I3` building an institution ·
@@ -203,7 +206,7 @@ baseline, and unreached sources make it I0. Never carried across a suppression �
 evidence suppresses the intent it would imply. Never used as a residual. Never shown to the
 member's face: it survives the over-the-shoulder test only when it reads as what they published.
 
-Every above-floor pair then takes an **intent class**, which drives ranking and the written
+Every surfaced pair then takes an **intent class**, which drives ranking and the written
 reason: **complement** (B has done what A is trying to do; S9 fires) · **parallel** (same pursuit;
 S9 does not fire — two people deploying capital are parallel, not complementary) · **open** (either
 side is I8; ranked on score alone) · **neutral** (no intent relation; score alone) · **unknown**
@@ -213,10 +216,10 @@ ranked last, and the card names the asymmetry — **never suppressed**).
 **R-022a** **Order of operations**, verbatim from the prototype's reference screen:
 
 1. Score every pair in the room, both directions, S1–S8.
-2. Drop everything below the floor (R-020).
+2. Drop every pair with nothing specific — no qualifying signal (R-020).
 3. Class every survivor. I8 on either side means open.
 4. Rank: complement, then parallel, then open / neutral / unknown on score, guarded last.
-5. Add S9 to the displayed score where the class is complement. The floor excludes it.
+5. Add S9 to the displayed score where the class is complement. It never decides surfacing.
 6. Write the reason from the intent, not the overlap.
 
 A complement at 7 beats a neutral at 11 — that is the point, and the part to argue with: the
@@ -225,7 +228,7 @@ I0 and I8 are checked first as whole-member states; then the class is the best a
 the intent combinations, in the order complement → guarded → parallel → neutral.
 
 The `light_touch` mode is retired. What survives of brokering is a **reading, not a mode**:
-Why-this-score states `mutual` (both directions clear the floor — introduce and step away) or
+Why-this-score states `mutual` (something specific runs both ways — introduce and step away) or
 `broker` (one direction clears it — stay and carry the reason across), and `Who's here` carries
 the same fact in words backed by edges — *"Wilson reads Kopelman in public and cites him; no
 reverse edge was found across two passes."*
@@ -299,7 +302,9 @@ obligation that survives, and it is R-032 above.
 
 ## 6. The card
 
-**R-033** A full card is **250–350 words**; outside the band is a hard gate failure. The declassified
+**R-033** A full card is **250–450 words**; outside the band is a hard gate failure. `[operator,
+2026-09-04: ceiling raised from 350 so the brief carries more data points — the reading layer
+stays skimmable; the growth lands in the collapsed rest of the brief.]` The declassified
 PDB of 3 Sep 1968 is 5 items / ~265 words / ~87s aloud; Brysbaert (2019, 190 studies) puts adult
 silent reading at 175–300 wpm and the slow end binds, because the host is standing and watching a
 door. `not_found`, gate-withheld and other non-card responses are degraded states and
@@ -310,13 +315,15 @@ fabrication and falls back to its withheld greeting when the available evidence 
 The reading layer is three ordered blocks, and its two acted-on blocks are **scanned, not read —
 they render as short bullet lines** (a hanging bronze rule, never a disc):
 
-- `Who they are` — up to three bullets: the identity line; the one borrowed attributed line (plus
-  `person.name_respelling` when present — the narrator never invents a pronunciation); and the
-  **door-label check, always present**, stale or not: *"The door said Foundry Group, Techstars,
-  Boulder — Foundry is right, the Techstars half is older than it reads."* (R-015)
+- `Who they are` — bullets: the identity line; the one borrowed attributed line (plus
+  `person.name_respelling` when present — the narrator never invents a pronunciation); and, only
+  when the supplied label is STALE, the R-015 correction (*"formerly Twitch; it is Softmax
+  now"*). `[operator, 2026-09-04]` The supplied label renders in the **banner caption** under
+  the name as plain fact when it differs from the measured read — *"…Foundry Group / Techstars,
+  Boulder."* — prefixed **"Former"** when stale. Never "the door said".
 - `Who's here` — bullets: the match, with the **name set off from its reason**; the mutuality or
   hosting line, in words backed by edges; then the rest of the room in one line — other
-  above-floor pairings counted but never named, everyone else in aggregate with the honest zero
+  other qualifying pairings counted but never named, everyone else in aggregate with the honest zero
   called out; never a roll call.
 - `Say this` — prose, the aloud device.
 
@@ -338,12 +345,21 @@ screen rather than becoming permanent chrome over the primary action. *(B-006, G
 **R-038** **Exactly one candidate is named.** `The match` names one member and one score; there is
 no ranked backup slot. Other present members appear in `Who's here` prose only when something true
 is measured about them — *"Melanie Perkins is also present; nothing is measured between them."*
-Below the floor nobody is named and the match block reports the miss honestly with the number —
-*"Top score, no candidate named · 5 · needs 6."*
+When nothing specific is measured, nobody is named and the match block reports the miss
+honestly with the top score and a why link — never a forced recommendation.
 
-**R-039** The intro is a **name-drop, never an instruction** — *"Eric Ries is here; his
-new book is about exactly the incentive problem you've been working on"*, not *"go talk to Eric."*
-Members are not routed.
+**R-039** `[amended, operator 2026-09-04]` **The Say line follows a fixed shape, and the matched
+member's name ABSOLUTELY must appear in it.** The engine writes the opening — a warm welcome plus
+the match, named, with their measured affiliation: *"We have an exciting schedule lined up and a
+full house tonight. I was so excited to see Fred Wilson — Union Square Ventures, New York."*
+("a full house" only when six or more are present). The model contributes exactly ONE sentence
+after it, in the HOST'S OWN FIRST-PERSON VOICE — one genuinely interesting point about the
+matched member, drawn only from the match's own render-eligible record (`about_the_match` in the
+prompt); the "I" carries warmth, the facts stay measured — at most 35 words, never a question
+put to the member. Members are still never routed — *"go
+talk to Eric"* remains forbidden. Enforced three ways: the scaffold names the match structurally;
+`validate_say_line` rejects any assembled line missing the name (the eval, unit-tested); and the
+digest withholds any narrator-written card whose Say block does not name the match.
 
 **R-040** **Recency has three states, not two:** `active` · `quiet` (every source
 reached, genuinely nothing) · `unknown` (a source was unreachable). **Only `quiet` may state
@@ -438,7 +454,7 @@ in a quiet page footer carrying the How-the-score-works link.
 weights and evidence; signals that did *not* fire, each with the one-line reason it did not
 (S9's non-firing is explained in intent terms — *"both hold I1, deploying capital: parallel, not
 complement"*); excluded generic topics with their holder shares; and the reverse-direction score
-with its own fired rows. The header restates that the floor is evaluated with S8 set aside, and
+with its own fired rows. The header restates that S8 is display-only, and
 the footer restates directionality: A's interest in B is not B's interest in A.
 
 **R-047** **Retry never relaxes a gate.** The obvious implementation is
@@ -459,7 +475,7 @@ inner-circle expansion is an ingest-time walk that writes facts back onto the me
 file *is* the cache DEC-3 requires — the ingest/serve split becomes a file copy.
 
 **R-050** **Deterministic:** resolution, scoring, buckets, intent classing and ranking (R-022a —
-given the stored intents, class and rank are pure functions), floor, provenance and trust
+given the stored intents, class and rank are pure functions), surfacing, provenance and trust
 gates and suppression class. Intent *extraction* is ingest-time fact extraction like any other:
 probabilistic, evidence-backed, and I0 when coverage cannot support a finding. **Probabilistic:** fact extraction at ingest and prose at
 compose, including the DEC-9 judgement about whether an otherwise eligible family fact is suitable.

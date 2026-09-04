@@ -195,7 +195,7 @@ def by_id(fid, members, mid):
     err(fid, f"member {mid} not present in given.inputs")
     return None
 
-def should_surface(score_value, signal_ids, minimum=6, required=frozenset({"S3", "S5", "S6", "S7"})):
+def should_surface(score_value, signal_ids, minimum=0, required=frozenset({"S3", "S5", "S6", "S7"})):
     """The compact truth table replacing one-fixture-per-surfacing-clause.
 
     The floor reads S1–S7 only: S8 (display/tie-break) and S9 (intent, display only) are both
@@ -210,16 +210,18 @@ def main():
     if not files:
         print("no fixtures found", file=sys.stderr); return 1
 
+    # The 6-point floor is removed (operator, 2026-09-04): the DEFAULT policy is substance-only.
+    # A numeric floor survives as configuration, so the configured cases pin that machinery.
     surfacing_cases = [
-        ("minimum-with-substrate", 6, ["S3", "S7"], True),
-        ("above-minimum-without-qualifying-substrate", 7, ["S1", "S2", "S4"], False),
-        ("below-minimum-with-substrate", 5, ["S2", "S7"], False),
-        ("s8-cannot-push-five-over-the-line", 6, ["S2", "S7", "S8"], False),
-        ("s9-never-reaches-the-floor", 8, ["S1", "S5", "S9"], False),
+        ("substance-surfaces-at-any-score", 5, ["S2", "S7"], 0, True),
+        ("demographics-alone-never-surface", 7, ["S1", "S2", "S4"], 0, False),
+        ("configured-floor-still-enforceable", 5, ["S2", "S7"], 6, False),
+        ("s8-cannot-push-five-over-a-configured-floor", 6, ["S2", "S7", "S8"], 6, False),
+        ("s9-never-decides-surfacing", 8, ["S1", "S5", "S9"], 6, False),
     ]
-    for name, score_value, signal_ids, expected in surfacing_cases:
+    for name, score_value, signal_ids, minimum, expected in surfacing_cases:
         checks += 1
-        if should_surface(score_value, signal_ids) != expected:
+        if should_surface(score_value, signal_ids, minimum=minimum) != expected:
             err("POLICY", f"surfacing case {name} disagrees with B-004")
 
     for path in files:
@@ -289,7 +291,7 @@ def main():
 
                     # surfacing rule, re-derived
                     checks += 1
-                    mn = cfg.get("surface_min_score", 6)
+                    mn = cfg.get("surface_min_score", 0)
                     req = set(cfg.get("surface_requires_any_of", ["S3", "S5", "S6", "S7"]))
                     sigs_set = set(expected_signals(rm))
                     surf_score = rm["score"] - sum(s["weight"] for s in rm["fired_signals"]

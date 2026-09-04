@@ -37,3 +37,8 @@ INFO:     127.0.0.1:57502 - "GET /card/7e5f712c5ab0 HTTP/1.1" 200 OK
 INFO:     127.0.0.1:57503 - "GET /card/fea47d03b43e HTTP/1.1" 200 OK
 INFO:     127.0.0.1:57504 - "GET /card/cab0bc6e22ba HTTP/1.1" 200 OK
 INFO:     127.0.0.1:57504 - "GET /favicon.ico HTTP/1.1" 404 Not Found
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [42957]
+make: *** [serve] Terminated: 15

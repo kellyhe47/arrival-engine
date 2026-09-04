@@ -375,12 +375,14 @@ def score_pair(
                      intent_class=klass, s9=s9)
 
 
-def surfaces(pair: PairScore, *, minimum: int = 6,
+def surfaces(pair: PairScore, *, minimum: int = 0,
              requires_any_of=("S3", "S5", "S6", "S7")) -> bool:
-    """The introduction floor (R-020).
+    """The surfacing test (R-020).
 
-    Evaluated on S1–S7 only — S8 and S9 are both excluded — and at least one non-demographic
-    signal must have fired. Below the floor nobody is named — not as primary, not as backup.
+    The 6-point floor is removed (operator, 2026-09-04): a match surfaces on SUBSTANCE — at
+    least one non-demographic signal (a shared context, topic, personal interest or declared
+    link) must have fired. Demographics alone still never name anyone. A numeric `minimum`
+    survives as configuration only, evaluated on S1–S7 with S8 and S9 excluded.
     """
     return pair.floor_score() >= minimum and bool(pair.signal_ids & set(requires_any_of))
 

@@ -7,8 +7,8 @@
                    if renders_card else None %}
 {% block body_class %}{% if say_block %} class="has-rail"{% endif %}{% endblock %}
 
-{# The identity line on a DEGRADED card. R-015's correction rides along — the door is exactly
-   where the host may already have heard the stale label. #}
+{# The identity line on a DEGRADED card. R-015's correction rides along — the host may already
+   have read the stale label at arrival. #}
 {% macro identity_line(member, label) %}
   <p>{{ member.display_name }}{% if label.current_label %}. {{ affiliation(label.current_label) }}{% endif %}.</p>
   {{ stale_note(label) }}
@@ -16,9 +16,8 @@
 
 {% macro stale_note(label) %}
   {% if label.stale %}
-  <p class="note warn">The door said {{ label.supplied_label }}; it is
-     {{ label.current_label }} now. Worth knowing before the handshake — the host may already
-     have read the door.</p>
+  <p class="note warn">Former {{ label.supplied_label }}; it is
+     {{ label.current_label }} now. Worth knowing before the handshake.</p>
   {% endif %}
 {% endmacro %}
 
@@ -158,7 +157,7 @@
       <p class="match miss">
         <span class="who">Top score, no candidate named</span>
         <a class="score" href="{{ base }}/why/{{ token }}/{{ token_for(top.member_id) }}"
-           >{{ top.score }} · needs {{ floor }}</a>
+           >{{ top.score }} · why</a>
       </p>
     {% endif %}
   </section>
@@ -189,7 +188,7 @@
           <p class="match miss">
             <span class="who">Top score, no candidate named</span>
             <a class="score" href="{{ base }}/why/{{ token }}/{{ token_for(digest.ranked_matches[0].member_id) }}"
-               >{{ digest.ranked_matches[0].score }} · needs {{ floor }}</a>
+               >{{ digest.ranked_matches[0].score }} · why</a>
           </p>
         {% else %}
           <p class="match miss"><span class="who">Nobody present to score</span></p>
@@ -239,7 +238,7 @@
   </details>
 
   <p class="meta"><span class="num">{{ digest.card.word_count }}</span> words · band
-     250–350 · gates passed · grade
+     250–450 · gates passed · grade
      <span class="num">{{ digest.content_grade.scored }}/{{ digest.content_grade.possible }}</span>
      {% if digest.content_grade.failed %} ({{ digest.content_grade.failed|join(', ') }}){% endif %}</p>
 

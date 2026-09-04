@@ -52,6 +52,6 @@ def resolve_label(arrival: dict, profile: dict) -> dict:
         "show_correction_to_host": stale,
         "echo_supplied_label": False,
         "correction_line": (
-            f"the door said {supplied}; it is {current} now" if stale else None
+            f"formerly {supplied}; it is {current} now" if stale else None
         ),
     }

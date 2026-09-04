@@ -27,8 +27,24 @@
     </div>
     {% endfor %}
   {% else %}
-    <p>Quiet so far. The first person through the door still gets a full card.</p>
+    <p>Quiet so far. The first arrival still gets a full card.</p>
   {% endif %}
+</section>
+
+{# The design strips this block to its control: the paragraph explaining that simulate-arrival
+   stands in for the webhook is true, but it is operator documentation and it belongs in the
+   README, not above a button someone taps mid-demo. The banner lost its third sentence for the
+   same reason. #}
+<section class="blk">
+  <p class="lbl">Simulate arrival</p>
+  <form method="post" action="{{ base }}/arrive" class="stack">
+    <select name="person_id" aria-label="Member">
+      {% for m in absent %}
+      <option value="{{ m.id }}">{{ m.display_name }}</option>
+      {% endfor %}
+    </select>
+    <div><button class="btn" type="submit">Fire the webhook</button></div>
+  </form>
 </section>
 
 {# R-062: table seating (A-16). A proposal, not a floor plan: reason first, names under it. #}
@@ -56,50 +72,6 @@
   {% else %}
     <p>Nobody to seat yet.</p>
   {% endif %}
-</section>
-
-{# The design strips this block to its control: the paragraph explaining that simulate-arrival
-   stands in for the webhook is true, but it is operator documentation and it belongs in the
-   README, not above a button someone taps mid-demo. The banner lost its third sentence for the
-   same reason. #}
-<section class="blk">
-  <p class="lbl">Simulate arrival</p>
-  <form method="post" action="{{ base }}/arrive" class="stack">
-    <select name="person_id" aria-label="Member">
-      {% for m in absent %}
-      <option value="{{ m.id }}">{{ m.display_name }}</option>
-      {% endfor %}
-    </select>
-    <div><button class="btn" type="submit">Fire the webhook</button></div>
-  </form>
-</section>
-
-{# QA-6. `ui-states.md` routes an ambiguous arrival to the chooser, and nothing in the product
-   linked to it — the screen existed and could only be reached by typing its URL. This is that
-   door: the host types what they were told at the entrance and the engine says whether it
-   resolves to one member, several, or none. It never guesses (R-013). #}
-<section class="blk">
-  <p class="lbl">Name at the door</p>
-  <form method="get" action="{{ base }}/resolve" class="stack">
-    <input type="text" name="name" placeholder="What the door said" aria-label="Name at the door">
-    <div><button class="btn" type="submit">Resolve</button></div>
-  </form>
-</section>
-
-{# Not in the 390 mock, and kept anyway: DEC-3 requires one live ingestion run on stage. Removing
-   it would be a feature deletion, not a design change. #}
-<section class="blk">
-  <p class="lbl">Live re-run</p>
-  <form method="post" action="{{ base }}/reingest" class="stack">
-    <select name="person_id" aria-label="Member to re-ingest">
-      {% for r in present %}<option value="{{ r.person_id }}">{{ r.display_name }}</option>{% endfor %}
-      {% for m in absent %}<option value="{{ m.id }}">{{ m.display_name }}</option>{% endfor %}
-    </select>
-    <div><button class="btn" type="submit">Run GREEN adapters</button></div>
-  </form>
-  <p class="meta">GREEN adapters only, so it cannot fail on a dead session in front of the room.
-     Deployed registry: {{ registry|length }} adapters, none of them SESSION. SESSION adapters are
-     not disabled here — they are absent, so there is nothing to disable.</p>
 </section>
 
 <div class="pagefoot">
