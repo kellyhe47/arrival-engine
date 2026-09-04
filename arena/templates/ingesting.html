@@ -10,15 +10,17 @@
 {% block content %}
 <section class="blk">
   <p class="lbl">Per adapter</p>
-  <table>
-    <tr><th>Source</th><th>Tier</th><th>Status</th><th>Facts</th><th>Reason</th></tr>
-    {% for s in result.source_status %}
-    <tr class="{{ '' if s.status == 'ok' else 'off' }}">
-      <td>{{ s.source_id }}</td><td>{{ s.tier }}</td><td>{{ s.status }}</td>
-      <td class="w">{{ s.facts }}</td><td>{{ s.reason or '—' }}</td></tr>
-    {% endfor %}
-  </table>
-  <p class="meta">Every attempt is recorded, not every success. This table is the only thing that
+  {# A-8. Five 13px Inter columns do not fit 390 minus a 20px gutter, and the column that gets
+     clipped is Reason — exactly the content DEC-1 says must not be hidden, on the screen the brief
+     calls half the argument. So the record is stacked hairline rows, not a table. #}
+  {% for s in result.source_status %}
+  <div class="adapter{{ '' if s.status == 'ok' else ' off' }}">
+    <span class="src">{{ s.source_id }}</span>
+    <span class="st">{{ s.tier }} · {{ s.status }} · {{ s.facts }} facts</span>
+    {% if s.reason %}<p class="rsn">{{ s.reason }}</p>{% endif %}
+  </div>
+  {% endfor %}
+  <p class="meta">Every attempt is recorded, not every success. This record is the only thing that
      distinguishes “quiet” from “unknown” — a 200 with zero items is not silence.</p>
   <p class="meta">The deployed runtime makes zero external calls, so GREEN adapters replay a
      recorded corpus here; each corpus is sized from a count measured in <code>db/roster.sql</code>,
@@ -31,6 +33,6 @@
   <p>{% if result.profile_complete %}Every source was reached.
      {% else %}Profile marked partial. The facts already collected are kept; the gap is reported so
      nobody reads a half-built profile as a complete one.{% endif %}</p>
-  <p><a class="btn" href="/{{ secret }}/card/{{ token }}">Open the card</a></p>
+  <p><a class="btn" href="{{ base }}/card/{{ token }}">Open the card</a></p>
 </section>
 {% endblock %}

@@ -5,7 +5,7 @@
 PY := .venv/bin/python
 PORT ?= 8000
 
-.PHONY: help install store store-real store-empty store-golden validate-spec test-golden red test run docker clean
+.PHONY: help install store store-real store-empty store-golden validate-spec test-golden red test run serve dev urls docker clean
 
 help:
 	@grep -E '^[a-z-]+:.*?## ' $(MAKEFILE_LIST) | sed 's/:.*## /\t/' | column -t -s "$$(printf '\t')"
@@ -39,8 +39,13 @@ red:  ## prove every fixture is load-bearing by breaking the rule it defends
 test: validate-spec test-golden red  ## everything
 	$(PY) -m pytest tests -q
 
-run: store urls  ## serve on :$(PORT)
+run: store serve  ## rebuild the store from db/, then serve on :$(PORT)
+
+serve: urls  ## serve the store that already exists — no rebuild
 	@ARENA_DB=var/arena.serve.db $(PY) -m uvicorn arena.web:app --host 0.0.0.0 --port $(PORT)
+
+dev: urls  ## serve with auto-reload on code changes — no rebuild
+	@ARENA_DB=var/arena.serve.db $(PY) -m uvicorn arena.web:app --host 0.0.0.0 --port $(PORT) --reload
 
 urls:  ## print the unguessable path and every card URL (operator's terminal only)
 	@ARENA_DB=var/arena.serve.db PORT=$(PORT) $(PY) scripts/urls.py

@@ -19,7 +19,7 @@
      write to the profile store.</p>
   {% for c in candidates %}
   <div class="row">
-    <span class="name"><a href="/{{ secret }}/card/{{ token_for(c.id) }}">{{ c.display_name }}</a></span>
+    <span class="name"><a href="{{ base }}/card/{{ token_for(c.id) }}">{{ c.display_name }}</a></span>
     <span class="meta">{{ c.seniority_tier or "—" }}</span>
   </div>
   {% endfor %}
@@ -27,7 +27,7 @@
 {% else %}
 <section class="blk">
   <p>No corroborated profile. Greet and log.</p>
-  <p class="lbl">Say</p>
+  <p class="lbl">{{ block_title('Say') }}</p>
   <p class="aloud">Welcome them in by name and note the arrival for someone to check later.</p>
 </section>
 {% endif %}

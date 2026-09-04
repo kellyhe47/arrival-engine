@@ -3,3 +3,9 @@ var/
 __pycache__/
 *.pyc
 .pytest_cache/
+
+# The narrator's API key. Never committed — see arena/config.py:load_dotenv.
+.env
+.env.*
+!.env.example
+.qa/screens/

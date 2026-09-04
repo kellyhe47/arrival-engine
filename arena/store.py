@@ -59,7 +59,19 @@ class Store:
                 f"the runtime may not write `{table}`; only {sorted(RUNTIME_WRITABLE)}")
 
     def arrive(self, person_id: str, at: str) -> None:
+        """Record an arrival. A member is in the room ONCE, however many times they arrive.
+
+        The primary key is (person_id, arrived_at), so `INSERT OR REPLACE` only collapses two
+        arrivals that land in the same second. A badge scanned twice, a webhook retried, or a host
+        tapping back and re-firing left a SECOND live row: the member appeared twice in Room, the
+        banner counted them twice, and — because presence is read as a join — they were scored
+        FOUR times and named four times in Who's here. So any open row is closed first, and the
+        newest arrival is the one that stands.
+        """
         self._guard("roster")
+        self.conn.execute(
+            "UPDATE roster SET departed_at = ? WHERE person_id = ? AND departed_at IS NULL"
+            " AND arrived_at <> ?", (at, person_id, at))
         self.conn.execute(
             "INSERT OR REPLACE INTO roster (person_id, arrived_at, departed_at) VALUES (?,?,NULL)",
             (person_id, at))
@@ -98,6 +110,11 @@ class Store:
             for r in self.conn.execute(
                 "SELECT slug, kind, label, discriminating, holder_count, base_size, basis FROM topic")
         }
+
+    def industry_labels(self) -> dict:
+        """The controlled industry vocabulary, slug -> label. Read, never invented (P0-6)."""
+        return {r["slug"]: r["label"] for r in
+                self.conn.execute("SELECT slug, label FROM industry")}
 
     def aliases(self) -> dict:
         return {r["alias"]: r["canonical"] for r in
@@ -224,18 +241,27 @@ class Store:
 
     # ── presence ──────────────────────────────────────────────────────────────
     def present_ids(self) -> list[str]:
-        """R-044 / P-3. Ordered by arrival. Read through `v_present`, which already drops opt-outs."""
+        """R-044 / P-3. Ordered by arrival. Read through `v_present`, which already drops opt-outs.
+
+        Grouped, not just joined. `v_present` yields one row per LIVE ROSTER ROW, so joining it
+        back against `roster` squares any duplication — two live rows for one person came back as
+        four, and every one of them was scored and surfaced separately. Presence is a set of
+        people; this returns each person once, ordered by their earliest live arrival.
+        """
         return [r["person_id"] for r in self.conn.execute(
-            "SELECT v.person_id FROM v_present v JOIN roster r ON r.person_id = v.person_id"
-            " AND r.departed_at IS NULL ORDER BY r.arrived_at, v.person_id")]
+            "SELECT v.person_id, MIN(r.arrived_at) AS arrived FROM v_present v"
+            " JOIN roster r ON r.person_id = v.person_id AND r.departed_at IS NULL"
+            " GROUP BY v.person_id ORDER BY arrived, v.person_id")]
 
     def roster_rows(self) -> list[dict]:
+        """What Room lists. One row per PERSON, dated by their earliest live arrival."""
         return [dict(r) for r in self.conn.execute(
-            "SELECT r.person_id, r.arrived_at, p.display_name,"
+            "SELECT r.person_id, MIN(r.arrived_at) AS arrived_at, p.display_name,"
             " COALESCE(f.do_not_brief, 0) AS do_not_brief"
             " FROM roster r JOIN person p ON p.id = r.person_id"
             " LEFT JOIN member_flags f ON f.person_id = r.person_id"
-            " WHERE r.departed_at IS NULL ORDER BY r.arrived_at, r.person_id")]
+            " WHERE r.departed_at IS NULL GROUP BY r.person_id"
+            " ORDER BY arrived_at, r.person_id")]
 
     # ── facts and coverage ────────────────────────────────────────────────────
     def candidate_facts(self, person_id: str) -> list[dict]:

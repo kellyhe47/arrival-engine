@@ -30,7 +30,8 @@ from .narrator import close_live_narrator, live_narrator
 from .ranking import brokering_mode
 from .scoring import score_pair
 from .store import Store, StoreUnavailable
-from .view import STATE_COPY, card_state, resolve_token, token_for, why_view
+from .view import (STATE_COPY, affiliation_line, block_title, card_banner, card_state,
+                   mark_borrowed, resolve_token, token_for, why_view)
 from .webhook import ReplayGuard, WebhookRejected, resolve_arrival_name, secret, verify
 
 HERE = Path(__file__).resolve().parent
@@ -47,6 +48,7 @@ app = FastAPI(title="Arrival", docs_url=None, redoc_url=None, openapi_url=None,
 REPLAY_GUARD = ReplayGuard()
 app.mount("/static", StaticFiles(directory=HERE / "static"), name="static")
 templates = Jinja2Templates(directory=str(HERE / "templates"))
+templates.env.filters["mark_borrowed"] = mark_borrowed
 
 
 @app.middleware("http")
@@ -87,7 +89,11 @@ def _ctx(store: Store, **extra) -> dict:
         "SELECT COUNT(*) FROM fact WHERE run_id <> 'run_synthetic_demo'").fetchone()[0]
     base = {"secret": SECRET, "synthetic_facts": synthetic, "measured_facts": measured,
             "css_version": int((HERE / "static" / "arena.css").stat().st_mtime),
-            "token_for": lambda mid: token_for(mid, SECRET)}
+            "token_for": lambda mid: token_for(mid, SECRET),
+            # Render-time only. The block IDS stay `Who`/`Now`/`Room`/`Notice`/`Say` everywhere
+            # else in the system; this is the heading the host reads. See view.BLOCK_TITLES.
+            "block_title": block_title,
+            "affiliation": affiliation_line}
     base.update(extra)
     return base
 
@@ -140,17 +146,25 @@ def card(request: Request, token: str, retry: int = 0):
     if member_id is None:
         # R-013 / ui-states: no corroborated profile. Greet and log; the Say block still renders.
         return templates.TemplateResponse(request, "card.html", _ctx(
-            store, state="not_found", copy=STATE_COPY["not_found"], digest=None,
-            member=None, chips=[], token=token), status_code=404)
+            store, state="not_found",
+            copy=card_banner(None, None, "not_found", industry_labels={}, vocabulary={}),
+            digest=None, member=None, chips=[], token=token), status_code=404)
 
     flags = store.flags()
     opted_out = bool((flags.get(member_id) or {}).get("do_not_brief"))
     settings = Settings()
     present_ids = [p for p in store.present_ids() if p != member_id]
 
-    digest = generate_digest(
-        {"arrival": {"member_id": member_id}, "present_members": present_ids},
-        settings=settings, clock=_now(), store=store, narrator=live_narrator())
+    if opted_out:
+        # P-3, honoured before anything is built. The Do Not Brief card says in so many words that
+        # "nothing was built and then thrown away" — so nothing is. Running the digest first made
+        # that sentence false: a full dossier was assembled, a Say line was bought from the
+        # narrator, and the card that discarded it still pinned that line to the Say rail.
+        digest = {}
+    else:
+        digest = generate_digest(
+            {"arrival": {"member_id": member_id}, "present_members": present_ids},
+            settings=settings, clock=_now(), store=store, narrator=live_narrator())
 
     renderable = set(digest.get("renderable_fact_ids") or [])
     state = card_state(digest, present_count=len(present_ids),
@@ -166,6 +180,17 @@ def card(request: Request, token: str, retry: int = 0):
 
     names = {mid: (store.member(mid) or {}).get("display_name", mid) for mid in present_ids}
 
+    # A-4. `unknown` is the one state that earns a gutter rule, and the line beside it is a COUNT:
+    # "reached 2 of 3". A bare list of unreachable source ids does not tell a host how much of the
+    # profile it is looking at. The denominator is every source attempted on the last run.
+    attempted = store.source_status(member_id)
+    out = sorted(set((digest.get("recency") or {}).get("unavailable_source_ids") or []))
+    total = len({s["source_id"] for s in attempted})
+    coverage = {"total": total, "out": out, "reached": total - len(out)}
+
+    copy = card_banner(member, label, state, industry_labels=store.industry_labels(),
+                       vocabulary=store.vocabulary())
+
     # R-051 / schema `card`: if a member ever asks what was said about them, this is the answer.
     if digest.get("card"):
         writable = _store(writable=True)
@@ -178,9 +203,9 @@ def card(request: Request, token: str, retry: int = 0):
         writable.close()
 
     return templates.TemplateResponse(request, "card.html", _ctx(
-        store, state=state, copy=STATE_COPY[state], digest=digest, member=member,
+        store, state=state, copy=copy, digest=digest, member=member,
         label=label, chips=chips, names=names, token=token, retry=retry,
-        floor=settings.surface_min_score))
+        coverage=coverage, floor=settings.surface_min_score))
 
 
 # ── Why this score ────────────────────────────────────────────────────────────
@@ -293,8 +318,7 @@ def resolve(request: Request, name: str = ""):
     store = _store()
     members = [m for m in (store.member(mid) for mid in store.member_ids()) if m]
     outcome = resolve_arrival_name(name, members)
-    state = {"resolved": "ready", "ambiguous": "ambiguous", "not_found": "not_found"}[
-        outcome["resolution"]]
+    state = outcome["resolution"]
     return templates.TemplateResponse(request, "resolve.html", _ctx(
         store, state=state, copy=STATE_COPY[state], supplied=name,
         candidates=outcome["candidates"]))

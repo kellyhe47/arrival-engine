@@ -232,6 +232,14 @@ INSERT OR IGNORE INTO source_status
   ('m_perkins','podcast_guest','GREEN','ok',NULL,200,1,'2026-09-03','run_synthetic_demo'),
   ('m_perkins','linkedin_profile','SESSION','unavailable','session_expired',NULL,0,'2026-09-03','run_synthetic_demo');
 
+-- ── the opt-out, with a holder ────────────────────────────────────────────────
+-- P-3 / R-032 is a state the product HAS and, until now, a state nothing in the store could
+-- reach: `member_flags` was empty, so Do Not Brief was unreachable and untestable. The Room design
+-- lists "Eric Ries — do not brief" in Simulate arrival, so that is who holds it here.
+-- Synthetic like everything else in this file: it is an operator setting, not a measurement.
+INSERT OR IGNORE INTO member_flags (person_id, do_not_brief, do_not_traverse, set_at, set_by) VALUES
+  ('m_ries', 1, 0, '2026-09-03T20:00:00Z', 'run_synthetic_demo');
+
 -- ── a Friday evening ──────────────────────────────────────────────────────────
 -- Presence is runtime state; this is a starting position for the demo, and Room can change it.
 INSERT OR IGNORE INTO roster (person_id, arrived_at, departed_at) VALUES

@@ -4,7 +4,7 @@
 <div class="banner"><div class="inner">
   <p class="eyebrow">Arena Hall · Austin, Texas</p>
   <h1>In the room</h1>
-  <p>{{ present|length }} present. Ordered by arrival. Physical position is not tracked.</p>
+  <p>{{ present|length }} present. Ordered by arrival.</p>
 </div></div>
 {% endblock %}
 {% block content %}
@@ -15,11 +15,11 @@
     {% for r in present %}
     <div class="row">
       <span class="name">
-        <a href="/{{ secret }}/card/{{ token_for(r.person_id) }}">{{ r.display_name }}</a>
+        <a href="{{ base }}/card/{{ token_for(r.person_id) }}">{{ r.display_name }}</a>
       </span>
-      <span class="meta num">arrived {{ r.arrived_at[11:16] }}</span>
+      <span class="meta num">arrived {{ r.arrived_at[11:16] }}{% if r.do_not_brief %} · do not brief{% endif %}</span>
       <span class="actions">
-        <form method="post" action="/{{ secret }}/depart">
+        <form method="post" action="{{ base }}/depart">
           <input type="hidden" name="person_id" value="{{ r.person_id }}">
           <button class="btn tiny" type="submit">Mark departed</button>
         </form>
@@ -31,11 +31,13 @@
   {% endif %}
 </section>
 
+{# The design strips this block to its control: the paragraph explaining that simulate-arrival
+   stands in for the webhook is true, but it is operator documentation and it belongs in the
+   README, not above a button someone taps mid-demo. The banner lost its third sentence for the
+   same reason. #}
 <section class="blk">
   <p class="lbl">Simulate arrival</p>
-  <p>This stands in for the webhook, which the brief says is solved. Firing it scores the arriving
-     member against everyone currently present and opens their card.</p>
-  <form method="post" action="/{{ secret }}/arrive" class="stack">
+  <form method="post" action="{{ base }}/arrive" class="stack">
     <select name="person_id" aria-label="Member">
       {% for m in absent %}
       <option value="{{ m.id }}">{{ m.display_name }}{% if m.do_not_brief %} — do not brief{% endif %}</option>
@@ -45,19 +47,32 @@
   </form>
 </section>
 
+{# QA-6. `ui-states.md` routes an ambiguous arrival to the chooser, and nothing in the product
+   linked to it — the screen existed and could only be reached by typing its URL. This is that
+   door: the host types what they were told at the entrance and the engine says whether it
+   resolves to one member, several, or none. It never guesses (R-013). #}
+<section class="blk">
+  <p class="lbl">Name at the door</p>
+  <form method="get" action="{{ base }}/resolve" class="stack">
+    <input type="text" name="name" placeholder="What the door said" aria-label="Name at the door">
+    <div><button class="btn" type="submit">Resolve</button></div>
+  </form>
+</section>
+
+{# Not in the 390 mock, and kept anyway: DEC-3 requires one live ingestion run on stage. Removing
+   it would be a feature deletion, not a design change. #}
 <section class="blk">
   <p class="lbl">Live re-run</p>
-  <p>One live ingestion run, on stage, to prove the pipeline is real. It exercises GREEN adapters
-     only, so it cannot fail on a dead session in front of the room.</p>
-  <form method="post" action="/{{ secret }}/reingest" class="stack">
+  <form method="post" action="{{ base }}/reingest" class="stack">
     <select name="person_id" aria-label="Member to re-ingest">
       {% for r in present %}<option value="{{ r.person_id }}">{{ r.display_name }}</option>{% endfor %}
       {% for m in absent %}<option value="{{ m.id }}">{{ m.display_name }}</option>{% endfor %}
     </select>
     <div><button class="btn" type="submit">Run GREEN adapters</button></div>
   </form>
-  <p class="meta">Deployed registry: {{ registry|length }} adapters, none of them SESSION.
-     SESSION adapters are not disabled here — they are absent, so there is nothing to disable.</p>
+  <p class="meta">GREEN adapters only, so it cannot fail on a dead session in front of the room.
+     Deployed registry: {{ registry|length }} adapters, none of them SESSION. SESSION adapters are
+     not disabled here — they are absent, so there is nothing to disable.</p>
 </section>
 
 {% endblock %}

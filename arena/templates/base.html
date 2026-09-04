@@ -11,13 +11,15 @@
    that arrives late degrades to Georgia rather than to a flash of the wrong typeface. #}
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="preload" as="style"
-      href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=Inter:wght@400;500&display=swap">
-<link rel="stylesheet"
-      href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=Inter:wght@400;500&display=swap">
+{# Two Garamonds on purpose (docs/design-additions.md A-1): Cormorant is a DISPLAY cut and keeps
+   the name, the block headings and the two aloud lines; EB Garamond is a TEXT cut and carries the
+   prose, which is read at arm's length in low light. Inter carries everything dense or numeric. #}
+{% set fonts = "https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=EB+Garamond:ital,wght@0,400;0,500;1,400&family=Inter:wght@400;500&display=swap" %}
+<link rel="preload" as="style" href="{{ fonts }}">
+<link rel="stylesheet" href="{{ fonts }}">
 <link rel="stylesheet" href="/static/arena.css?v={{ css_version }}">
 </head>
-<body>
+<body{% block body_class %}{% endblock %}>
 {% block banner %}{% endblock %}
 <main class="wrap">
 {% block content %}{% endblock %}
@@ -31,8 +33,9 @@
   {% else %}
   <p>Store: <span class="num">{{ measured_facts }}</span> measured facts, no synthetic rows.</p>
   {% endif %}
-  <p><a href="/{{ secret }}/">Room</a></p>
+  <p><a href="{{ base }}/">Room</a></p>
 </footer>
 </main>
+{% block rail %}{% endblock %}
 </body>
 </html>

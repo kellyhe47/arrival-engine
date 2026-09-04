@@ -5,25 +5,49 @@
      1. ZERO border-radius. Anywhere. One rounded corner and it stops looking like Arena Hall.
      2. Hairlines, not boxes. Separate with rules and space — never cards-in-cards, never shadows.
      3. Italic serif in gold is the emphasis device, not bold. It marks the two places the host
-        reads ALOUD: the borrowed line in Who, and the Say line.
+        reads ALOUD: the borrowed line in Who they are, and Your opening line.
 
-   ONE DELIBERATE DEVIATION, stated in the README. Cormorant Garamond at weight 300 is a display
-   face and is genuinely hard to read small, in low light, at arm's length — which is exactly the
-   reading condition R-033 is built around. So card prose is never below 19px and never below
-   weight 400, and everything dense or numeric (the score, provenance chips, source dates, the
-   Why-this-score table) is set in Inter. That is what the site itself does with its own numerals,
-   and it keeps the ninety-second read honest instead of pretty. */
+   THE DEVIATION, RESTATED AND MOVED (2026-09-03 design pass; docs/design-additions.md A-1).
+   The old rule was "card prose never below 19px and never below weight 400, in Cormorant".
+   Cormorant Garamond at any weight is a display face: its stroke contrast is drawn for 40px and
+   its x-height is small, which is precisely wrong at arm's length in low light. Raising the weight
+   fixed the wrong variable. Card prose is now EB Garamond 400 at 20px / 1.58 — the same old-style
+   Garamond class, so the club's voice is unchanged, but a face cut for text. Cormorant 300 keeps
+   every display role it earns: the arriving name, block headings, and the two aloud lines.
+   Everything dense or numeric (the score, provenance, source dates, the Why-this-score tables)
+   stays in Inter. That is what the site does with its own numerals.
+
+   FOUR THINGS THIS PASS CHANGED AND WHY (each logged in docs/design-additions.md):
+     A-2 Provenance is a footnote, not a tag. Five blocks of prose with a bordered chip under each
+         reads as a log file. The chip loses its border and its fill and sits on a short hairline —
+         present enough to answer "how do you know that?", quiet enough to read past.
+     A-3 The score leaves the prose. Reason first, score small (R-036) is a layout instruction as
+         much as a copy one: the integer is right-set on its own hairline row, tabular, so a
+         sentence is never interrupted by a number.
+     A-4 `unknown` gets a gutter `quiet` does not. A bronze gutter rule plus a named, counted
+         coverage line ("reached 2 of 3") is the one visual difference this product exists to
+         protect. `quiet` renders as ordinary prose, because it is an ordinary answer.
+     A-5 The Say rail. The line the host delivers is 250 words below the fold. It is repeated in a
+         hairline rail pinned to the bottom of the viewport until the real block scrolls into
+         place. It is the opening line, so it competes with nothing.
+
+   ONE THING THIS PASS DID NOT TAKE. The design underlines every block label with a full-measure
+   hairline. Our section headers are unchanged: the label alone, on its own line, no rule beneath
+   it. The blocks are already separated by `.blk`'s top hairline, and a second rule 14px under the
+   first turns one ruled section into a two-line letterhead. See docs/design-additions.md A-9. */
 
 :root {
-  --olive:#3b4626;  --olive-d:#2c3520;
+  --olive:#2b3a26;  --olive-d:#1f2c1c;
   --cream:#F1EADB;  --cream-dim:#cdc7b3;
   --paper:#F1EADB;  --paper-2:#E7DECC;
   --ink:#26241d;    --ink-soft:#403c32;  --mut:#6f685a;
   --bronze:#7B5732; --gold:#B89257;
-  --serif:'Cormorant Garamond', 'Cormorant', Garamond, Georgia, 'Times New Roman', serif;
+  --display:'Cormorant Garamond', 'Cormorant', Garamond, Georgia, serif;
+  --serif:'EB Garamond', 'Cormorant Garamond', Garamond, Georgia, 'Times New Roman', serif;
   --ui:'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
   --hair-paper: 1px solid rgba(123,87,50,0.18);
-  --hair-olive: 1px solid #3b4626;
+  --hair-strong: 1px solid rgba(123,87,50,0.34);
+  --hair-olive: 1px solid #2b3a26;
   --gutter: clamp(20px, 5vw, 44px);
   --measure: 40rem;
 }
@@ -37,13 +61,16 @@ body {
   color: var(--ink);
   font-family: var(--serif);
   font-weight: 400;
-  font-size: clamp(20px, 1.05rem + 0.35vw, 24px);
-  line-height: 1.62;
+  font-size: 20px;
+  line-height: 1.58;
+  text-wrap: pretty;
+  font-feature-settings: "kern" 1, "liga" 1;
 }
 
-.wrap { max-width: var(--measure); margin: 0 auto; padding: 0 var(--gutter) 96px; }
+.wrap { max-width: var(--measure); margin: 0 auto; padding: 0 var(--gutter) 40px; }
 
-/* ── the eyebrow: the site's label treatment, and the card's five bare nouns ── */
+/* ── the eyebrow, and the card's five bare nouns: the site's label treatment ──
+   UNCHANGED by the 2026-09-03 pass (A-9). Label on its own line, nothing under it. */
 .lbl, .eyebrow {
   font-family: var(--ui);
   font-size: 11px; font-weight: 500;
@@ -55,100 +82,198 @@ body {
       letter-spacing: 2.16px; line-height: 1.6; text-transform: uppercase; }
 .num { font-family: var(--ui); font-variant-numeric: tabular-nums; }
 
-/* ── the olive ground: arrival and attention ── */
+/* ── the olive ground: arrival and attention. Compact, because it is spending the fold ── */
 .banner {
   background: var(--olive); color: var(--cream);
-  padding: clamp(22px, 5vw, 34px) var(--gutter);
-  margin-bottom: clamp(28px, 6vw, 48px);
+  padding: 20px var(--gutter) 22px;
+  margin-bottom: 26px;
 }
-.banner .eyebrow { color: var(--gold); }
+/* `.banner p` (0,1,1) outranks `.lbl, .eyebrow` (0,1,0), so a <p class="eyebrow"> in the banner was
+   rendering at the 17px sub-line size with 3.5px tracking — enough to wrap onto two lines at 390.
+   Same class of bug as the .blk p.meta note further down. */
+.banner .eyebrow { color: var(--gold); margin-bottom: 8px; font-size: 11px; line-height: 1.5;
+  max-width: none; }
 .banner .inner { max-width: var(--measure); margin: 0 auto; }
 .banner h1 {
-  font-family: var(--serif); font-weight: 300;
-  font-size: clamp(32px, 2rem + 2.4vw, 58px); line-height: 1.1;
+  font-family: var(--display); font-weight: 300;
+  font-size: clamp(38px, 2rem + 3.2vw, 58px); line-height: 1.02;
+  letter-spacing: -0.005em;
   margin: 0 0 6px; color: var(--cream);
 }
-.banner p { margin: 0; color: var(--cream-dim); font-size: clamp(19px, 1rem + 0.2vw, 22px); }
+.banner h1 .respell { font-size: 0.42em; letter-spacing: 0.02em; color: var(--cream-dim);
+                      font-family: var(--ui); font-weight: 400; white-space: nowrap; }
+.banner p { margin: 0; color: var(--cream-dim); font-size: 17px; line-height: 1.45;
+            max-width: 34ch; }
 .banner a { color: var(--gold); }
 
 /* ── blocks ── */
-.blk { padding: 26px 0; border-top: var(--hair-paper); }
-.blk:first-of-type { border-top: 0; }
-.blk p { margin: 0 0 12px; font-size: clamp(19px, 1rem + 0.3vw, 24px); }
+.blk { padding: 22px 0 24px; border-top: var(--hair-paper); }
+.blk:first-of-type { border-top: 0; padding-top: 4px; }
+.blk p { margin: 0 0 12px; }
 .blk p:last-child { margin-bottom: 0; }
 
-h2 { font-family: var(--serif); font-weight: 300;
-     font-size: clamp(26px, 1.5rem + 1.4vw, 40px); line-height: 1.1; margin: 0 0 14px; }
-h3 { font-family: var(--serif); font-weight: 300;
-     font-size: clamp(24px, 1.4rem + 0.7vw, 33px); line-height: 1.16; margin: 0 0 10px; }
+h2 { font-family: var(--display); font-weight: 300;
+     font-size: clamp(28px, 1.5rem + 1.4vw, 40px); line-height: 1.08; margin: 0 0 14px; }
+h3 { font-family: var(--display); font-weight: 300;
+     font-size: clamp(25px, 1.4rem + 0.7vw, 33px); line-height: 1.14; margin: 0 0 10px; }
 
-/* Italic gold serif: the two places the host reads aloud. */
-.aloud { font-style: italic; color: var(--bronze);
-         font-size: clamp(24px, 1.4rem + 0.8vw, 33px); line-height: 1.2; }
+/* Italic gold serif: the two places the host reads aloud. Cormorant earns display sizes. */
+.aloud { font-family: var(--display); font-style: italic; color: var(--bronze);
+         font-weight: 400;
+         font-size: clamp(27px, 1.5rem + 1vw, 34px); line-height: 1.24;
+         letter-spacing: 0.002em; }
+.blk p.aloud { margin-bottom: 0; }
+/* The borrowed line inside Who they are is the same device at prose scale, inline. */
+.borrowed { font-family: var(--display); font-style: italic; font-size: 1.12em;
+            color: var(--bronze); }
 
-/* ── provenance chip: dense, so Inter ── */
-.chips { margin-top: 10px; display: flex; flex-wrap: wrap; gap: 8px; }
+/* ── provenance: a footnote, not a tag (A-2) ── */
+.chips { margin-top: 14px; padding-top: 8px; display: flex; flex-wrap: wrap;
+         gap: 4px 18px; border-top: 1px solid rgba(123,87,50,0.14); }
 .chip {
-  font-family: var(--ui); font-size: 11px; font-weight: 500; letter-spacing: 0.06em;
-  text-transform: uppercase; color: var(--mut);
-  border: var(--hair-paper); padding: 5px 9px; background: var(--paper-2);
+  font-family: var(--ui); font-size: 11px; font-weight: 400; letter-spacing: 0.04em;
+  color: var(--mut); line-height: 1.5;
+  border: 0; padding: 0; background: none;
+  font-variant-numeric: tabular-nums;
 }
-.chip .host { color: var(--bronze); }
-.chip.synthetic { border-color: var(--bronze); }
+.chip .host { color: var(--bronze); font-weight: 500; }
+.chip.synthetic .host { color: var(--mut); }
 .chip.synthetic::after { content: " · demo seed"; color: var(--bronze); }
 
-/* ── score: small, beside the reason, never the headline (DEC-2) ── */
+/* ── the score: right-set, tabular, off the prose line (A-3, R-036) ── */
+.match { display: grid; grid-template-columns: 1fr auto; align-items: baseline;
+         gap: 4px 14px; padding: 11px 0; border-top: 1px solid rgba(123,87,50,0.14);
+         font-family: var(--ui); font-size: 13px; letter-spacing: 0.01em; color: var(--mut); }
+.match:first-of-type { margin-top: 14px; }
+.match .who { color: var(--ink); font-size: 14px; }
+.match .who .rank { color: var(--mut); }
 .score {
-  font-family: var(--ui); font-size: 12px; font-weight: 500; letter-spacing: 0.14em;
-  color: var(--mut); text-decoration: none; border-bottom: 1px solid var(--gold);
-  white-space: nowrap;
+  font-family: var(--ui); font-size: 13px; font-weight: 500; letter-spacing: 0.04em;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink); text-decoration: none;
+  border-bottom: 1px solid var(--gold); white-space: nowrap;
 }
-.score:hover { color: var(--bronze); }
+.score .of { color: var(--mut); font-weight: 400; }
+.score:hover { color: var(--bronze); border-bottom-color: var(--bronze); }
+.match.miss .who { color: var(--mut); }
+.match.miss .figure { font-family: var(--ui); font-variant-numeric: tabular-nums;
+                      font-size: 13px; color: var(--ink); white-space: nowrap; }
+
+/* ── coverage: the one difference this product exists to protect (A-4) ──
+   `unknown` — a source could not be read — gets a bronze gutter and a counted line.
+   `quiet` — every source reached, genuinely nothing — gets neither, because it is an answer. */
+.coverage { border-left: 3px solid var(--bronze); padding: 2px 0 2px 15px; margin: 16px 0 0; }
+.coverage .count { font-family: var(--ui); font-size: 11px; font-weight: 500;
+  letter-spacing: 2.4px; text-transform: uppercase; color: var(--bronze);
+  display: block; margin-bottom: 6px; }
+.coverage p { font-size: 18px; color: var(--ink-soft); margin: 0 0 8px; }
+.coverage .srcs { font-family: var(--ui); font-size: 12px; color: var(--mut);
+  letter-spacing: 0.02em; line-height: 1.7; margin: 0; }
+.coverage .srcs .out { color: var(--bronze); }
 
 /* ── notes and warnings: hairlines and space, never boxes-in-boxes ── */
-.blk p.note, .note { border-left: 3px solid var(--gold); padding: 4px 0 4px 16px; margin: 16px 0;
-        font-size: clamp(19px, 1rem + 0.2vw, 22px); color: var(--ink-soft); }
+.blk p.note, .note { border-left: 3px solid var(--gold); padding: 2px 0 2px 15px; margin: 16px 0;
+        font-size: 18px; line-height: 1.55; color: var(--ink-soft); }
 .warn { border-left-color: var(--bronze); }
-/* Dense and numeric material is Inter, and it must stay small — the `.blk p` prose size would
-   otherwise win on specificity and set a 12px UI note at 24px. */
-.blk p.meta, .meta { font-family: var(--ui); font-size: 13px; font-weight: 400;
-        letter-spacing: 0.02em; color: var(--mut); line-height: 1.65; text-transform: none; }
+/* Dense and numeric material is Inter, and it must stay small. */
+.blk p.meta, .meta { font-family: var(--ui); font-size: 12.5px; font-weight: 400;
+        letter-spacing: 0.01em; color: var(--mut); line-height: 1.65; text-transform: none; }
+.blk p.meta { margin-top: 12px; }
 
 /* ── the only button in the system ── */
 .btn, button.btn {
   display: inline-block; background: var(--olive); color: var(--cream);
   font-family: var(--ui); font-size: 12px; font-weight: 500; letter-spacing: 0.16em;
   text-transform: uppercase; text-decoration: none;
-  padding: 16px 36px; border: 0; cursor: pointer;
+  padding: 16px 30px; border: 0; cursor: pointer; min-height: 48px;
 }
 .btn:hover { background: var(--olive-d); }
 .btn.quiet { background: transparent; color: var(--bronze); border: var(--hair-paper);
-             padding: 12px 20px; }
+             padding: 14px 20px; }
 
 select, input {
-  font-family: var(--ui); font-size: 13px; padding: 14px 12px;
-  border: var(--hair-paper); background: var(--paper-2); color: var(--ink);
+  font-family: var(--ui); font-size: 14px; padding: 15px 12px; width: 100%;
+  border: var(--hair-paper); background: var(--paper-2); color: var(--ink); min-height: 48px;
 }
 
 /* ── lists and tables: hairline rules only ── */
-.row { display: grid; grid-template-columns: 1fr auto; align-items: baseline; gap: 6px 16px;
-       padding: 16px 0; border-top: var(--hair-paper); }
+.row { display: grid; grid-template-columns: 1fr auto; align-items: baseline; gap: 8px 16px;
+       padding: 15px 0; border-top: var(--hair-paper); }
 .row:first-child { border-top: 0; }
-.row .name { font-size: clamp(22px, 1.2rem + 0.6vw, 28px); }
-.row .actions { grid-column: 1 / -1; }
+.row .name { font-family: var(--display); font-weight: 400; font-size: 27px; line-height: 1.15; }
+.row .name a { text-decoration: none; border-bottom: 1px solid rgba(123,87,50,0.3); }
+.row .actions { grid-column: 1 / -1; margin-top: 2px; }
 .btn.tiny { background: transparent; color: var(--mut); border: var(--hair-paper);
-            padding: 8px 14px; font-size: 10px; letter-spacing: 0.14em; }
+            padding: 9px 14px; font-size: 10px; letter-spacing: 0.14em; min-height: 0; }
 .btn.tiny:hover { color: var(--bronze); border-color: var(--bronze); }
 
 table { width: 100%; border-collapse: collapse; font-family: var(--ui); font-size: 13px; }
-th, td { text-align: left; padding: 12px 8px 12px 0; border-top: var(--hair-paper);
-         vertical-align: top; line-height: 1.55; }
-th { font-size: 11px; text-transform: uppercase; letter-spacing: 2.16px; color: var(--bronze);
-     font-weight: 500; border-top: 0; }
-td.w { font-variant-numeric: tabular-nums; white-space: nowrap; color: var(--ink); }
+th, td { text-align: left; padding: 11px 8px 11px 0; border-top: var(--hair-paper);
+         vertical-align: top; line-height: 1.5; }
+th { font-size: 10px; text-transform: uppercase; letter-spacing: 2px; color: var(--bronze);
+     font-weight: 500; border-top: 0; padding-bottom: 8px; }
+td:last-child, th:last-child { padding-right: 0; }
+td.w { font-variant-numeric: tabular-nums; white-space: nowrap; color: var(--ink);
+       font-weight: 500; }
 tr.off td { color: var(--mut); }
+tr.off td.w { color: var(--mut); font-weight: 400; }
+td .sig { color: var(--ink); font-weight: 500; letter-spacing: 0.04em; }
+tr.off td .sig { color: var(--mut); font-weight: 400; }
+
+/* ── the per-adapter record: stacked hairline rows, not a table (A-8) ──
+   Five 13px Inter columns do not fit 390 minus a 20px gutter, and the column that gets clipped is
+   Reason — exactly the content DEC-1 says must not be hidden, on the screen the brief calls half
+   the argument. A horizontal scroller hides it just as effectively. So the record is rows: source
+   and its counted status on the first line, the reason on its own full-width second line. */
+.adapter { display: grid; grid-template-columns: 1fr auto; gap: 4px 14px;
+  padding: 13px 0; border-top: 1px solid rgba(123,87,50,0.18);
+  font-family: var(--ui); font-size: 13px; letter-spacing: 0.01em; }
+.adapter:first-of-type { border-top: 0; padding-top: 4px; }
+.adapter .src { color: var(--ink); font-weight: 500; }
+.adapter .st { font-family: var(--ui); font-size: 11px; font-weight: 500; letter-spacing: 1.8px;
+  text-transform: uppercase; color: var(--mut); white-space: nowrap;
+  font-variant-numeric: tabular-nums; }
+.adapter .rsn { grid-column: 1 / -1; color: var(--mut); font-size: 12.5px; line-height: 1.55;
+  margin: 0; }
+.adapter.off .src { color: var(--mut); font-weight: 400; }
+.adapter.off .rsn { color: var(--bronze); }
+
+/* Why-this-score: the weight column is the point, so it is a bar as well as a number. */
+/* Fixed layout takes its columns from the FIRST row, and the fired table's first row is the only
+   one made of <th> — so unless the th carry the widths too, that table splits into four equal
+   quarters and the unfired table below it does not. A-7 only works if the two share one grid. */
+table.signals { table-layout: fixed; }
+table.signals th:nth-child(2), table.signals td.w { width: 31px; }
+table.signals th:nth-child(3), table.signals td.bar { width: 46px; }
+table.signals td.bar { padding-right: 12px; }
+/* An unbreakable fact id (f_feld_cites_wilson) is wider than the evidence column at 390. */
+table.signals td:last-child { overflow-wrap: anywhere; }
+table.signals .stack-bar { display: block; height: 6px; background: var(--gold); }
+tr.off .stack-bar { background: rgba(123,87,50,0.22); }
 
 a { color: var(--bronze); }
+a:hover { color: var(--ink); }
 hr { border: 0; border-top: var(--hair-paper); margin: 32px 0; }
-footer { margin-top: 56px; padding-top: 20px; border-top: var(--hair-paper); }
-.stack > * + * { margin-top: 16px; }
+footer { margin-top: 40px; padding-top: 18px; border-top: var(--hair-paper); }
+footer p { margin: 0 0 8px; }
+.stack > * + * { margin-top: 14px; }
+
+/* ── the Say rail (A-5): the line they deliver, held at the bottom of the viewport until the
+   real block arrives. Hairline and paper — it is a rail, not a card. ── */
+.sayrail {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 5;
+  background: var(--paper); border-top: var(--hair-strong);
+  padding: 11px var(--gutter) 13px;
+  transition: opacity 220ms ease-out, transform 220ms ease-out;
+}
+.sayrail .inner { max-width: var(--measure); margin: 0 auto;
+  display: grid; grid-template-columns: auto 1fr; gap: 12px; align-items: baseline; }
+.sayrail .lbl { margin: 0; }
+.sayrail .line {
+  font-family: var(--display); font-style: italic; color: var(--bronze);
+  font-size: 17px; line-height: 1.3; margin: 0;
+  overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+}
+.sayrail[hidden] { display: none; }
+.sayrail.gone { opacity: 0; transform: translateY(6px); pointer-events: none; }
+body.has-rail .wrap { padding-bottom: 96px; }

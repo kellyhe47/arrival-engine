@@ -14,6 +14,10 @@ Card --(gate failure)--> Withheld card + failure list --(retry)--> Card
 ## States per surface
 
 ### Card
+The card banner never names the state. It carries the measured affiliation, the member's name and
+a subtitle derived from stored vocabulary — see `docs/design-additions.md` A-6. The state below
+decides what the BODY renders.
+
 | State | Trigger | What it shows |
 |---|---|---|
 | Ready | profile cached, room scored | Five blocks, 250-350 words |
@@ -34,8 +38,9 @@ genericity. This is the whole answer to "expose the reasoning"
 and it is one tap away, never on the card.
 
 ### Room
-Current-presence list ordered by arrival time, with simulate-arrival and mark-departed controls.
-Physical position is not tracked. This stands in for the webhook, which the brief says is solved.
+Current-presence list ordered by arrival time, with simulate-arrival and mark-departed controls,
+and the DEC-3 live re-run. This stands in for the webhook, which the brief says is solved. Physical
+position is not tracked — a scope fact for the README, no longer printed on the surface.
 
 ## Actions and their outcomes
 | Action | Outcome |
@@ -47,8 +52,21 @@ Physical position is not tracked. This stands in for the webhook, which the brie
 | Pick candidate | Binds identity for this arrival only; does not write to the profile store |
 | Mark departed | Removes from roster; already-rendered cards are not retro-edited |
 
+## The five blocks: id, and the title the host reads
+The ids are the domain vocabulary and the gate contract; the titles are render-time only
+(`view.BLOCK_TITLES`, docs/design-additions.md A-6).
+
+| Block id | Rendered title |
+|---|---|
+| `Who` | Who they are |
+| `Now` | Recent activity |
+| `Room` | Who's here |
+| `Notice` | Personal detail |
+| `Say` | Your opening line |
+
 ## Where a decision is shown to the user, and in what words
-- The score: an integer out of 16, small, beside the reason. Never the headline. [DEC-2]
+- The score: an integer out of 16, small, right-set on its own hairline row under the reason.
+  Never the headline. [DEC-2 / A-3]
 - Provenance: a chip per fact — source host and date. Every rendered fact has one. [DEC-4]
 - A stale supplied label: directly below the identity line in Who, in the form “the door said
   [supplied]; it is [current] now.” Omitted when the label is current.
@@ -56,15 +74,20 @@ Physical position is not tracked. This stands in for the webhook, which the brie
   appears.
 - A miss: stated explicitly ("top score 5, needs 6") without naming the candidate, never hidden as
   an empty section.
-- An unavailable source: named on the ingesting screen with its reason. Not hidden. [DEC-1]
+- An unavailable source: named on the ingesting screen with its reason, and on the card as a
+  bronze-gutter coverage block with a count ("reached 19 of 20") naming the source that was not
+  read. `quiet` gets no gutter, because it is an ordinary answer. Not hidden. [DEC-1 / A-4]
 
 ## Primary journey, walked
-Host is at the door. Phone buzzes: someone arrived. Card opens on **Who** — a name and one line the
-host could repeat verbatim. Eye drops to **Now**: is this person mid-something, or quiet? Then
-**Room**: one sentence naming who to introduce and why, with a small number the host ignores unless
-challenged. **Notice** gives the one thing that makes the greeting feel personal rather than
-transactional, with its source visible so the host knows how it is known. **Say** is the line they
-actually deliver. Total read: under ninety seconds, standing, watching a door.
+Host is at the door. Phone buzzes: someone arrived. The banner says who they are before it says
+anything else — affiliation, name, one derived line. Card opens on **Who they are** — a name and
+one line the host could repeat verbatim. Eye drops to **Recent activity**: is this person
+mid-something, or quiet? Then **Who's here**: one sentence naming who to introduce and why, with a
+small number the host ignores unless challenged. **Personal detail** gives the one thing that makes
+the greeting feel personal rather than transactional, with its source visible so the host knows how
+it is known. **Your opening line** is the line they actually deliver — and it is held in a rail at
+the bottom of the viewport the whole way down, so it is never more than a glance away. Total read:
+under ninety seconds, standing, watching a door.
 
 Two things this walk surfaced that were not in the sketch, and are now requirements:
 1. **The host needs to know how a fact is known, not just what it is** — because they will be asked

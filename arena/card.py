@@ -243,7 +243,8 @@ def generate_digest(inputs: dict, *, settings, clock: str, store=None,
     try:
         blocks = active_narrator.compose(plan)
     except NarratorUnavailable:
-        return _withheld(member_id, plan, ranked, room, suppression, settings)
+        return _withheld(member_id, plan, ranked, room, suppression, settings,
+                         selection=selection, recency=recency)
 
     scored_pair = None
     if room.get("kind") == "match":
@@ -391,9 +392,19 @@ def _grade(deep_cut_fact_id, renderable, chips, blocks) -> dict:
             "failed": sorted(k for k, v in checks.items() if not v)}
 
 
-def _withheld(member_id, plan, ranked, room, suppression, settings) -> dict:
+def _withheld(member_id, plan, ranked, room, suppression, settings, *,
+              selection: dict | None = None, recency: dict | None = None) -> dict:
     """R-048: the narrator is the only permitted external dependency, and when it is unavailable
-    the card degrades to a deterministic greeting rather than to a guess."""
+    the card degrades to a deterministic greeting rather than to a guess.
+
+    A withheld digest is still a DIGEST, and it carries the same keys a passing one does. The
+    selection and the recency verdict were both computed before the narrator was ever called, so
+    dropping them here made the withheld path a different shape from the happy path — and any
+    caller that read `digest["renderable_fact_ids"]` by subscript (scripts/urls.py, which `make
+    run` and `make serve` both depend on) died with a KeyError on the one path that is supposed to
+    be the safe degradation.
+    """
+    selection = selection or {}
     blocks = [{"order": 1, "label": "Who", "kind": "identity",
                "text": f"{plan.display_name}. {plan.label}".strip()},
               {"order": 5, "label": "Say", "kind": "sayable",
@@ -411,6 +422,9 @@ def _withheld(member_id, plan, ranked, room, suppression, settings) -> dict:
         "verdict": "fail",
         "content_grade": {"scored": 0, "possible": 4, "ratio": 0.0, "failed": []},
         "deep_cut_fact_id": None,
+        "renderable_fact_ids": selection.get("renderable_fact_ids", []),
+        "provenance_chips": selection.get("provenance_chips", []),
+        "recency": recency or {},
     }
     result.update(suppression)
     return result

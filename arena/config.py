@@ -25,6 +25,36 @@ VAR = REPO / "var"
 DEFAULT_STORE = VAR / "arena.serve.db"
 
 
+def load_dotenv(path: Path | None = None) -> None:
+    """Read `.env` into the process environment, once, at import.
+
+    The narrator's key is the only secret this app has, and every entry point needs it — the
+    server, `make run`, `scripts/urls.py`. Without this the key sits in a file nobody reads and
+    every card with a match degrades to the withheld greeting, which looks like a product bug
+    rather than a missing credential.
+
+    A REAL environment variable always wins: `.env` is the developer convenience, not the source
+    of truth in a container. `.env` is gitignored; `.env.example` is the committed template.
+    """
+    path = path or (REPO / ".env")
+    try:
+        text = path.read_text()
+    except OSError:
+        return
+    for line in text.splitlines():
+        line = line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        key, _, value = line.partition("=")
+        key = key.strip()
+        value = value.strip().strip('"').strip("'")
+        if key and key not in os.environ:
+            os.environ[key] = value
+
+
+load_dotenv()
+
+
 def store_path() -> Path:
     return Path(os.environ.get("ARENA_DB", str(DEFAULT_STORE)))
 
@@ -32,6 +62,20 @@ def store_path() -> Path:
 #: R-059 / P0-5. Discovery mitigation, NOT access control. The README says so in plain words.
 def card_path_secret() -> str:
     return os.environ.get("ARENA_PATH_SECRET", "d3f0-arrival-9c1a")
+
+
+def public_root() -> bool:
+    """Whether the surfaces also answer at `/`, with no path segment in front of them.
+
+    Serving the app at the root is convenient locally and is what the operator asked for. It also
+    REMOVES the unguessable path, which is the only discovery mitigation R-059 has — anyone who
+    reaches the host reaches the Room. `ARENA_PUBLIC_ROOT=0` restores the original posture, and a
+    deployment facing the open internet should set it.
+
+    The other three mitigations are unaffected either way: `X-Robots-Tag: noindex`, the robots
+    disallow, and no member name in any URL or page title.
+    """
+    return os.environ.get("ARENA_PUBLIC_ROOT", "1") != "0"
 
 
 WORD_BAND = (250, 350)

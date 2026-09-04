@@ -30,16 +30,27 @@ def main() -> int:
         print(f"  no store yet: {exc}\n")
         return 0
     present = store.present_ids()
-    print(f"  {'member':13} {'state':17} {'words':>5}  card")
+    flags = store.flags()
+    # Deliberately WITHOUT the model narrator: this listing runs on every `make serve`, and
+    # buying ten Say lines to print a table is not what the key is for. So a member whose card
+    # needs a narrator shows `withheld (no narrator)` here and still renders in the app.
+    print("  states are computed without the narrator — see the note in scripts/urls.py\n")
+    print(f"  {'member':13} {'state':21} {'words':>5}  card")
     for mid in store.member_ids():
         others = [p for p in present if p != mid]
-        digest = generate_digest({"arrival": {"member_id": mid}, "present_members": others},
-                                 settings=Settings(), clock="2026-09-03T21:00:00Z", store=store)
+        opted_out = bool((flags.get(mid) or {}).get("do_not_brief"))
+        # P-3, same as the app: nothing is built for a member who opted out.
+        digest = {} if opted_out else generate_digest(
+            {"arrival": {"member_id": mid}, "present_members": others},
+            settings=Settings(), clock="2026-09-03T21:00:00Z", store=store)
         state = card_state(digest, present_count=len(others),
-                           renderable_count=len(digest["renderable_fact_ids"]))
-        words = digest["card"]["word_count"] if digest["card"] else "-"
+                           renderable_count=len(digest.get("renderable_fact_ids") or []),
+                           opted_out=opted_out)
+        words = digest["card"]["word_count"] if digest.get("card") else "-"
+        if any(g["gate"] == "narrator_available" for g in digest.get("gate_failures") or []):
+            state = "withheld (no narrator)"
         name = (store.member(mid) or {}).get("display_name", mid)
-        print(f"  {name:13} {state:17} {str(words):>5}  "
+        print(f"  {name:13} {state:21} {str(words):>5}  "
               f"{base}/{secret}/card/{token_for(mid, secret)}")
     print()
     return 0

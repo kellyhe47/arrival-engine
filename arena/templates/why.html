@@ -13,10 +13,15 @@
 
 <section class="blk">
   <p class="lbl">Signals that fired</p>
-  <table>
-    <tr><th>Signal</th><th>W</th><th>Why it fired</th></tr>
+  {# The weight column is the point, so it is a bar as well as a number. Both tables share one
+     fixed grid — see the `table.signals` note in arena.css. #}
+  <table class="signals">
+    <tr><th>Signal</th><th>W</th><th></th><th>Why it fired</th></tr>
     {% for s in why.fired %}
-    <tr><td>{{ s.signal_id }}</td><td class="w">{{ s.weight }}</td><td>{{ s.evidence }}</td></tr>
+    <tr><td><span class="sig">{{ s.signal_id }}</span></td>
+        <td class="w">{{ s.weight }}</td>
+        <td class="bar"><span class="stack-bar" style="width: {{ (100 * s.weight / 3)|round|int }}%"></span></td>
+        <td>{{ s.evidence }}</td></tr>
     {% endfor %}
   </table>
   <p class="meta">The threshold is evaluated on the score EXCLUDING S8; the displayed score
@@ -25,9 +30,12 @@
 
 <section class="blk">
   <p class="lbl">Signals that did not fire</p>
-  <table>
+  <table class="signals">
     {% for s in why.not_fired %}
-    <tr class="off"><td>{{ s.signal_id }}</td><td class="w">{{ s.weight }}</td><td>{{ s.why_not }}</td></tr>
+    <tr class="off"><td><span class="sig">{{ s.signal_id }}</span></td>
+        <td class="w">{{ s.weight }}</td>
+        <td class="bar"><span class="stack-bar" style="width: {{ (100 * s.weight / 3)|round|int }}%"></span></td>
+        <td>{{ s.why_not }}</td></tr>
     {% endfor %}
   </table>
 </section>
@@ -56,14 +64,17 @@
   <p>{{ why.to_name }} → {{ why.from_name }} scores
      <span class="num">{{ why.reverse_score }}</span> of {{ why.ceiling }}.
      Scoring is directional: A's interest in B is not B's interest in A.</p>
-  <table>
+  <table class="signals">
     {% for s in why.reverse_fired %}
-    <tr><td>{{ s.signal_id }}</td><td class="w">{{ s.weight }}</td><td>{{ s.evidence }}</td></tr>
+    <tr><td><span class="sig">{{ s.signal_id }}</span></td>
+        <td class="w">{{ s.weight }}</td>
+        <td class="bar"><span class="stack-bar" style="width: {{ (100 * s.weight / 3)|round|int }}%"></span></td>
+        <td>{{ s.evidence }}</td></tr>
     {% endfor %}
   </table>
   <p class="meta">Brokering mode: <strong>{{ why.brokering.replace('_', ' ') }}</strong>.
      Mutual means introduce and step away. Broker means stay and carry the reason across.</p>
 </section>
 
-<p><a class="btn" href="/{{ secret }}/card/{{ token }}">Back to the card</a></p>
+<p><a class="btn" href="{{ base }}/card/{{ token }}">Back to the card</a></p>
 {% endblock %}
