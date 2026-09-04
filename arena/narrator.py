@@ -384,7 +384,13 @@ UNSPOKEN = re.compile(
     r"\bSEC\b|\bNYSE\b|\bNASDAQ\b|\bfilings?\b|\bForm (?:D|ADV|4)\b|\bAPI\b|"
     r"\bprofile\b|\bheadline\b|\bLinkedIn\b|og:|https?://|@\w+|"
     r"\bfollowers?\b|\bfollowing\b|\d{4}-\d{2}-\d{2}|\bCRD\b|\btoken\b|\bdeployed\b|"
-    r"\b(?!(?:19|20)\d\d\b)\d{3,}\b",
+    # A bare digit run means a scraped identifier — a CRD number, a member id, a raw count. The
+    # bar was three digits, which also caught every sum a host actually says out loud. It cost
+    # Sarah Tavel her whole card: her match was Hunter Walk, whose argument is that funds of
+    # "$100 million or less" should minimize reserves, so the number IS the point and the one
+    # revision pass kept it — two rejections, then `narrator_available: False` and a withheld
+    # brief. Hundreds are spoken; four-digit identifiers are not. Years stay exempt at any length.
+    r"\b(?!(?:19|20)\d\d\b)\d{4,}\b",
     re.IGNORECASE)
 
 
