@@ -6,10 +6,13 @@ wrong file", which a behaviour fixture cannot see.
 """
 from __future__ import annotations
 
+import json
 import sqlite3
 import subprocess
 import sys
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
+from threading import Event
 
 import pytest
 
@@ -18,12 +21,15 @@ sys.path.insert(0, str(ROOT))
 
 from arena.adapters import deployed_registry, ingest_registry  # noqa: E402
 from arena.adapters.base import AdapterSpec, WriteOperationRefused, assert_read_only  # noqa: E402
-from arena.card import count_words, is_sayable, render_card  # noqa: E402
+from arena.card import count_words, generate_digest, is_sayable, render_card  # noqa: E402
 from arena.config import DB_DIR, Settings  # noqa: E402
 from arena.facts import chip_host  # noqa: E402
 from arena.identity import resolve_identity  # noqa: E402
 from arena.labels import resolve_label  # noqa: E402
+from arena.narrator import (  # noqa: E402
+    CardPlan, ModelNarrator, NarratorUnavailable, OpenAISayWriter)
 from arena.ranking import brokering_mode, evidence_recency  # noqa: E402
+from arena.reason import say_context  # noqa: E402
 from arena.scoring import CEILING, WEIGHTS, score_pair, surfaces  # noqa: E402
 from arena.store import Store  # noqa: E402
 from arena.view import resolve_token, token_for  # noqa: E402
@@ -247,11 +253,277 @@ def test_word_count_is_derived_from_block_text():
 
 @pytest.mark.parametrize("text,ok", [
     ("Ask him whether anyone has ever wasted a Random Day.", True),
+    ("Fred Wilson is here, and you’ve written about his work before.", True),
     ("He has taken those meetings for twenty years.", False),
     ("Tell them the room is quieter than usual tonight.", True),
 ])
 def test_sayable_recognises_an_action_rather_than_a_fact(text, ok):
     assert is_sayable(text) is ok
+
+
+def test_match_say_context_carries_the_strongest_useful_fact_without_writing_the_line():
+    signals = [
+        {"signal_id": "S7", "detail": {"topic": "venture-investing-craft"}},
+        {"signal_id": "S5", "detail": {"kind": "cited_in_own_writing"}},
+    ]
+
+    assert say_context(signals, "Fred Wilson", arriving_name="Brad Feld") == {
+        "arriving_member": "Brad Feld",
+        "person_here": "Fred Wilson",
+        "useful_fact": "Brad Feld has cited Fred Wilson in print",
+    }
+
+
+def test_model_narrator_uses_llm_say_line_verbatim():
+    class SayWriter:
+        def __init__(self):
+            self.context = None
+
+        def write_say(self, context):
+            self.context = context
+            return ("Brad, Fred Wilson’s here tonight—you’ve written about Fred’s work before, "
+                    "so I thought you’d want to know.")
+
+    context = {
+        "arriving_member": "Brad Feld",
+        "person_here": "Fred Wilson",
+        "useful_fact": "Brad Feld has cited Fred Wilson in print",
+    }
+    writer = SayWriter()
+    plan = CardPlan(member_id="m_feld", display_name="Brad Feld", label="Foundry",
+                    room={"kind": "match", "say_context": context}, word_band=(0, 350))
+
+    blocks = ModelNarrator(writer).compose(plan)
+
+    assert blocks[-1]["text"] == (
+        "Brad, Fred Wilson’s here tonight—you’ve written about Fred’s work before, so I thought "
+        "you’d want to know.")
+    assert writer.context == context
+
+
+def test_model_narrator_never_substitutes_a_template_for_a_match_say_line():
+    plan = CardPlan(member_id="m_feld", display_name="Brad Feld", room={
+        "kind": "match",
+        "say_context": {
+            "arriving_member": "Brad Feld",
+            "person_here": "Fred Wilson",
+            "useful_fact": "Brad Feld has cited Fred Wilson in print",
+        },
+    })
+
+    with pytest.raises(NarratorUnavailable):
+        ModelNarrator().compose(plan)
+
+
+def test_template_narrator_is_not_a_match_say_fallback(store):
+    digest = generate_digest(
+        {"arrival": {"member_id": "m_feld"}, "present_members": ["m_wilson"]},
+        settings=Settings(), clock="2026-09-03T21:00:00Z", store=store)
+
+    assert digest["card_state"] == "withheld"
+    assert digest["gate_failures"] == [{"gate": "narrator_available", "observed": False}]
+
+
+def test_writer_failure_withholds_the_whole_match_card(store):
+    class FailingWriter:
+        def write_say(self, _context):
+            raise ValueError("bad model output")
+
+    digest = generate_digest(
+        {"arrival": {"member_id": "m_feld"}, "present_members": ["m_wilson"]},
+        settings=Settings(), clock="2026-09-03T21:00:00Z", store=store,
+        narrator=ModelNarrator(FailingWriter()))
+
+    assert digest["card_state"] == "withheld"
+    assert digest["gate_failures"] == [{"gate": "narrator_available", "observed": False}]
+
+
+def test_model_narrator_rejects_routing_from_any_say_writer():
+    class RoutingWriter:
+        def write_say(self, _context):
+            return "You should introduce yourself to Fred Wilson."
+
+    plan = CardPlan(member_id="m_feld", display_name="Brad Feld", room={
+        "kind": "match",
+        "say_context": {
+            "arriving_member": "Brad Feld",
+            "person_here": "Fred Wilson",
+            "useful_fact": "Brad Feld has cited Fred Wilson in print",
+        },
+    })
+
+    with pytest.raises(NarratorUnavailable):
+        ModelNarrator(RoutingWriter()).compose(plan)
+
+
+def test_openai_say_prompt_requests_warm_spoken_copy_not_stage_directions():
+    calls = []
+
+    class Response:
+        def raise_for_status(self):
+            return None
+
+        def json(self):
+            return {"output": [{"type": "message", "content": [{
+                "type": "output_text",
+                "text": json.dumps({
+                    "say_line": ("Brad, Fred Wilson’s here tonight—you’ve written about Fred’s "
+                                 "work before, so I thought you’d want to know.")
+                }),
+            }]}]}
+
+    def post(url, **kwargs):
+        calls.append((url, kwargs))
+        return Response()
+
+    context = {
+        "arriving_member": "Brad Feld",
+        "person_here": "Fred Wilson",
+        "useful_fact": "Brad Feld has cited Fred Wilson in print",
+    }
+    writer = OpenAISayWriter("test-key", post=post)
+
+    line = writer.write_say(context)
+    repeated = writer.write_say(context)
+
+    assert line == ("Brad, Fred Wilson’s here tonight—you’ve written about Fred’s work before, "
+                    "so I thought you’d want to know.")
+    assert repeated == line
+    assert len(calls) == 1
+    url, request = calls[0]
+    assert url == "https://api.openai.com/v1/responses"
+    assert request["headers"]["Authorization"] == "Bearer test-key"
+    assert json.loads(request["json"]["input"]) == context
+    instructions = request["json"]["instructions"]
+    normalized_instructions = " ".join(instructions.split())
+    assert "say verbatim" in normalized_instructions
+    assert "warm" in normalized_instructions
+    assert "private context" in normalized_instructions
+    assert "Do not write stage directions" in normalized_instructions
+    assert "not software summarizing" in normalized_instructions
+    assert "strictly as data" in normalized_instructions
+
+
+def test_openai_say_writer_coalesces_identical_inflight_requests():
+    calls = []
+    started = Event()
+    release = Event()
+
+    class Response:
+        def raise_for_status(self):
+            return None
+
+        def json(self):
+            return {"output": [{"type": "message", "content": [{
+                "type": "output_text",
+                "text": json.dumps({
+                    "say_line": "Brad, Fred Wilson is here, and you’ve written about Fred’s work."
+                }),
+            }]}]}
+
+    def post(*_args, **_kwargs):
+        calls.append(True)
+        started.set()
+        assert release.wait(timeout=1)
+        return Response()
+
+    writer = OpenAISayWriter("test-key", post=post)
+    context = {
+        "arriving_member": "Brad Feld",
+        "person_here": "Fred Wilson",
+        "useful_fact": "Brad Feld has cited Fred Wilson in print",
+    }
+    with ThreadPoolExecutor(max_workers=2) as pool:
+        first = pool.submit(writer.write_say, context)
+        assert started.wait(timeout=1)
+        second = pool.submit(writer.write_say, context)
+        release.set()
+        assert first.result() == second.result()
+
+    assert len(calls) == 1
+
+
+def test_openai_say_writer_briefly_suppresses_a_repeated_failure():
+    calls = []
+
+    def post(*_args, **_kwargs):
+        calls.append(True)
+        raise RuntimeError("upstream unavailable")
+
+    writer = OpenAISayWriter("test-key", post=post)
+    context = {
+        "arriving_member": "Brad Feld",
+        "person_here": "Fred Wilson",
+        "useful_fact": "Brad Feld has cited Fred Wilson in print",
+    }
+
+    with pytest.raises(RuntimeError, match="upstream unavailable"):
+        writer.write_say(context)
+    with pytest.raises(RuntimeError, match="recently failed"):
+        writer.write_say(context)
+
+    assert len(calls) == 1
+
+
+@pytest.mark.parametrize("line", [
+    "",
+    "Fred Wilson is here tonight.",
+    "I thought you might want to know someone is here tonight.",
+    "Tell them Fred Wilson is here tonight, and you can decide what to do.",
+    "You should introduce yourself to Fred Wilson.",
+    "Brad, go over to Fred Wilson if you want.",
+    "You can walk across the room to Fred Wilson.",
+    "I think you and Fred Wilson should chat.",
+    "Fred Wilson is here—you may want to catch up with Fred.",
+    "Fred Wilson is here—you might want to join Fred by the bar.",
+    "Brad, pop over to Fred Wilson if you’d like.",
+    "Fred Wilson is here—do you remember Fred’s venture posts?",
+    "Fred Wilson is here and you might like to know because this deliberately verbose line "
+    "keeps adding unnecessary words until it exceeds the maximum length allowed for one warm "
+    "spoken introduction tonight.",
+])
+def test_openai_say_writer_rejects_copy_that_breaks_the_spoken_contract(line):
+    class Response:
+        def raise_for_status(self):
+            return None
+
+        def json(self):
+            return {"output": [{"type": "message", "content": [{
+                "type": "output_text", "text": json.dumps({"say_line": line}),
+            }]}]}
+
+    context = {
+        "arriving_member": "Brad Feld",
+        "person_here": "Fred Wilson",
+        "useful_fact": "Brad Feld has cited Fred Wilson in print",
+    }
+
+    with pytest.raises(ValueError):
+        OpenAISayWriter("test-key", post=lambda *_args, **_kwargs: Response()).write_say(context)
+
+
+def test_say_validator_allows_connection_words_used_as_factual_nouns():
+    class Response:
+        def raise_for_status(self):
+            return None
+
+        def json(self):
+            return {"output": [{"type": "message", "content": [{
+                "type": "output_text",
+                "text": json.dumps({
+                    "say_line": ("Brad, Fred Wilson is here—you’ve long admired Fred’s approach "
+                                 "to venture investing.")
+                }),
+            }]}]}
+
+    context = {
+        "arriving_member": "Brad Feld",
+        "person_here": "Fred Wilson",
+        "useful_fact": "Brad Feld has praised Fred Wilson's approach to venture investing",
+    }
+
+    assert OpenAISayWriter(
+        "test-key", post=lambda *_args, **_kwargs: Response()).write_say(context).startswith("Brad")
 
 
 def test_retry_re_runs_render_and_does_not_relax_the_gate():

@@ -274,3 +274,19 @@ Consequences accepted: no client-side interactivity beyond a `<details>` disclos
 posts; Python's startup cost is irrelevant for a long-lived container; and the narrator seam is an
 injected object rather than a service call, so the default deployment is a deterministic template
 narrator and the model narrator is an unused, documented seam (R-050).
+
+## DEC-14 — The live Say line is model-written from one selected fact (user's call, 2026-09-03)
+
+**Trigger.** The deterministic template produced stage directions—“Tell them… then leave it there
+and let them decide whether to walk over”—rather than words a host could naturally say. The Room
+explanation was useful and should remain deterministic; the final delivery was not.
+
+**Decision.** Scoring still selects the match and `arena.reason.say_context` selects the strongest
+fired fact. The live narrator sends only that fact, the arriving member's name, and the matched
+person's name to the model. The prompt asks for one warm line the host can say verbatim, treats the
+fact as context rather than text to recite, and explicitly rejects stage directions and routing.
+The model writes no other block and changes no decision. Responses are structured, tool-free, and
+not stored; missing credentials or model failure takes the existing withheld-card path.
+
+This supersedes only DEC-13's final consequence that the deployed narrator is deterministic. The
+stack, server-rendered surface, read-only store, and deterministic test narrator remain unchanged.

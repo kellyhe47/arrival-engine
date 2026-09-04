@@ -9,8 +9,6 @@ A reason that cites a connection the engine did not find is a hard gate failure,
 """
 from __future__ import annotations
 
-from .scoring import SIGNAL_NAMES
-
 GATE = "reason_cites_only_fired_signals"
 
 
@@ -78,32 +76,6 @@ def _clause(signal: dict, a_name: str, b_name: str, labels: dict | None) -> str 
     return None                                  # S8 is never offered to a host as a reason
 
 
-#: The same signals, said to the member rather than about them. "them" always means the OTHER
-#: person, who has just been named — so no pronoun is ever guessed for anybody.
-def _say_clause(signal: dict, labels: dict | None) -> str | None:
-    sid = signal["signal_id"]
-    d = signal.get("detail") or {}
-    if sid == "S5":
-        return {"cited_in_own_writing": "you have cited them in print before",
-                "co_mention": "you have named them in your own work",
-                "repost": "you have reposted them",
-                "follows": "you follow them"}.get(d.get("kind"), "you have named them publicly")
-    if sid == "S7":
-        return f"you both keep coming back to {humanize(d.get('topic'), labels)}"
-    if sid == "S3":
-        return (f"you are circling the same question from different fields — "
-                f"{humanize(d.get('topic'), labels)}")
-    if sid == "S4":
-        return f"you have {humanize(d.get('value'), labels)} in common"
-    if sid == "S6":
-        return f"you are both into {humanize(d.get('topic'), labels)}"
-    if sid == "S1":
-        return "you started out in the same decade"
-    if sid == "S2":
-        return f"you are both in {humanize(d.get('industry'), labels)}"
-    return None
-
-
 def _ordered(fired_signals: list[dict]) -> list[dict]:
     by_id = {s["signal_id"]: s for s in fired_signals}
     return [by_id[sid] for sid in _PRIORITY if sid in by_id]
@@ -121,16 +93,16 @@ def reason_sentence(fired_signals: list[dict], display_name: str, labels: dict |
     return f"{display_name} is here: {body}."
 
 
-def say_line(fired_signals: list[dict], display_name: str, labels: dict | None = None) -> str:
-    """R-039: a name-drop, never an instruction. Members are not routed.
-
-    One clause — the strongest thing that fired — put in the host's mouth as an observation.
-    """
-    clause = next((c for c in (_say_clause(s, labels) for s in _ordered(fired_signals)) if c), None)
-    if clause is None:
-        return f"Mention that {display_name} is in tonight, and leave the rest to them."
-    return (f"Tell them {display_name} is in tonight, and that {clause} — then leave it there and "
-            f"let them decide whether to walk over.")
+def say_context(fired_signals: list[dict], display_name: str, labels: dict | None = None,
+                arriving_name: str = "They") -> dict:
+    """Select the useful fact for R-039 without attempting to write the host's line."""
+    fact = next((c for c in (_clause(s, arriving_name, display_name, labels)
+                             for s in _ordered(fired_signals)) if c), None)
+    return {
+        "arriving_member": arriving_name,
+        "person_here": display_name,
+        "useful_fact": fact or f"{display_name} is here tonight",
+    }
 
 
 def cited_signal_ids(fired_signals: list[dict]) -> list[str]:

@@ -9,10 +9,12 @@ Retry re-runs THIS module only. It does not re-ingest and it does not lower a th
 """
 from __future__ import annotations
 
+import re
+
 from .facts import chip_host, select_renderable_facts, suppression_notice
 from .narrator import CardPlan, Line, NarratorUnavailable, SuppliedNarrator, TemplateNarrator
 from .ranking import brokering_mode, rank_room
-from .reason import cited_signal_ids, reason_sentence, say_line, validate_reason
+from .reason import cited_signal_ids, reason_sentence, say_context, validate_reason
 from .recency import build_now_block
 from .scoring import score_pair
 
@@ -40,7 +42,9 @@ def is_sayable(text: str) -> bool:
     words = (text or "").strip().split()
     if not words:
         return False
-    return words[0].strip('“"').lower() in _IMPERATIVES or " you " in f" {text.lower()} "
+    return (words[0].strip('“"').lower() in _IMPERATIVES
+            or re.search(r"\byou(?:r(?:s|self)?|['’](?:re|ve|ll|d))?\b", text,
+                         re.IGNORECASE) is not None)
 
 
 def render_card(narration: dict, *, settings, facts: list[dict] | None = None,
@@ -139,13 +143,14 @@ def _room_plan(ranked: dict, *, settings, names: dict, pairs: dict,
             "broker": "Only one direction clears the bar, so stay and carry the reason across.",
             "light_touch": "A light touch is enough — name them and let it find its own level.",
         }[mode]
-    plan["say_line"] = say_line(primary["fired_signals"],
-                                names.get(primary["member_id"], primary["member_id"]), labels)
+    plan["say_context"] = say_context(
+        primary["fired_signals"], names.get(primary["member_id"], primary["member_id"]),
+        labels, arriving_name)
     return plan
 
 
 def generate_digest(inputs: dict, *, settings, clock: str, store=None,
-                    flags: dict | None = None) -> dict:
+                    flags: dict | None = None, narrator=None) -> dict:
     """The whole product in one call: a name arrives, the room is scored, one match is surfaced
     with a reason built only from fired signals, a sourced deep cut is chosen, suppressions are
     disclosed without leaking their text, and the card closes on a line the host can say."""
@@ -232,11 +237,11 @@ def generate_digest(inputs: dict, *, settings, clock: str, store=None,
 
     narration = inputs.get("narration")
     if narration and narration.get("blocks"):
-        narrator = SuppliedNarrator(narration["blocks"])
+        active_narrator = SuppliedNarrator(narration["blocks"])
     else:
-        narrator = TemplateNarrator()
+        active_narrator = narrator or TemplateNarrator()
     try:
-        blocks = narrator.compose(plan)
+        blocks = active_narrator.compose(plan)
     except NarratorUnavailable:
         return _withheld(member_id, plan, ranked, room, suppression, settings)
 

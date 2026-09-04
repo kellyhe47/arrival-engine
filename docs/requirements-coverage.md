@@ -74,7 +74,7 @@ build's scope (ingest-side collection, run by separate agents), with the runtime
 | R-036 | ✔ | reason in prose, score as a small Inter link beside it |
 | R-037 | ✔ | `validate_reason` is a hard gate on the digest. G-020 |
 | R-038 | ✔ | one primary, one backup, everyone else collapses; below the floor the miss is stated without a name |
-| R-039 | ✔ | `say_line()` — an observation, never an instruction |
+| R-039 | ✔ | `say_context()` selects a fired fact; the Say prompt turns it into warm words the host can speak verbatim, never stage directions or member routing |
 | R-040 | ✔ | `arena/recency.py` — three states; only `quiet` may state silence; reruns dated by recording |
 | R-041 | ✔ | thin profile: fewer facts, `deep_cut_fact_id: null`, no Notice block, nothing invented |
 | R-042 | ◐ | never linked from a member-facing surface; unguessable path + `noindex` are discovery mitigation only. This is P0-5, accepted, and stated in the README |
@@ -95,7 +95,7 @@ build's scope (ingest-side collection, run by separate agents), with the runtime
 |---|---|---|
 | R-048 | ✔ | ingest → SQLite → read-only serve; narrator is the only external seam and its absence degrades to a withheld greeting; logs carry identifiers and statuses only |
 | R-049 | ✔ | one hop, point lookups, the file is the cache |
-| R-050 | ✔ | the determinism boundary, and `TemplateNarrator` as the default so it is a property rather than a policy |
+| R-050 | ✔ | deterministic selection through `say_context`; the deployed `ModelNarrator` may rewrite only the final Say line from the two names and one fired fact, with no tools or stored response |
 | R-051 | ✔ | append-only; every row names its run; emitted cards recorded under `run_serving` |
 
 ## 9. Demo and deliverables

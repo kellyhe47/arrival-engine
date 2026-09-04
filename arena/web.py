@@ -4,14 +4,16 @@ Mobile-first, server-rendered, no build step, no login. Discovery mitigations on
 path, `X-Robots-Tag: noindex`, a `robots.txt` disallow, and no member name in any URL or page title
 (R-059). That is not access control, and the README says so in plain words.
 
-The serving path makes zero external calls. The narrator is deterministic, the adapters are
-recorded, and the store is a local SQLite file. `deployed_registry()` cannot hold a SESSION adapter.
+The serving path makes no source-adapter calls. Its one permitted external dependency is the
+narrator that writes the Say line; adapters remain recorded and the store is a local SQLite file.
+`deployed_registry()` cannot hold a SESSION adapter.
 """
 from __future__ import annotations
 
 import datetime as dt
 import json
 import uuid
+from contextlib import asynccontextmanager
 from pathlib import Path
 
 from fastapi import FastAPI, Form, Header, HTTPException, Request
@@ -24,6 +26,7 @@ from .adapters.registry import registry_from_sources
 from .card import generate_digest
 from .config import Settings, card_path_secret, store_path
 from .ingest import run_ingestion
+from .narrator import close_live_narrator, live_narrator
 from .ranking import brokering_mode
 from .scoring import score_pair
 from .store import Store, StoreUnavailable
@@ -33,7 +36,14 @@ from .webhook import ReplayGuard, WebhookRejected, resolve_arrival_name, secret,
 HERE = Path(__file__).resolve().parent
 SECRET = card_path_secret()
 
-app = FastAPI(title="Arrival", docs_url=None, redoc_url=None, openapi_url=None)
+@asynccontextmanager
+async def _lifespan(_app: FastAPI):
+    yield
+    close_live_narrator()
+
+
+app = FastAPI(title="Arrival", docs_url=None, redoc_url=None, openapi_url=None,
+              lifespan=_lifespan)
 REPLAY_GUARD = ReplayGuard()
 app.mount("/static", StaticFiles(directory=HERE / "static"), name="static")
 templates = Jinja2Templates(directory=str(HERE / "templates"))
@@ -140,7 +150,7 @@ def card(request: Request, token: str, retry: int = 0):
 
     digest = generate_digest(
         {"arrival": {"member_id": member_id}, "present_members": present_ids},
-        settings=settings, clock=_now(), store=store)
+        settings=settings, clock=_now(), store=store, narrator=live_narrator())
 
     renderable = set(digest.get("renderable_fact_ids") or [])
     state = card_state(digest, present_count=len(present_ids),

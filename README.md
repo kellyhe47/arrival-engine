@@ -14,6 +14,13 @@ make run         # http://localhost:8000/d3f0-arrival-9c1a/
 make test        # validate-spec + test-golden + red-first + unit tests
 ```
 
+The live Card surface uses an LLM for the final `Say` line. Set `OPENAI_API_KEY` before `make run`;
+`ARENA_NARRATOR_MODEL` optionally overrides the default `gpt-5.4-mini`. The request contains only
+the arriving member's name, the matched person's name, and the strongest fired match fact, uses no
+tools, and is not stored. Without a key—or when the narrator is unavailable—the existing withheld
+card state is shown rather than substituting fabricated copy. Successful lines are reused from a
+bounded, process-local cache for identical contexts; the API request itself sets `store: false`.
+
 ---
 
 ## Read this first: what this is *not*
@@ -161,11 +168,11 @@ partially close: **`docs/requirements-coverage.md`**.
 
 `arena/narrator.py` is the only seam, and it makes no decisions. Three implementations:
 `SuppliedNarrator` (the fixture-backed fake — prose comes in with the case), `TemplateNarrator`
-(deterministic, **the default in the deployed app**, which is what makes `external_calls: []` true
-rather than merely unasserted), and `ModelNarrator` (injected client, temperature 0, no tools, no
-network authority, render-eligible structured facts only; unused, and documented as unused).
+(deterministic prose for fixtures and for the first four blocks), and `ModelNarrator` (the deployed
+hybrid). The core selects one fired match fact; the model receives that fact plus the two names and
+writes only the warm, directly spoken `Say` line. It cannot change any other block or decision.
 
-The template reaches the 250–350 word band by **including more sourced material, never by padding**:
+The narrator reaches the 250–350 word band by **including more sourced material, never by padding**:
 optional sourced lines are added in a fixed order until the floor is reached, skipping any that
 would breach the ceiling. When the available material cannot carry the band the card comes out
 short and fails the gate honestly — that is the thin-profile state, and it is not a defect.
