@@ -266,22 +266,6 @@ class TemplateNarrator:
         # past to reach the point.
         return lines or ["Nothing dated came back that says what they have been up to lately."]
 
-    def _room(self, plan: CardPlan) -> str:
-        room = plan.room or {}
-        if room.get("kind") == "empty":
-            return ("First one here. Nobody to introduce yet — and nobody outside the building "
-                    "is offered, because the engine does not reach past the roster.")
-        if room.get("kind") == "no_strong_match":
-            return (f"Nobody here clears the bar tonight — the closest pairing scored "
-                    f"{room.get('top_score')} and needs {room.get('floor')}. No name is offered; "
-                    f"a weak introduction spends credibility a strong one will need.")
-        parts = [room.get("primary_sentence", "")]
-        if room.get("hosting_sentence"):
-            parts.append(room["hosting_sentence"])
-        if room.get("others_sentence"):
-            parts.append(room["others_sentence"])
-        return " ".join(p for p in parts if p)
-
     def _notice(self, plan: CardPlan) -> str:
         if not plan.deep_cut:
             return ("Nothing here rises to a deep cut that is both sourced and worth saying out "
@@ -294,6 +278,12 @@ class TemplateNarrator:
 
     def _say(self, plan: CardPlan) -> str:
         first = plan.display_name.split()[0]
+        # R-044: the first arrival is a state, not a thin version of the happy path. `_room_lines`
+        # already says nobody has been scored; the Say line has to agree with it, so the deep-cut
+        # opener below is skipped rather than left to imply a room that is not there.
+        if (plan.room or {}).get("kind") == "empty":
+            return (f"Greet {first} by name and let them settle — they are first through the "
+                    f"door tonight, so there is nobody to introduce them to yet.")
         if plan.deep_cut:
             chip = plan.deep_cut.chip or {}
             return (f"Ask {first} about the story under Personal detail — it is their own "
