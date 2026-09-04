@@ -167,7 +167,7 @@ What this means, stated plainly so no later reader thinks P0-3 was missed:
     the prompt is the only thing that was standing in the way.
 
 ## DEC-10 — Pending queue resolved (2026-09-03)
-All six queued changes and the eight spec-review P0s were decided in one pass.
+All six queued changes and the eight P0s from the (since-retired) spec review were decided in one pass.
 
 ACCEPTED and now in the PRD:
   P-1 phonetic respelling in Who        -> R-034
@@ -249,3 +249,28 @@ gone quiet.
 **Residual risk, accepted and stated.** The non-member partner never opted in, and unlike a member
 (R-032, Do Not Brief) has no way to opt out of being traversed. Their writing is public either way;
 the reason we read it is the relationship. Logged as K-11.
+
+## DEC-13 — Stack: Python 3.12 + FastAPI + stdlib sqlite3 + server-rendered Jinja2 (2026-09-03)
+
+No stack had ever been chosen; no language, framework or deployment target appeared in any
+document. Decided, and the reasoning given in one paragraph so it can be overruled on evidence
+rather than taste.
+
+**Python 3.12, FastAPI + Uvicorn, stdlib `sqlite3` (no ORM), Jinja2 server-rendered HTML with no
+build step, self-hosted webfonts, one container.** SQLite is already the store (DEC-3 / R-049) and
+the serving path is read-only point lookups, so an ORM would add a mapping layer over queries that
+are already the clearest statement of the gate they enforce — several of those gates *are* views
+(`v_renderable_fact`, `v_present`, `v_recency_state`, `v_collectable_source`, `v_assertable_absence`,
+`v_traversable_person`) and must be queried, not re-implemented, so raw SQL is the feature.
+`eval/verify_fixtures.py` is already Python, so one language covers the spec checker, the golden
+runner and the application, and the golden runner can import the real implementation rather than
+shelling out to it. Server-rendered HTML with no bundler removes an entire class of deployment
+failure for a demo that must survive being opened on a phone at a door, and it keeps the runtime's
+`external_calls` genuinely empty — every fixture asserts `external_calls: []`, and a CDN font or a
+client-side data fetch would make that assertion a lie. The deployed app opens the SQLite file
+read-only, so the ingest/serve split (DEC-3, R-053) is a file copy rather than architecture.
+
+Consequences accepted: no client-side interactivity beyond a `<details>` disclosure and plain form
+posts; Python's startup cost is irrelevant for a long-lived container; and the narrator seam is an
+injected object rather than a service call, so the default deployment is a deterministic template
+narrator and the model narrator is an unused, documented seam (R-050).

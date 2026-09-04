@@ -2,59 +2,59 @@
   "schema_version": 1,
   "id": "G-017",
   "name": "tie-break-is-deterministic",
-  "why": "Two members can tie on score for genuinely different reasons. The host gets one name first, so the order must be defined by rule rather than by dictionary order. *** KNOWN-DEFECTIVE FIXTURE — see PRD §10 P0-9. *** It carries m_shear as `founder`; the canonical cast (db/roster.sql) says `chief-executive`, measured from x.com/eshear og:description \"CEO of Softmax\". Correcting it kills S1 and drops him 6 -> 4, destroying the tie this fixture exists to test. No tie at equal score exists anywhere in the real attribute space: a search over all 10 members x all pairs found zero, because `context` and `edge` are not seeded yet. Re-ground it after the first ingest run against the real edges in AUD-06 (E13b Walk/Ries co-curated *Uncensored* 2012; E10b Walk->Kopelman). It also depends on `board-games`, the unbacked placeholder in K-8. Do not paper over either by editing expectations.",
+  "why": "Two members can tie on score for genuinely different reasons. The host gets one name first, so the order must be defined by rule rather than by dictionary order. RE-GROUNDED 2026-09-03 on the only equal-score tie that exists in the audited graph: Hunter Walk scores 9 to both Fred Wilson and Brad Feld, on identical signals and identical LARGE counts, so tier 1 cannot separate them and the rule falls through to EVIDENCE RECENCY — a tier that had zero coverage before. Walk->Feld's most recent evidence is Feld's 2014-05-27 post recording that Foundry invested in Homebrew; Walk->Wilson's is Walk's 2012-03-04 post about the Uncensored anthology. Feld is newer, so Feld ranks first. Every attribute here matches db/roster.sql and every edge and context is audit-backed (AUD-06 E9, E13b).",
   "covers": [
     "B-011"
   ],
   "case_type": "boundary",
   "traces_to": [
-    "DEC-5"
+    "DEC-5",
+    "AUD-06-E9",
+    "AUD-06-E13b",
+    "RUBRIC-2"
   ],
-  "defends_against": "An implementation that returns ties in hash or insertion order, so the same arrival recommends a different person on each run.",
+  "defends_against": "An implementation that leaves equal-score, equal-LARGE-count ties to dictionary order or to insertion order, making the host's first name arbitrary.",
   "time_sensitive": false,
   "given": {
     "inputs": {
       "arriving_member": {
-        "id": "m_ries",
-        "seniority_tier": "founder",
-        "career_start_decade": "2000s",
-        "prominence_tier": 4,
+        "id": "m_walk",
+        "seniority_tier": "principal",
+        "career_start_decade": "1990s",
+        "prominence_tier": 3,
         "industries": [
-          "capital-markets"
+          "venture-capital"
         ],
         "topics_professional": [
-          "long-term-governance"
+          "venture-capital-craft",
+          "seed-stage-financing"
         ],
         "topics_personal": [
-          "board-games"
+          "live-music"
         ],
-        "contexts": [],
+        "contexts": [
+          {
+            "type": "life_event",
+            "value": "uncensored-anthology-2012",
+            "resolved": 1
+          }
+        ],
         "declared_links": [
           {
-            "to": "m_shear",
+            "to": "m_wilson",
             "kind": "cited_in_own_writing",
-            "evidence_fact_id": "f_ries_cites_shear"
+            "evidence_fact_id": "f_walk_uncensored",
+            "evidence_date": "2012-03-04"
+          },
+          {
+            "to": "m_feld",
+            "kind": "cited_in_own_writing",
+            "evidence_fact_id": "f_walk_uncensored",
+            "evidence_date": "2012-03-04"
           }
         ]
       },
       "present_members": [
-        {
-          "id": "m_shear",
-          "seniority_tier": "founder",
-          "career_start_decade": "2000s",
-          "prominence_tier": 3,
-          "industries": [
-            "ai-research"
-          ],
-          "topics_professional": [
-            "ai-alignment"
-          ],
-          "topics_personal": [
-            "board-games"
-          ],
-          "contexts": [],
-          "declared_links": []
-        },
         {
           "id": "m_wilson",
           "seniority_tier": "principal",
@@ -64,13 +64,60 @@
             "venture-capital"
           ],
           "topics_professional": [
-            "long-term-governance"
+            "venture-capital-craft",
+            "crypto-protocols"
           ],
-          "topics_personal": [],
-          "contexts": [],
+          "topics_personal": [
+            "music-collecting"
+          ],
+          "contexts": [
+            {
+              "type": "life_event",
+              "value": "uncensored-anthology-2012",
+              "resolved": 1
+            }
+          ],
+          "declared_links": []
+        },
+        {
+          "id": "m_feld",
+          "seniority_tier": "principal",
+          "career_start_decade": "1980s",
+          "prominence_tier": 4,
+          "industries": [
+            "venture-capital"
+          ],
+          "topics_professional": [
+            "venture-capital-craft",
+            "startup-communities"
+          ],
+          "topics_personal": [
+            "endurance-running"
+          ],
+          "contexts": [
+            {
+              "type": "life_event",
+              "value": "uncensored-anthology-2012",
+              "resolved": 1
+            }
+          ],
           "declared_links": []
         }
-      ]
+      ],
+      "signal_evidence": {
+        "m_wilson": {
+          "S2": "2012-03-04",
+          "S4": "2012-03-04",
+          "S5": "2012-03-04",
+          "S8": "2026-09-03"
+        },
+        "m_feld": {
+          "S2": "2014-05-27",
+          "S4": "2012-03-04",
+          "S5": "2012-03-04",
+          "S8": "2026-09-03"
+        }
+      }
     },
     "preexisting_state": {},
     "configuration": {
@@ -90,59 +137,106 @@
         "large_signal_count_desc",
         "evidence_recency_desc",
         "member_id_asc"
-      ]
+      ],
+      "vocabulary": {
+        "venture-capital-craft": {
+          "discriminating": false,
+          "holder_count": 5,
+          "base_size": 10
+        },
+        "seed-stage-financing": {
+          "discriminating": true
+        },
+        "crypto-protocols": {
+          "discriminating": true
+        },
+        "startup-communities": {
+          "discriminating": true
+        },
+        "live-music": {
+          "discriminating": true
+        },
+        "music-collecting": {
+          "discriminating": true
+        },
+        "endurance-running": {
+          "discriminating": true
+        }
+      }
     },
     "clock": {}
   },
   "when": {
     "operation": "rank_room",
     "input_refs": [
-      "m_ries"
+      "m_walk",
+      "m_wilson",
+      "m_feld"
     ]
   },
   "expect": {
     "exact": {
       "result": {
+        "excluded_topics": [
+          {
+            "topic": "venture-capital-craft",
+            "discriminating": false,
+            "holder_count": 5,
+            "base_size": 10
+          }
+        ],
         "ranked_matches": [
           {
-            "member_id": "m_wilson",
+            "member_id": "m_feld",
             "rank": 1,
-            "score": 6,
+            "score": 9,
             "surfaced": true,
             "fired_signals": [
               {
-                "signal_id": "S3",
-                "weight": 3
+                "signal_id": "S2",
+                "weight": 2
               },
               {
-                "signal_id": "S7",
+                "signal_id": "S4",
                 "weight": 3
-              }
-            ]
-          },
-          {
-            "member_id": "m_shear",
-            "rank": 2,
-            "score": 6,
-            "surfaced": true,
-            "fired_signals": [
-              {
-                "signal_id": "S1",
-                "weight": 2
               },
               {
                 "signal_id": "S5",
                 "weight": 3
               },
               {
-                "signal_id": "S6",
+                "signal_id": "S8",
+                "weight": 1
+              }
+            ]
+          },
+          {
+            "member_id": "m_wilson",
+            "rank": 2,
+            "score": 9,
+            "surfaced": true,
+            "fired_signals": [
+              {
+                "signal_id": "S2",
+                "weight": 2
+              },
+              {
+                "signal_id": "S4",
+                "weight": 3
+              },
+              {
+                "signal_id": "S5",
+                "weight": 3
+              },
+              {
+                "signal_id": "S8",
                 "weight": 1
               }
             ]
           }
         ],
         "surfaced_count": 2,
-        "tie_broken_by": "large_signal_count_desc"
+        "tie_broken_by": "evidence_recency_desc"
       },
       "state_changes": [],
       "emitted_events": [],
@@ -150,11 +244,11 @@
     },
     "properties": [
       {
-        "name": "tie-resolved-by-large-signal-count",
+        "name": "tie-falls-through-to-recency-when-large-counts-match",
         "operator": "eq",
         "left": "result.ranked_matches.0.member_id",
-        "reason": "DEC-5: equal scores rank by count of LARGE signals before any other consideration.",
-        "expected": "m_wilson"
+        "expected": "m_feld",
+        "reason": "DEC-5: equal score and equal LARGE count, so tier 1 cannot separate them. Tier 2 is evidence recency: 2014-05-27 beats 2012-03-04."
       }
     ]
   }

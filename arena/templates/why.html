@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% block title %}Why this score{% endblock %}
+{% block banner %}
+<div class="banner"><div class="inner">
+  <p class="eyebrow">Why this score</p>
+  <h1>{{ why.from_name }} → {{ why.to_name }}</h1>
+  <p><span class="num">{{ why.score }}</span> of {{ why.ceiling }} ·
+     <span class="num">{{ why.score_excluding_s8 }}</span> against a floor of {{ floor }} once the
+     status gradient is set aside</p>
+</div></div>
+{% endblock %}
+{% block content %}
+
+<section class="blk">
+  <p class="lbl">Signals that fired</p>
+  <table>
+    <tr><th>Signal</th><th>W</th><th>Why it fired</th></tr>
+    {% for s in why.fired %}
+    <tr><td>{{ s.signal_id }}</td><td class="w">{{ s.weight }}</td><td>{{ s.evidence }}</td></tr>
+    {% endfor %}
+  </table>
+  <p class="meta">The threshold is evaluated on the score EXCLUDING S8; the displayed score
+     includes it. Prominence may break a tie. It may never create a match.</p>
+</section>
+
+<section class="blk">
+  <p class="lbl">Signals that did not fire</p>
+  <table>
+    {% for s in why.not_fired %}
+    <tr class="off"><td>{{ s.signal_id }}</td><td class="w">{{ s.weight }}</td><td>{{ s.why_not }}</td></tr>
+    {% endfor %}
+  </table>
+</section>
+
+<section class="blk">
+  <p class="lbl">Generic topics excluded</p>
+  {% if why.excluded_topics %}
+  <table>
+    <tr><th>Topic</th><th>Held by</th><th>Share of the stored member base</th></tr>
+    {% for t in why.excluded_topics %}
+    <tr><td>{{ t.topic }}</td>
+        <td class="w">{{ t.holder_count }} of {{ t.base_size }}</td>
+        <td class="w">{{ '%.0f'|format(100 * t.holder_count / t.base_size) }}% ≥ 40%</td></tr>
+    {% endfor %}
+  </table>
+  <p class="meta">Genericity is a property of the vocabulary, measured once over the member base
+     and stored. It is never recomputed from who happens to be in the room — that version was
+     non-monotonic, room-size-inverted, and failed on the only case ever measured.</p>
+  {% else %}
+  <p>None. No stored topic reaches the 40% holder share.</p>
+  {% endif %}
+</section>
+
+<section class="blk">
+  <p class="lbl">The other direction</p>
+  <p>{{ why.to_name }} → {{ why.from_name }} scores
+     <span class="num">{{ why.reverse_score }}</span> of {{ why.ceiling }}.
+     Scoring is directional: A's interest in B is not B's interest in A.</p>
+  <table>
+    {% for s in why.reverse_fired %}
+    <tr><td>{{ s.signal_id }}</td><td class="w">{{ s.weight }}</td><td>{{ s.evidence }}</td></tr>
+    {% endfor %}
+  </table>
+  <p class="meta">Brokering mode: <strong>{{ why.brokering.replace('_', ' ') }}</strong>.
+     Mutual means introduce and step away. Broker means stay and carry the reason across.</p>
+</section>
+
+<p><a class="btn" href="/{{ secret }}/card/{{ token }}">Back to the card</a></p>
+{% endblock %}

@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow, noarchive">
+<meta name="referrer" content="no-referrer">
+{# R-059: no member name in any page title, so nothing leaks through a browser-history entry. #}
+<title>{% block title %}Arrival{% endblock %}</title>
+{# The brief: self-host OR preload. Preloaded, with a real fallback stack in the CSS, so a webfont
+   that arrives late degrades to Georgia rather than to a flash of the wrong typeface. #}
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preload" as="style"
+      href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=Inter:wght@400;500&display=swap">
+<link rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=Inter:wght@400;500&display=swap">
+<link rel="stylesheet" href="/static/arena.css?v={{ css_version }}">
+</head>
+<body>
+{% block banner %}{% endblock %}
+<main class="wrap">
+{% block content %}{% endblock %}
+<footer class="meta">
+  <p>Staff instrument. Unguessable path, <span class="num">noindex</span> and a robots disallow are
+     discovery mitigations, not access control — see the README.</p>
+  {% if synthetic_facts %}
+  <p>Store: <span class="num">{{ measured_facts }}</span> measured facts,
+     <span class="num">{{ synthetic_facts }}</span> from the synthetic demo seed. Facts from the
+     seed are marked on their provenance chip.</p>
+  {% else %}
+  <p>Store: <span class="num">{{ measured_facts }}</span> measured facts, no synthetic rows.</p>
+  {% endif %}
+  <p><a href="/{{ secret }}/">Room</a></p>
+</footer>
+</main>
+</body>
+</html>

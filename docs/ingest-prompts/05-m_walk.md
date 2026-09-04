@@ -3,6 +3,12 @@
 Homebrew, San Francisco — label current. Prominence 3 (X 246,611). Seniority principal.
 Read `00-COMMON.md` first.
 
+**Ten of these are running in parallel right now.** Write to **`db/arena.m_walk.db`**, never to `db/arena.db`, and keep your writes as replayable SQL in `ingest/sql/m_walk-NN-*.sql` — the operator merges the ten files at the end. Namespace your ids (`run_ingest_walk_<date>`, `f_walk_NNN`), `INSERT OR IGNORE` any one-hop non-member, and **append** to `ingest/BLOCKERS.md` rather than overwriting it. See the parallel-run section of `00-COMMON.md`.
+
+**LinkedIn — CONFIRMED `linkedin.com/in/hunterwalk`.** A slug IS attested: **`hunterwalk.com` carries a "More of Me?" block** linking his LinkedIn, **Instagram (`instagram.com/hunterwalk`)**, Bluesky and **Threads (`threads.net/@hunterwalk`)** — all `linked_from_own_canonical` (STRONG). That block is also why the "Threads unverified" note below is obsolete. Measured 2026-09-03: headline "Funding Startups via Homebrew and new VCs via Screendoor LP"; Experience gives **Linden Lab from Jan 2001** and **Google Nov 2003 – Feb 2013**, which settles `career_start_decade`. ⚠️ **His LinkedIn shows 882,825 followers — 3.6x his X figure.** Under the stored ladder that is tier 4, not the seeded 3. **Do not re-baseline the row yourself** (00-COMMON forbids it); report the drift and leave it. A public post of his names **"my wife Caroline Barlerin"** — the `@cbarlerin` in his X bio, now confirmed.
+
+**Walk the WHOLE following list, not the first page.** Record how many of the claimed total you actually reached. Real wheel events only (programmatic scrolling does not page the list), reload to clear a stalled virtualizer, and scope selectors to the primary column so the "Who to follow" rail never leaks into the graph.
+
 ## Fetch
 | url | what |
 |---|---|
@@ -12,12 +18,14 @@ Read `00-COMMON.md` first.
 | `https://api.github.com/users/hunterwalk` | **identity confirmed** by the name field. 0 repos — a claimed handle, not a code presence |
 | `https://www.youtube.com/feeds/videos.xml?channel_id=UC68ai6rdol6MOTe_4b6T-wQ` | confirmed his. 15 crowd-shot concert clips 2012–2024 — the `live-music` evidence |
 | `https://api.fxtwitter.com/hunterwalk` | 246,611 followers, **1 tweet**, website `hunterwalk.com`, bio `🚀@homebrew 💰@screendoorvc 👨‍👩‍👧@cbarlerin 🐶@daisyfleets` |
+| `https://www.linkedin.com/in/hunterwalk/` | SESSION. **882,825 followers — 3.6x his X count.** Experience settles `career_start_decade`: Linden Lab Jan 2001, Google Nov 2003–Feb 2013 |
+| `https://www.instagram.com/hunterwalk/` · `https://www.threads.net/@hunterwalk` | both linked from his own "More of Me?" block — `linked_from_own_canonical`, so identity is STRONG even though the platforms are walled |
 | `https://www.homebrew.co/blog` | **separate corpus**, firm news. **Byline not exposed — UNVERIFIED whether he writes it.** Don't attribute |
 
 ## Never fetch / dead ends
 `homebrew.co/feed` 404 · `hunterwalk.com/archives` 404 (use the REST API) · `wp-sitemap.xml` 404 ·
 `hunterwalk.substack.com` exists but **archive count 0** · `medium.com/@hunterwalk` 403 ·
-TikTok `@hunterwalk` has **3 followers** · Threads unverified · **no Wikipedia article** ·
+TikTok `@hunterwalk` has **3 followers** · **no Wikipedia article** ·
 `news.ycombinator.com/user?id=hunterwalk` **429 twice, body "Sorry."** — rate-limited, *not* absent
 
 ## His X identity — the weakest accepted in the set
@@ -53,7 +61,7 @@ the same fact twice); **his first concert was Madonna in 1985 and the Beastie Bo
 booed.**
 
 ## Backfill / auth
-`career_start_decade` — no Wikipedia; LinkedIn, or the 2006 YouTube channel creation. Respelling NULL.
+`career_start_decade` — **settled: 1990s–2000s boundary, take it from LinkedIn** (Linden Lab Jan 2001, Google Nov 2003). Respelling NULL.
 **`prominence_basis` is now 246,611** — the old Bluesky floor of 5,371 was 45× low; don't regress it.
 Almost everything of his is keyless and open. He should be your most complete profile; if he isn't,
 say what went wrong.

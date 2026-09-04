@@ -3,6 +3,12 @@
 LTSE; author, *Incorruptible* (2026-05-26). Prominence 4 (X 301,423). Seniority founder.
 Read `00-COMMON.md` first.
 
+**Ten of these are running in parallel right now.** Write to **`db/arena.m_ries.db`**, never to `db/arena.db`, and keep your writes as replayable SQL in `ingest/sql/m_ries-NN-*.sql` — the operator merges the ten files at the end. Namespace your ids (`run_ingest_ries_<date>`, `f_ries_NNN`), `INSERT OR IGNORE` any one-hop non-member, and **append** to `ingest/BLOCKERS.md` rather than overwriting it. See the parallel-run section of `00-COMMON.md`.
+
+**LinkedIn — CONFIRMED `linkedin.com/in/eries`, and it is his single biggest channel.** A slug IS attested: **`theleanstartup.com` and `news.theleanstartup.com` both link it** (`linked_from_own_canonical`, STRONG). ⚠️ **582,687 followers, measured 2026-09-03 — nearly double his 301,420 on X**, so his prominence basis is measured on the wrong platform. Do not re-baseline the row yourself; report it. He also runs a **LinkedIn newsletter, "Trust is Everything", 72,340 subscribers** — a first-person publication channel that appears in **no allow-list in `db/roster.sql`** and is a genuine gap in his source coverage. His activity feed's two newest items were **3 and 4 hours old** at read time: whatever his blog cadence suggests, this is where he actually posts.
+
+**Walk the WHOLE following list, not the first page.** Record how many of the claimed total you actually reached. Real wheel events only (programmatic scrolling does not page the list), reload to clear a stalled virtualizer, and scope selectors to the primary column so the "Who to follow" rail never leaks into the graph.
+
 **He looked dormant the month he shipped a book.** The staleness was a retrieval artifact. He is the
 most active of the ten — if your pipeline concludes otherwise, your pipeline is wrong.
 
@@ -15,6 +21,8 @@ most active of the ten — if your pipeline concludes otherwise, your pipeline i
 | CIK **0001680712** and **0001786417** | all 8 LTSE Form D filings, 2016–2022 |
 | `https://anchor.fm/s/f51132a8/podcast/rss` | *The Eric Ries Show*, 44 episodes |
 | `https://www.youtube.com/@TheEricRiesShow` | live to 2026-09-03 |
+| `https://www.linkedin.com/in/eries/` | SESSION. **582,687 followers — nearly 2x his X count**; newest posts hours old |
+| *Trust is Everything* — his LinkedIn newsletter, reached from his profile (**do not guess a URL for it**; one article measured at `linkedin.com/pulse/you-cant-inspect-ai-can-watch-how-its-makers-treat-people-eric-ries-aivlc`) | **72,340 subscribers.** A first-person channel in NO allow-list — the real gap in his source coverage |
 | `https://api.github.com/users/ericries` | 11 repos, active same-day. Includes the Tom Lehrer songbook |
 | `openlibrary.org/isbn/9780307887894.json`, `search.json` | ***Incorruptible*** — Authors Equity, 2026-05-26, ISBN 9798893311860, 432pp |
 | `https://en.wikipedia.org/w/index.php?title=Eric_Ries&action=raw` | career start |
@@ -49,7 +57,6 @@ name) and **Authors Equity**.
 ## Topics needing evidence
 `startup-communities`, `tech-policy-immigration`, `long-term-governance` (LTSE, Form 1 order
 34-85828). Also measured: `tech-policy-elections`.
-⚠️ `board-games` is a **placeholder with no audit backing** — source it properly or leave it unassigned.
 
 ## Deep cut
 Known veins: he is **cc'd on his own exchange's SEC cover letter and it isn't signed by him**; a

@@ -11,8 +11,8 @@ Process: product-inception skill. Checkpoints at Phase 2 (audit), Phase 6 (fixtu
 - [~] P5 Grill open decisions (deferred to after P6 checkpoint; offered to user)
 - [x] P6 Architecture (docs/architecture.excalidraw, 21/21 edges recoverable) + docs/wireframes.html + docs/ui-states.md
 - [ ] P7 PRD                 -> docs/PRD.md
-- [ ] P8 Design handoff prompt (optional)
-- [ ] P9 spec-review loop    -> eval/verify_claims.py
+- [x] P8 Design handoff prompt -> docs/DESIGN-PROMPT.md
+- [x] P9 spec-review loop    -> completed; review retired, surviving defects live in PRD §10
 - [ ] P10 Handoff prompt     -> docs/HANDOFF.md
 - [ ] P11 Compound
 

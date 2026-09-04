@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "arena",
+      "runtimeExecutable": ".venv/bin/python",
+      "runtimeArgs": ["-m", "uvicorn", "arena.web:app", "--host", "127.0.0.1", "--port", "8111"],
+      "port": 8111
+    }
+  ]
+}

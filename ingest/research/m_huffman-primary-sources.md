@@ -1,0 +1,46 @@
+# `m_huffman` — primary-source research
+
+Observed 2026-09-03 (America/Chicago), using the required `ArenaHall/1.0 (kellyqhe47@gmail.com)` user agent for SEC and Wayback requests and the operator's existing Chrome session for LinkedIn. This is research evidence only; no database or SQL changes were made. Personalization and recommendation rails from LinkedIn were discarded.
+
+## Identity, role, and career start
+
+- The official SEC person submissions record, [`CIK0001827011.json`](https://data.sec.gov/submissions/CIK0001827011.json), returned HTTP 200 and names **“Huffman Steve Ladd.”** It contains **88** recent filings from 2020-10-01 through 2026-09-02. This is the correct person CIK and a STRONG `named_in_sec_filing` identity anchor; do not substitute CIK 0001690226.
+- The official Reddit submissions record, [`CIK0001713445.json`](https://data.sec.gov/submissions/CIK0001713445.json), returned HTTP 200 and identifies **Reddit, Inc.**, ticker **RDDT**, with **478** recent filings. The company record includes the Q2 2026 accession described below.
+- Reddit's SEC-filed [424B4](https://www.sec.gov/Archives/edgar/data/1713445/000162828024012380/reddit-final424b4.htm) identifies Steve/Steven Huffman as co-founder, CEO and president since July 2015; it also says he co-founded Reddit in June 2005, was Hipmunk co-founder and CTO from June 2010 to October 2015, and holds a University of Virginia computer-science degree. Safe backfill: **`career_start_decade = '2000s'`**. No source reviewed establishes a pronunciation, so `name_respelling` should remain NULL. Investor relations was not used; the per-person protocol says that host is a known 403 and the equivalent SEC document is open.
+
+## Q2 2026 SEC filing and signed shareholder letter
+
+- Reddit filed a [Form 8-K](https://www.sec.gov/Archives/edgar/data/1713445/000171344526000098/rddt-20260730.htm) on **2026-07-30**, accession **`0001713445-26-000098`**; the [filing index](https://www.sec.gov/Archives/edgar/data/1713445/000171344526000098/0001713445-26-000098-index.htm) identifies the Q2 shareholder letter as Exhibit 99.2. Item 2.02 says the release and letter concern the quarter ended 2026-06-30. The 8-K is signed `/s/ Steven Huffman`, President and CEO.
+- The SEC-hosted [Q2 2026 shareholder letter](https://www.sec.gov/Archives/edgar/data/1713445/000171344526000098/exhibit992q226.htm) is dated 2026-07-30 and ends with **“Steve Huffman — Co-Founder & Chief Executive Officer.”** Its first-person prose is the best open substitute for the inaccessible earnings call. Safe, concise paraphrases:
+  - Huffman argues that human context, personal opinion, and firsthand experience become more valuable as synthetic content proliferates.
+  - He describes Reddit's product goal as a daily destination and says the company is focused on converting weekly users into daily users.
+  - The letter says Reddit combines AI with community-led moderation to catch spam and coordinated inauthentic behavior. The company reports 23 million spam views blocked daily and a 20% reduction in user exposure to spam. This directly supports **`content-moderation`**, with corporate/SEC-filed provenance.
+- The same 8-K formally says Reddit uses CEO Steve Huffman's **`u/spez`** account as a Regulation FD disclosure channel. That is STRONG SEC corroboration for the Reddit account and a high-confidence deep cut.
+- Attribution caution: the letter's signed first-person passages may be attributed to Huffman; slide metrics should remain company-published claims rather than being rewritten as personal observations.
+
+## LinkedIn: the supplied slug is an identity collision
+
+- **Do not collect from [`linkedin.com/in/shuffman`](https://www.linkedin.com/in/shuffman/).** A live, logged-in read in the operator's Chrome session resolved this URL to **Sarah Huffman**, headline “Nerd for hire,” at Healthvana. This is not the member. Wayback's [availability result](https://archive.org/wayback/available?url=linkedin.com/in/shuffman) returned one closest snapshot, 2008-02-19; the [CDX listing](https://web.archive.org/cdx/search/cdx?url=linkedin.com/in/shuffman&filter=statuscode%3A200&output=json&fl=timestamp%2Coriginal%2Cstatuscode%2Cdigest&collapse=digest) likewise contains exactly one HTTP-200 digest. The [archived page](https://web.archive.org/web/20080219215034id_/http://www.linkedin.com:80/in/shuffman) also identifies Sarah Huffman. This URL should become a new `person_identity_negative` collision, not a successful Huffman source.
+- The corroborated profile is [`linkedin.com/in/shuffman56`](https://www.linkedin.com/in/shuffman56/). Y Combinator's official [Reddit company page](https://www.ycombinator.com/companies/reddit) links its Steve Huffman founder record directly to that URL. Wayback's [availability API](https://archive.org/wayback/available?url=linkedin.com/in/shuffman56) and [CDX listing](https://web.archive.org/cdx/search/cdx?url=linkedin.com/in/shuffman56&filter=statuscode%3A200&output=json&fl=timestamp%2Coriginal%2Cstatuscode%2Cdigest&collapse=digest) expose three HTTP-200 captures (2010, 2016, 2024):
+  - The [2010 capture](https://web.archive.org/web/20100512222823id_/http://www.linkedin.com:80/in/shuffman56) names Steve Huffman, says “Co-founder at reddit.com,” gives San Francisco Bay Area, and links `reddit.com` as his website.
+  - The [2016 capture](https://web.archive.org/web/20160117013713id_/https://www.linkedin.com/in/shuffman56) names Steve Huffman, lists prior Reddit and Y Combinator roles, and links Reddit and Hipmunk as websites.
+  - The [2024 capture](https://web.archive.org/web/20240616093902id_/https://www.linkedin.com/in/shuffman56) names Steve Huffman, links Reddit and Hipmunk, and embeds a structured follower count of **4,628**.
+- The current logged-in profile rendered successfully in Chrome as **Steve Huffman — CEO at Reddit**, San Francisco, University of Virginia. Its Activity section showed **8,128 followers**. The raw HTTP status was not exposed by the browser client, so it should not be fabricated; the source itself was readable and is `ok`. Under the repository's current ladder, 8,128 is **prominence tier 2** (1,000–24,999), replacing NULL. Record platform and observation date. No connection degree, “followed by” text, operator identity, or recommendation-rail content may be stored.
+
+## Y Combinator Summer 2005 edge
+
+- YC's official [Reddit page](https://www.ycombinator.com/companies/reddit) says **Summer 2005**, names Steve Huffman and Alexis Ohanian as founders, and labels Reddit batch `S05`.
+- YC's official [Kiko page](https://www.ycombinator.com/companies/kiko) says **Summer 2005** and names Emmett Shear among its former founders.
+- YC's live [Summer 2005 directory filter](https://www.ycombinator.com/companies?batch=Summer%202005) returned exactly **nine** companies through its public `YCCompany_production` index: Reddit, Parakey, Kiko, Clickfacts, TextPayMe, Loopt, Infogami, Memamp, and Simmery.
+- Together these support a symmetric **`shared_org`** edge between Huffman and Shear for the Summer 2005 YC cohort. They do **not** prove direct interaction. The bridge is Reddit ↔ Kiko, not Reddit ↔ Twitch; Twitch/Justin.tv belongs to a later batch.
+
+## Other accessible first-person corpus
+
+- Mixergy's [full transcript](https://mixergy.com/interviews/steve-huffman-reddit-interview/) returned HTTP 200 and is dated **2010-10-20**. YC's own [announcement](https://www.ycombinator.com/blog/steve-huffman-founder-of-reddit-s05-and-hipmu) independently identifies the interviewee as Steve Huffman, founder of Reddit (`S05`) and Hipmunk (`S10`). In the transcript Huffman describes the first summer of Reddit as almost entirely coding, calls user/community moderation central to scaling, and says early outside moderators chiefly handled spam. These are historical first-person observations, not proof of current policy.
+- The public [HN Algolia query for `author_spez`](https://hn.algolia.com/api/v1/search?tags=comment%2Cauthor_spez&hitsPerPage=200) returned **67 comments**, all in one page, dated 2006-10-10 through 2019-04-01. A case-insensitive search across all 67 comment bodies found **zero** occurrences of `emmett`, `shear`, or `kiko`. This is a measured Huffman → Shear absence for that named corpus, not evidence that the two never interacted. The HN account uses the same handle and writes in the first person about creating and operating Reddit; preserve that self-identification rationale rather than treating the handle alone as proof.
+
+## Finance suppression and limits
+
+- The person submissions JSON contains **67 Form 4 filings** among its 88 recent filings. The ingest fetched the newest filing as a worked suppression case and stored one transaction fact with `suppression_class='finance'`; transaction detail is deliberately omitted from this note and the user-facing report. It may render only as a withheld class/count, never as content.
+- The live LinkedIn result overturns the prompt's assumed NULL prominence only after correcting the slug. `/in/shuffman` must not be accepted merely because it was supplied; the observed page is a different person.
+- No source here establishes a Huffman-authored mention of Emmett Shear, a direct Huffman–Shear interaction, or a pronunciation/respelling.

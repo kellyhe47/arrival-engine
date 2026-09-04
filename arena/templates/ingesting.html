@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}Ingesting{% endblock %}
+{% block banner %}
+<div class="banner"><div class="inner">
+  <p class="eyebrow">Ingesting</p>
+  <h1>Live re-run</h1>
+  <p>GREEN adapters only. Unavailable sources are named, not hidden.</p>
+</div></div>
+{% endblock %}
+{% block content %}
+<section class="blk">
+  <p class="lbl">Per adapter</p>
+  <table>
+    <tr><th>Source</th><th>Tier</th><th>Status</th><th>Facts</th><th>Reason</th></tr>
+    {% for s in result.source_status %}
+    <tr class="{{ '' if s.status == 'ok' else 'off' }}">
+      <td>{{ s.source_id }}</td><td>{{ s.tier }}</td><td>{{ s.status }}</td>
+      <td class="w">{{ s.facts }}</td><td>{{ s.reason or '—' }}</td></tr>
+    {% endfor %}
+  </table>
+  <p class="meta">Every attempt is recorded, not every success. This table is the only thing that
+     distinguishes “quiet” from “unknown” — a 200 with zero items is not silence.</p>
+  <p class="meta">The deployed runtime makes zero external calls, so GREEN adapters replay a
+     recorded corpus here; each corpus is sized from a count measured in <code>db/roster.sql</code>,
+     and a source with no recorded corpus reports zero rather than inventing one. SESSION sources
+     appear as <code>absent_from_registry</code> — they are not disabled in this build, there is
+     nothing to disable.</p>
+</section>
+<section class="blk">
+  <p class="lbl">Outcome</p>
+  <p>{% if result.profile_complete %}Every source was reached.
+     {% else %}Profile marked partial. The facts already collected are kept; the gap is reported so
+     nobody reads a half-built profile as a complete one.{% endif %}</p>
+  <p><a class="btn" href="/{{ secret }}/card/{{ token }}">Open the card</a></p>
+</section>
+{% endblock %}

@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block title %}Room{% endblock %}
+{% block banner %}
+<div class="banner"><div class="inner">
+  <p class="eyebrow">Arena Hall · Austin, Texas</p>
+  <h1>In the room</h1>
+  <p>{{ present|length }} present. Ordered by arrival. Physical position is not tracked.</p>
+</div></div>
+{% endblock %}
+{% block content %}
+
+<section class="blk">
+  <p class="lbl">Present</p>
+  {% if present %}
+    {% for r in present %}
+    <div class="row">
+      <span class="name">
+        <a href="/{{ secret }}/card/{{ token_for(r.person_id) }}">{{ r.display_name }}</a>
+      </span>
+      <span class="meta num">arrived {{ r.arrived_at[11:16] }}</span>
+      <span class="actions">
+        <form method="post" action="/{{ secret }}/depart">
+          <input type="hidden" name="person_id" value="{{ r.person_id }}">
+          <button class="btn tiny" type="submit">Mark departed</button>
+        </form>
+      </span>
+    </div>
+    {% endfor %}
+  {% else %}
+    <p>Nobody here yet. The first arrival gets an honest card, not an error.</p>
+  {% endif %}
+</section>
+
+<section class="blk">
+  <p class="lbl">Simulate arrival</p>
+  <p>This stands in for the webhook, which the brief says is solved. Firing it scores the arriving
+     member against everyone currently present and opens their card.</p>
+  <form method="post" action="/{{ secret }}/arrive" class="stack">
+    <select name="person_id" aria-label="Member">
+      {% for m in absent %}
+      <option value="{{ m.id }}">{{ m.display_name }}{% if m.do_not_brief %} — do not brief{% endif %}</option>
+      {% endfor %}
+    </select>
+    <div><button class="btn" type="submit">Fire the webhook</button></div>
+  </form>
+</section>
+
+<section class="blk">
+  <p class="lbl">Live re-run</p>
+  <p>One live ingestion run, on stage, to prove the pipeline is real. It exercises GREEN adapters
+     only, so it cannot fail on a dead session in front of the room.</p>
+  <form method="post" action="/{{ secret }}/reingest" class="stack">
+    <select name="person_id" aria-label="Member to re-ingest">
+      {% for r in present %}<option value="{{ r.person_id }}">{{ r.display_name }}</option>{% endfor %}
+      {% for m in absent %}<option value="{{ m.id }}">{{ m.display_name }}</option>{% endfor %}
+    </select>
+    <div><button class="btn" type="submit">Run GREEN adapters</button></div>
+  </form>
+  <p class="meta">Deployed registry: {{ registry|length }} adapters, none of them SESSION.
+     SESSION adapters are not disabled here — they are absent, so there is nothing to disable.</p>
+</section>
+
+{% endblock %}

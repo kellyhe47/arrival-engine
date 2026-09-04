@@ -2,7 +2,7 @@
   "schema_version": 1,
   "id": "G-010",
   "name": "word-budget-over-band-fails",
-  "why": "Three hundred and fifty words is the ceiling, taken from the slow end of adult silent reading because the host is standing and watching a door. One word over is a gate failure, not a warning.",
+  "why": "Three hundred and fifty words is the ceiling, taken from the slow end of adult silent reading because the host is standing and watching a door. One word over is a gate failure, not a warning. P0-7: the blocks carry real text and the runner derives word_count from it; the count is no longer handed in as an input.",
   "covers": [
     "B-005",
     "B-015"
@@ -23,35 +23,34 @@
           {
             "order": 1,
             "label": "Who",
-            "text": "...",
+            "text": "Brad Feld, Foundry, General Partner. Investor, author of nine books, and a man who has published something close to five and a half thousand blog posts across twenty-two years under his own name, which is a longer continuous public record than almost anyone else in the room can claim tonight.",
             "kind": "identity"
           },
           {
             "order": 2,
             "label": "Now",
-            "text": "...",
+            "text": "He is in the middle of a deliberate return to writing after a gap that he has been open about rather than quiet about. The cadence tells the story better than any summary: near-daily posting from 2005 through 2020, then a collapse to sixty-nine posts in 2021, fifteen in 2022, twenty-nine in 2023, and exactly one post in the whole of 2024. Then the revival, sixty-five posts last year and thirty already this year, the newest dated the ninth of August. Alongside the blog he is serialising a novel, now forty-seven chapters long, and co-writing a second site with an artificial collaborator that has its own name, its own chosen pronoun, and a nickname his wife gave it.",
             "kind": "recency"
           },
           {
             "order": 3,
             "label": "Room",
-            "text": "...",
+            "text": "Fred Wilson is already here and the two of them cite each other more often than any other pair of people in this building, by a margin that is not close. They have been reading and arguing with each other in public for the better part of two decades, which means no introduction is required and none should be attempted. Melanie Perkins is also present. There is nothing measured between her and him: no shared investment, no shared board, no shared recording, and no mention of either by the other in anything that could be found.",
             "kind": "match"
           },
           {
             "order": 4,
             "label": "Notice",
-            "text": "...",
+            "text": "Since roughly 2004 he has kept a standing offer open to complete strangers: twenty minutes, on request, no filter and no introduction needed. He calls it Random Day. He once did an entire day of those meetings while wearing a full Cookie Monster costume, and he wrote the whole thing up himself afterwards rather than letting somebody else tell it.",
             "kind": "deep_cut"
           },
           {
             "order": 5,
             "label": "Say",
-            "text": "...",
+            "text": "Ask him whether anybody has ever booked a Random Day and completely wasted it. He has been taking those meetings for twenty years and he will have an answer ready to go.",
             "kind": "sayable"
           }
-        ],
-        "word_count": 351
+        ]
       }
     },
     "preexisting_state": {},
@@ -89,7 +88,7 @@
         "gate_failures": [
           {
             "gate": "word_count_in_band",
-            "observed": 351,
+            "observed": 356,
             "allowed": [
               250,
               350

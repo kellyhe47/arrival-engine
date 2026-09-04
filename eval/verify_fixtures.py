@@ -24,6 +24,37 @@ errors, checks = [], 0
 def err(fid, msg):
     errors.append(f"{fid}: {msg}")
 
+def _count_words(given_inputs):
+    """Word count DERIVED from the narration block text. P0-7.
+
+    The fixtures used to hand `narration.word_count` in and assert it back, which made the band gate
+    circular -- it could never catch a miscount because there was nothing independent to count. The
+    blocks now carry real text and this is the only source of the number. Returns None when no block
+    carries text, which is itself an error at the call site.
+    """
+    blocks = (given_inputs.get("narration") or {}).get("blocks") or []
+    texts = [b.get("text") or "" for b in blocks]
+    if not any(t.strip() for t in texts):
+        return None
+    return sum(len(t.split()) for t in texts)
+
+
+def _recency(signal_evidence, match):
+    """Latest evidence date across a match's fired signals, or None if undated.
+
+    Tie-break tier 2. Signals are computed from member attribute sets, which carry no dates, so the
+    date has to come from the fact backing each fired signal -- `signal_evidence[member_id][signal]`.
+    Undated on either side falls through to tier 3 rather than guessing an order.
+
+    S8 IS EXCLUDED. Its "evidence" is a prominence measurement -- when we last read a follower count
+    -- not a dated event between two people. Including it makes every match tie at today's date and
+    silently collapses tier 2 into tier 3.
+    """
+    ev = signal_evidence.get(match["member_id"]) or {}
+    dates = [d for sig, d in ev.items() if d and sig != "S8"]
+    return max(dates) if dates else None
+
+
 def chip_host(url):
     """Host as it appears on a provenance chip: the URL's hostname with a leading `www.` removed.
 
@@ -250,6 +281,21 @@ def main():
                         if nh < nl:
                             err(fid, f"tie {hi['member_id']}/{lo['member_id']} ordered against "
                                      f"large-signal-count rule ({nh} < {nl})")
+                        elif nh == nl:
+                            # Tier 1 cannot separate them. Tier 2 is evidence recency: a match's
+                            # recency is the LATEST evidence date across its fired signals. Tier 3
+                            # is member id ascending -- deterministic, arbitrary, and documented as
+                            # arbitrary. Both were uncovered before G-017 was re-grounded.
+                            ev = gi.get("signal_evidence") or {}
+                            rh, rl = _recency(ev, hi), _recency(ev, lo)
+                            checks += 1
+                            if rh is not None and rl is not None and rh != rl:
+                                if rh < rl:
+                                    err(fid, f"tie {hi['member_id']}/{lo['member_id']} ordered "
+                                             f"against evidence-recency rule ({rh} < {rl})")
+                            elif hi["member_id"] > lo["member_id"]:
+                                err(fid, f"tie {hi['member_id']}/{lo['member_id']} ordered against "
+                                         f"member-id rule after recency also tied")
                 checks += 1
                 if res.get("surfaced_count") != sum(1 for r in res["ranked_matches"] if r["surfaced"]):
                     err(fid, "surfaced_count disagrees with ranked_matches")
@@ -262,9 +308,12 @@ def main():
             if not (lo <= wc <= hi):
                 err(fid, f"card word_count {wc} outside band [{lo},{hi}] but no gate failure asserted")
             checks += 1
-            src = gi.get("narration", {}).get("word_count")
-            if src is not None and src != wc:
-                err(fid, f"card word_count {wc} != narration word_count {src}")
+            derived = _count_words(gi)
+            if derived is None:
+                err(fid, "card asserts word_count but the narration blocks carry no text to count "
+                         "(P0-7: the count must be DERIVED, never handed in)")
+            elif derived != wc:
+                err(fid, f"card word_count {wc} != {derived} counted from the narration block text")
 
         if res.get("gate_failures"):
             for gf in res["gate_failures"]:
@@ -274,6 +323,11 @@ def main():
                     obs = gf.get("observed")
                     if lo <= obs <= hi:
                         err(fid, f"word_count_in_band failure asserted but {obs} is inside [{lo},{hi}]")
+                    checks += 1
+                    derived = _count_words(gi)
+                    if derived is not None and derived != obs:
+                        err(fid, f"word_count_in_band failure observed {obs} != {derived} counted "
+                                 f"from the narration block text")
 
         # --- block structure ---
         if isinstance(res.get("card"), dict) and "blocks" in res["card"]:

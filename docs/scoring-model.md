@@ -93,6 +93,19 @@ Present members are ranked by `score(A -> B)` descending. Ties break by, in orde
   2. recency of the most recent evidence backing any fired signal (newer wins)
   3. member id, ascending (deterministic, arbitrary, documented as arbitrary)
 
+Tier 2 needs a definition, because signals are computed from member attribute SETS, which carry no
+dates -- only facts have `source_date`. So each fired signal carries the date of the fact backing it
+(`signal_evidence[member_id][signal_id]`), and a match's recency is the LATEST such date across its
+fired signals.
+
+**S8 is excluded from that maximum.** Its date is a prominence measurement -- when a follower count
+was last read -- not a dated event between two people. Including it makes every match tie at today's
+date, which silently collapses tier 2 into tier 3. Where neither side has a dated signal, tier 2 is
+skipped and tier 3 decides.
+
+Coverage: G-017 exercises tier 2 on the only equal-score, equal-LARGE-count tie in the audited graph;
+G-037 exercises tier 1 and is labelled synthetic because no real differing-LARGE-count tie exists.
+
 ## 5. Threshold for surfacing
 
 A match is surfaced on the card only if `score_excluding_S8 >= 6` AND at least one of S3, S5, S7

@@ -1,0 +1,144 @@
+{% extends "base.html" %}
+{% block title %}Arrival{% endblock %}
+
+{% macro chips_for(block) %}
+  {% set ids = ([block.fact_id] if block.fact_id else []) + (block.fact_ids or []) %}
+  {% if ids %}
+  <div class="chips">
+    {% for fid in ids %}{% set c = chips.get(fid) %}{% if c %}
+      <span class="chip{% if c.synthetic %} synthetic{% endif %}">
+        <span class="host">{{ c.source_host or 'unsourced' }}</span>
+        {% if c.source_date %} · {{ c.source_date }}{% endif %}
+        {% if c.via_edge_type %} · via {{ c.via_edge_type.replace('_', ' ') }}{% endif %}
+      </span>
+    {% endif %}{% endfor %}
+  </div>
+  {% endif %}
+{% endmacro %}
+
+{% block banner %}
+<div class="banner"><div class="inner">
+  <p class="eyebrow">{{ copy[0] }}</p>
+  <h1>{% if member %}{{ member.display_name }}{% if member.name_respelling %}
+        <span style="font-size:0.5em">[{{ member.name_respelling }}]</span>{% endif %}
+      {% else %}No profile{% endif %}</h1>
+  <p>{{ copy[1] }}</p>
+</div></div>
+{% endblock %}
+
+{% block content %}
+
+{% if state == 'not_found' %}
+  <section class="blk">
+    <p>Nothing here resolves to a corroborated member. The engine does not guess identity, and it
+       does not offer a nearest match.</p>
+    <p class="lbl">Say</p>
+    <p class="aloud">Greet them by name, welcome them in, and log the arrival for someone to check
+       later.</p>
+  </section>
+
+{% elif state == 'do_not_brief' %}
+  <section class="blk">
+    <p class="lbl">Who</p>
+    <p>{{ member.display_name }}{% if label.current_label %} — {{ label.current_label }}{% endif %}.</p>
+    <p class="note warn">This member has opted out of recognition. No dossier, no matches, and no
+       score is computed in either direction — the opt-out is honoured at scoring time, not at
+       render time, so nothing was built and then thrown away. They are also absent from other
+       members' Room blocks, because a one-way opt-out is not an opt-out.</p>
+    <p class="lbl">Say</p>
+    <p class="aloud">Welcome them by name and leave it there.</p>
+  </section>
+
+{% elif not digest.card %}
+  <section class="blk">
+    <p class="lbl">Who</p>
+    <p>{{ member.display_name }}{% if label.current_label %} — {{ label.current_label }}{% endif %}.</p>
+    {% if state == 'thin_profile' %}
+    <p class="note">Identity is resolved and the available evidence cannot carry a full card.
+       Fewer facts is the correct answer here; padding it out is the failure this is guarding
+       against. There is no Notice block, because there is nothing sourced that is worth saying.</p>
+    {% else %}
+    <p class="note warn">A hard gate failed, so the brief is withheld. This degrades to a greeting,
+       never to a guess.</p>
+    {% endif %}
+    <p class="lbl">What failed</p>
+    <table>
+      <tr><th>Gate</th><th>Observed</th><th>Allowed</th></tr>
+      {% for g in digest.gate_failures %}
+      <tr><td>{{ g.gate.replace('_', ' ') }}</td>
+          <td class="w">{{ g.observed if g.observed is not none else '—' }}</td>
+          <td class="w">{{ g.allowed or g.unfired_cited or '—' }}</td></tr>
+      {% endfor %}
+    </table>
+    <p class="meta">Retry re-runs render only. It does not re-ingest, and it does not lower a
+       threshold — the obvious implementation of a retry button turns a hard gate into a retry
+       loop.</p>
+    <p><a class="btn" href="/{{ secret }}/card/{{ token }}?retry={{ retry + 1 }}">Retry render</a></p>
+    <p class="lbl">Say</p>
+    <p class="aloud">Greet them by name and log the arrival.</p>
+  </section>
+
+{% else %}
+  {% for b in digest.card.blocks %}
+  <section class="blk">
+    <p class="lbl">{{ b.label }}</p>
+
+    {% if b.label == 'Who' %}
+      <p>{{ b.text }}</p>
+      {% if label.stale %}
+      <p class="note warn">The door said {{ label.supplied_label }}; it is
+         {{ label.current_label }} now. Worth knowing before the handshake — the host may already
+         have read the door.</p>
+      {% endif %}
+
+    {% elif b.label == 'Say' %}
+      <p class="aloud">{{ b.text }}</p>
+
+    {% else %}
+      <p>{{ b.text }}</p>
+    {% endif %}
+
+    {{ chips_for(b) }}
+
+    {% if b.label == 'Room' %}
+      {% if digest.surfaced_count %}
+        {% for m in digest.ranked_matches if m.surfaced %}
+        <p class="meta">
+          {{ names.get(m.member_id, m.member_id) }} —
+          <a class="score" href="/{{ secret }}/why/{{ token }}/{{ token_for(m.member_id) }}">
+            {{ m.score }}/16 · why</a>
+        </p>
+        {% endfor %}
+        {% if digest.brokering %}
+        <p class="meta">Brokering: {{ digest.brokering.replace('_', ' ') }}.</p>
+        {% endif %}
+      {% else %}
+        {% set top = digest.ranked_matches[0] if digest.ranked_matches else None %}
+        <p class="meta">{% if top %}Top score {{ top.score }}, needs {{ floor }}. No candidate is
+          named, not even as a backup.{% else %}Nobody present to score.{% endif %}
+          {% for m in digest.ranked_matches %}
+          <a class="score" href="/{{ secret }}/why/{{ token }}/{{ token_for(m.member_id) }}">why</a>{% if not loop.last %} · {% endif %}
+          {% endfor %}
+        </p>
+      {% endif %}
+
+    {% elif b.label == 'Notice' and digest.withheld_count %}
+      <p class="meta">{{ digest.suppression_notice }}. Class and count only — the text of a withheld
+         fact never reaches this page.</p>
+
+    {% elif b.label == 'Now' and digest.recency.recency_state == 'unknown' %}
+      <p class="note warn">Could not be read on the last run:
+        {{ digest.recency.unavailable_source_ids|join(', ') }}.
+        No claim is made about silence in either direction — absence of evidence from a source you
+        could not read is not evidence of absence.</p>
+    {% endif %}
+  </section>
+  {% endfor %}
+
+  <p class="meta"><span class="num">{{ digest.card.word_count }}</span> words · band
+     250–350 · gates passed · grade
+     <span class="num">{{ digest.content_grade.scored }}/{{ digest.content_grade.possible }}</span>
+     {% if digest.content_grade.failed %} ({{ digest.content_grade.failed|join(', ') }}){% endif %}</p>
+{% endif %}
+
+{% endblock %}

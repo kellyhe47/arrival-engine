@@ -1,0 +1,44 @@
+{
+  "source_id": "newsletter",
+  "member_id": "m_ries",
+  "basis": "COUNT ONLY, replayed offline. roster notes: 12 posts 2026-05-26 -> 2026-08-23. No item body is recorded here, because none was measured item-by-item \u2014 the count is, and the count is all the run reports.",
+  "profile": {},
+  "items": [
+    {
+      "item_id": "m_ries_newsletter_1"
+    },
+    {
+      "item_id": "m_ries_newsletter_2"
+    },
+    {
+      "item_id": "m_ries_newsletter_3"
+    },
+    {
+      "item_id": "m_ries_newsletter_4"
+    },
+    {
+      "item_id": "m_ries_newsletter_5"
+    },
+    {
+      "item_id": "m_ries_newsletter_6"
+    },
+    {
+      "item_id": "m_ries_newsletter_7"
+    },
+    {
+      "item_id": "m_ries_newsletter_8"
+    },
+    {
+      "item_id": "m_ries_newsletter_9"
+    },
+    {
+      "item_id": "m_ries_newsletter_10"
+    },
+    {
+      "item_id": "m_ries_newsletter_11"
+    },
+    {
+      "item_id": "m_ries_newsletter_12"
+    }
+  ]
+}

@@ -1,0 +1,154 @@
+/* Arena Hall — the club's own visual language.
+   Tokens read off the live site (computed styles, published as CSS custom properties).
+
+   Three rules carry the whole look and none of them are negotiable:
+     1. ZERO border-radius. Anywhere. One rounded corner and it stops looking like Arena Hall.
+     2. Hairlines, not boxes. Separate with rules and space — never cards-in-cards, never shadows.
+     3. Italic serif in gold is the emphasis device, not bold. It marks the two places the host
+        reads ALOUD: the borrowed line in Who, and the Say line.
+
+   ONE DELIBERATE DEVIATION, stated in the README. Cormorant Garamond at weight 300 is a display
+   face and is genuinely hard to read small, in low light, at arm's length — which is exactly the
+   reading condition R-033 is built around. So card prose is never below 19px and never below
+   weight 400, and everything dense or numeric (the score, provenance chips, source dates, the
+   Why-this-score table) is set in Inter. That is what the site itself does with its own numerals,
+   and it keeps the ninety-second read honest instead of pretty. */
+
+:root {
+  --olive:#3b4626;  --olive-d:#2c3520;
+  --cream:#F1EADB;  --cream-dim:#cdc7b3;
+  --paper:#F1EADB;  --paper-2:#E7DECC;
+  --ink:#26241d;    --ink-soft:#403c32;  --mut:#6f685a;
+  --bronze:#7B5732; --gold:#B89257;
+  --serif:'Cormorant Garamond', 'Cormorant', Garamond, Georgia, 'Times New Roman', serif;
+  --ui:'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+  --hair-paper: 1px solid rgba(123,87,50,0.18);
+  --hair-olive: 1px solid #3b4626;
+  --gutter: clamp(20px, 5vw, 44px);
+  --measure: 40rem;
+}
+
+*, *::before, *::after { box-sizing: border-box; border-radius: 0 !important; }
+
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--serif);
+  font-weight: 400;
+  font-size: clamp(20px, 1.05rem + 0.35vw, 24px);
+  line-height: 1.62;
+}
+
+.wrap { max-width: var(--measure); margin: 0 auto; padding: 0 var(--gutter) 96px; }
+
+/* ── the eyebrow: the site's label treatment, and the card's five bare nouns ── */
+.lbl, .eyebrow {
+  font-family: var(--ui);
+  font-size: 11px; font-weight: 500;
+  text-transform: uppercase; letter-spacing: 3.5px;
+  color: var(--bronze);
+  margin: 0 0 10px;
+}
+.ui { font-family: var(--ui); font-size: 12px; font-weight: 500;
+      letter-spacing: 2.16px; line-height: 1.6; text-transform: uppercase; }
+.num { font-family: var(--ui); font-variant-numeric: tabular-nums; }
+
+/* ── the olive ground: arrival and attention ── */
+.banner {
+  background: var(--olive); color: var(--cream);
+  padding: clamp(22px, 5vw, 34px) var(--gutter);
+  margin-bottom: clamp(28px, 6vw, 48px);
+}
+.banner .eyebrow { color: var(--gold); }
+.banner .inner { max-width: var(--measure); margin: 0 auto; }
+.banner h1 {
+  font-family: var(--serif); font-weight: 300;
+  font-size: clamp(32px, 2rem + 2.4vw, 58px); line-height: 1.1;
+  margin: 0 0 6px; color: var(--cream);
+}
+.banner p { margin: 0; color: var(--cream-dim); font-size: clamp(19px, 1rem + 0.2vw, 22px); }
+.banner a { color: var(--gold); }
+
+/* ── blocks ── */
+.blk { padding: 26px 0; border-top: var(--hair-paper); }
+.blk:first-of-type { border-top: 0; }
+.blk p { margin: 0 0 12px; font-size: clamp(19px, 1rem + 0.3vw, 24px); }
+.blk p:last-child { margin-bottom: 0; }
+
+h2 { font-family: var(--serif); font-weight: 300;
+     font-size: clamp(26px, 1.5rem + 1.4vw, 40px); line-height: 1.1; margin: 0 0 14px; }
+h3 { font-family: var(--serif); font-weight: 300;
+     font-size: clamp(24px, 1.4rem + 0.7vw, 33px); line-height: 1.16; margin: 0 0 10px; }
+
+/* Italic gold serif: the two places the host reads aloud. */
+.aloud { font-style: italic; color: var(--bronze);
+         font-size: clamp(24px, 1.4rem + 0.8vw, 33px); line-height: 1.2; }
+
+/* ── provenance chip: dense, so Inter ── */
+.chips { margin-top: 10px; display: flex; flex-wrap: wrap; gap: 8px; }
+.chip {
+  font-family: var(--ui); font-size: 11px; font-weight: 500; letter-spacing: 0.06em;
+  text-transform: uppercase; color: var(--mut);
+  border: var(--hair-paper); padding: 5px 9px; background: var(--paper-2);
+}
+.chip .host { color: var(--bronze); }
+.chip.synthetic { border-color: var(--bronze); }
+.chip.synthetic::after { content: " · demo seed"; color: var(--bronze); }
+
+/* ── score: small, beside the reason, never the headline (DEC-2) ── */
+.score {
+  font-family: var(--ui); font-size: 12px; font-weight: 500; letter-spacing: 0.14em;
+  color: var(--mut); text-decoration: none; border-bottom: 1px solid var(--gold);
+  white-space: nowrap;
+}
+.score:hover { color: var(--bronze); }
+
+/* ── notes and warnings: hairlines and space, never boxes-in-boxes ── */
+.blk p.note, .note { border-left: 3px solid var(--gold); padding: 4px 0 4px 16px; margin: 16px 0;
+        font-size: clamp(19px, 1rem + 0.2vw, 22px); color: var(--ink-soft); }
+.warn { border-left-color: var(--bronze); }
+/* Dense and numeric material is Inter, and it must stay small — the `.blk p` prose size would
+   otherwise win on specificity and set a 12px UI note at 24px. */
+.blk p.meta, .meta { font-family: var(--ui); font-size: 13px; font-weight: 400;
+        letter-spacing: 0.02em; color: var(--mut); line-height: 1.65; text-transform: none; }
+
+/* ── the only button in the system ── */
+.btn, button.btn {
+  display: inline-block; background: var(--olive); color: var(--cream);
+  font-family: var(--ui); font-size: 12px; font-weight: 500; letter-spacing: 0.16em;
+  text-transform: uppercase; text-decoration: none;
+  padding: 16px 36px; border: 0; cursor: pointer;
+}
+.btn:hover { background: var(--olive-d); }
+.btn.quiet { background: transparent; color: var(--bronze); border: var(--hair-paper);
+             padding: 12px 20px; }
+
+select, input {
+  font-family: var(--ui); font-size: 13px; padding: 14px 12px;
+  border: var(--hair-paper); background: var(--paper-2); color: var(--ink);
+}
+
+/* ── lists and tables: hairline rules only ── */
+.row { display: grid; grid-template-columns: 1fr auto; align-items: baseline; gap: 6px 16px;
+       padding: 16px 0; border-top: var(--hair-paper); }
+.row:first-child { border-top: 0; }
+.row .name { font-size: clamp(22px, 1.2rem + 0.6vw, 28px); }
+.row .actions { grid-column: 1 / -1; }
+.btn.tiny { background: transparent; color: var(--mut); border: var(--hair-paper);
+            padding: 8px 14px; font-size: 10px; letter-spacing: 0.14em; }
+.btn.tiny:hover { color: var(--bronze); border-color: var(--bronze); }
+
+table { width: 100%; border-collapse: collapse; font-family: var(--ui); font-size: 13px; }
+th, td { text-align: left; padding: 12px 8px 12px 0; border-top: var(--hair-paper);
+         vertical-align: top; line-height: 1.55; }
+th { font-size: 11px; text-transform: uppercase; letter-spacing: 2.16px; color: var(--bronze);
+     font-weight: 500; border-top: 0; }
+td.w { font-variant-numeric: tabular-nums; white-space: nowrap; color: var(--ink); }
+tr.off td { color: var(--mut); }
+
+a { color: var(--bronze); }
+hr { border: 0; border-top: var(--hair-paper); margin: 32px 0; }
+footer { margin-top: 56px; padding-top: 20px; border-top: var(--hair-paper); }
+.stack > * + * { margin-top: 16px; }

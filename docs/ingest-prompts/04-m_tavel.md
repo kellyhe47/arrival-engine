@@ -2,6 +2,12 @@
 
 Benchmark, Partner. Prominence 3 (X 52,896). Seniority principal. Read `00-COMMON.md` first.
 
+**Ten of these are running in parallel right now.** Write to **`db/arena.m_tavel.db`**, never to `db/arena.db`, and keep your writes as replayable SQL in `ingest/sql/m_tavel-NN-*.sql` — the operator merges the ten files at the end. Namespace your ids (`run_ingest_tavel_<date>`, `f_tavel_NNN`), `INSERT OR IGNORE` any one-hop non-member, and **append** to `ingest/BLOCKERS.md` rather than overwriting it. See the parallel-run section of `00-COMMON.md`.
+
+**LinkedIn — CONFIRMED `linkedin.com/in/sarahtavel`, and it is the single richest source she has.** A slug IS attested: her own **Substack profile lists it in its `userLinks`** (`linked_from_own_canonical`, STRONG). It is the source that settles `career_start_decade` = **2000s** (Consultant, The Kerdan Group, **Jun 2005**) and it carries her full employment spine in her own words — Bessemer VP May 2006–Apr 2012, **first PM at Pinterest** Apr 2012–Jul 2015, Greylock GP 2015–2017, Benchmark Partner May 2017–present, with her own deal and board lists. It also independently corroborates two Adventurista deep cuts twenty years apart: **Harvard A.B. Philosophy cum laude, "Captain of Women's Rugby Team as a sophomore"**, and her entire high-school entry, verbatim: **"Stuyvesant High School — Nerd amongst nerds."** 38,047 followers — below her X figure, so not a prominence candidate.
+
+**Walk the WHOLE following list, not the first page.** Record how many of the claimed total you actually reached. Real wheel events only (programmatic scrolling does not page the list), reload to clear a stalled virtualizer, and scope selectors to the primary column so the "Who to follow" rail never leaks into the graph.
+
 Her own bio: *"Blogging since 2006. Partner @benchmark. formerly: product @pinterest. vc @greylockvc,
 @bessemervp."*
 

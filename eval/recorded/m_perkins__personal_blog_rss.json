@@ -1,0 +1,63 @@
+{
+  "source_id": "personal_blog_rss",
+  "member_id": "m_perkins",
+  "profile": {},
+  "items": [
+    {
+      "item_id": "i_perkins_1",
+      "kind": "blog_post",
+      "published_at": "2026-08-24",
+      "recorded_at": "2026-08-24",
+      "is_rerun": false,
+      "title": "What ten years of shipping taught us about defaults"
+    },
+    {
+      "item_id": "i_perkins_2",
+      "kind": "blog_post",
+      "published_at": "2026-07-16",
+      "recorded_at": "2026-07-16",
+      "is_rerun": false,
+      "title": "Notes on designing for people who did not ask to be designers"
+    },
+    {
+      "item_id": "i_perkins_3",
+      "kind": "blog_post",
+      "published_at": "2026-06-02",
+      "recorded_at": "2026-06-02",
+      "is_rerun": false,
+      "title": "The onboarding metric we stopped reporting"
+    },
+    {
+      "item_id": "i_perkins_4",
+      "kind": "blog_post",
+      "published_at": "2026-04-18",
+      "recorded_at": "2026-04-18",
+      "is_rerun": false,
+      "title": "Why we kept the free tier"
+    },
+    {
+      "item_id": "i_perkins_5",
+      "kind": "blog_post",
+      "published_at": "2026-03-05",
+      "recorded_at": "2026-03-05",
+      "is_rerun": false,
+      "title": "A short history of our worst launch"
+    },
+    {
+      "item_id": "i_perkins_6",
+      "kind": "blog_post",
+      "published_at": "2026-01-27",
+      "recorded_at": "2026-01-27",
+      "is_rerun": false,
+      "title": "On growing a company from a country nobody flies to"
+    },
+    {
+      "item_id": "i_perkins_7",
+      "kind": "blog_post",
+      "published_at": "2025-12-09",
+      "recorded_at": "2025-12-09",
+      "is_rerun": false,
+      "title": "The year in templates"
+    }
+  ]
+}

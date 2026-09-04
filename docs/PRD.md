@@ -13,6 +13,7 @@ does not override an unrelated numbered requirement.
 | `eval/golden/*.json` | executable acceptance examples for the behaviours they cover | implementing or changing covered behaviour |
 | `docs/scoring-model.md` | the scoring oracle: signals, buckets, gates, threshold, ties | scoring, ranking, Room |
 | **`docs/ingest-spec.md`** | **the fetch contract: who may be collected, from where, how identity is confirmed, what a run must write** | **any scraper, adapter or ingest prompt** |
+| **`docs/IMPLEMENTATION-PROMPT.md`** | **the ordered build brief: stack decision, build order, defects to close, definition of done** | **building the application** |
 | **`docs/ingest-prompts/`** | **ten ready-to-hand-off collection prompts, one per member, plus `00-COMMON.md` (rules, auth protocol, write contract)** | **running the first ingest** |
 | **`db/roster.sql`** | **the canonical cast — the ten, their allow-listed sources, the measured deny-list, supplied-vs-current labels** | **any ingest or resolution work** |
 | `db/schema.sql` | storage, and the gates enforced as views (`v_renderable_fact`, `v_recency_state`, `v_collectable_source`) | any persistence work |
@@ -21,7 +22,6 @@ does not override an unrelated numbered requirement.
 | `docs/wireframes.html` + `docs/ui-states.md` | every screen state | any surface work |
 | `docs/audit/01–07` | measured evidence, not normative product behaviour | checking the evidence behind a number or claim |
 | `docs/decisions/DECISIONS.md` | settled decision history, not a second requirements document | changing or challenging an established policy |
-| `docs/spec-review-01.md` | historical adversarial review, not a source of truth; only defects retained in §10 remain active | investigating the origin of an active defect |
 | `docs/architecture.excalidraw` | non-normative pipeline overview; current contracts above win | orientation only |
 
 ---
@@ -58,7 +58,7 @@ file, source URLs, reports, logs or deployed profile cache.
 |---|---|---|
 | **GREEN** | blog RSS full-text, HN Algolia, SEC EDGAR, Wikipedia, Wayback, YouTube transcripts, podcast RSS, Open Library | anywhere, incl. deployed |
 | **METERED** | X API | anywhere, costs money |
-| **SESSION** | LinkedIn, X, Instagram (measured working); Facebook, TikTok (UNVERIFIED) | ingest only, **never deployed** |
+| **SESSION** | LinkedIn, X, Instagram (measured working); Facebook, TikTok (attempted, still UNVERIFIED) | ingest only, **never deployed** |
 
 **R-006** Build the relational layer for inner-circle, tagged-associate, and follow-graph evidence.
 Audit 07 confirmed that authenticated LinkedIn returns full post bodies and tagged people, X's
@@ -125,6 +125,14 @@ fires at full weight or not at all.
 | S6 | shared personal interest | 1 | |
 | S7 | shared professional thesis | 3 | |
 | S8 | status gradient | 1 | **✓** |
+
+> **Note on place.** Arena Hall is **in Austin, Texas** — measured from `arenahall.com`, whose own
+> page title reads "Arena Hall — Austin, Texas" and whose hero is captioned "A private membership
+> community in Austin, Texas." **None of the ten stand-ins are**; they are spread across New York,
+> Boulder, Philadelphia, San Francisco and Sydney. So the venue's city is real and the *members'*
+> shared-city assumption is not. S4 matches on **measured** shared place, institution, life event or
+> pursuit, never on an assumed geography — and never on "they are both at the club tonight", which is
+> true of everyone in the room and therefore carries no information. *(was K-6)*
 
 **R-017** S2 and S3 are mutually exclusive, so the ceiling is **16**.
 
@@ -314,26 +322,30 @@ operator-side partial-profile failure. *(DEC-3; B-010)*
 
 ## 10. Risks and open defects
 
-These are the tracked implementation defects inherited from the historical review. Resolved findings
-remain in `docs/spec-review-01.md` and `docs/decisions/DECISIONS.md`. Three defects remain:
+Tracked implementation defects. The adversarial spec review that produced them has been retired;
+its surviving findings are this table, and the decisions behind the resolved ones are in
+`docs/decisions/DECISIONS.md`.
+
+**All P0 defects are now closed** — P0-10 on 2026-09-03 by the application build session (see below), P0-1/2/3/4/6 earlier, P0-8 by `db/roster.sql`, and P0-5, P0-7
+and P0-9 on 2026-09-03. The rows are kept struck-through rather than deleted so the history of what
+was wrong, and how it was settled, stays legible.
 
 | id | defect | fix |
 |---|---|---|
-| P0-5 | "never member-visible" has no enforcement: no auth + public URL + ten real named people | unguessable URL + `noindex`; accepted risk, stated |
-| P0-7 | `word_count` is handed to fixtures, not derived (circular) | fixtures supply block text; the runner counts |
-| P0-9 | **G-017 carries `m_shear` as `founder`; the canonical cast says `chief-executive`** (measured: `x.com/eshear` og:description, "CEO of Softmax"). Correcting it kills S1 and drops him 6→4, destroying the tie the fixture exists to test | re-ground after the first ingest run, against the real edges in AUD-06 (E13b Walk/Ries co-curated *Uncensored* 2012; E10b Walk→Kopelman). A search over all ten members × all pairs found **no** equal-score tie in the real attribute space, because `context` and `edge` are not seeded yet. Also depends on `board-games` (K-8) |
+| ~~P0-5~~ | ~~"never member-visible" has no enforcement: no auth + public URL + ten real named people~~ | **Decided: accept, and mitigate honestly.** The brief forbids auth and accounts, so: unguessable path, `X-Robots-Tag: noindex`, `robots.txt` disallow, and **no member name in any URL or page title** so nothing leaks by referrer or browser history. The residual risk is stated in the README rather than papered over. See R-059 |
+| ~~P0-7~~ | ~~`word_count` is handed to fixtures, not derived (circular)~~ | **Resolved: G-010 and G-022 now carry real block text and `narration.word_count` is gone from `given`.** The runner counts (`_count_words`) and errors if a fixture asserts a count it cannot derive. Verified by tampering: changing the asserted count fails the check |
+| **P0-10** | **G-022 asserted `score(m_feld -> m_wilson) = 11` including S8, and cited S8 in its Room block. S8 requires B's prominence tier strictly above A's; `db/roster.sql` measures both at tier 4 (640,845 and 388,685 followers), so it cannot fire. G-001 was re-baselined for exactly this on 2026-09-03; G-022 was the stale twin, and it survived because it passed `present_members` as bare ids, which `verify_fixtures.py` cannot re-derive** | **Resolved 2026-09-03: spec and fixture fixed together.** The member attribute records are now supplied inline, taken verbatim from G-001 and G-005, so the checker re-derives this case like every other; the expectation is **10** on S1/S2/S5/S7 and S8 is removed from `cited_signal_ids` (forced by R-037 — a reason may name only signals that fired). Block text is untouched, so the derived `word_count` is still 253. Full write-up: `docs/fixture-notes.md` |
+| ~~P0-9~~ | ~~G-017 carries `m_shear` as `founder`; the canonical cast says `chief-executive`** (measured: `x.com/eshear` og:description, "CEO of Softmax"). Correcting it kills S1 and drops him 6→4, destroying the tie the fixture exists to test ~~ | **Resolved: G-017 re-grounded on the one real tie in the audited graph** — Walk scores 9 to both Wilson and Feld on identical signals, so tier 1 cannot separate them and it falls through to evidence recency (Feld 2014-05-27 beats Wilson 2012-03-04). Tiers 2 and 3 had **zero** coverage before. `m_shear` is gone from the fixture, so the contradiction is gone. **G-037** was added for tier 1 and is labelled synthetic, because an exhaustive search found no differing-LARGE-count tie anywhere in the real graph |
 
 | # | risk | standing |
 |---|---|---|
 | K-1 | SESSION adapters breach platform ToS; enforcement is account-level on the **operator's** account | raised, accepted (DEC-6) |
-| K-2 | Facebook / TikTok yields UNVERIFIED | measure before claiming |
+| K-2 | Facebook / TikTok yields UNVERIFIED | **Decided: attempt them through the operator's logged-in session**, same read-only posture as LinkedIn, X and Instagram (DEC-6). They stay UNVERIFIED until a session actually measures them — the claim is still earned, not assumed. **R-008 is unchanged: no captcha or bot-detection evasion**, so TikTok's 25 captcha references remain a hard stop, recorded as `unavailable` with a blocker rather than worked around |
 | K-3 | Session data is not reproducible by Arena Hall from another account | mitigated by DEC-7; residual |
 | K-4 | Provenance is structural (R-025); **the family half is a prompt instruction, not a mechanism** | accepted by decision (DEC-9) |
-| K-5 | AUD-EDGES incomplete — Kopelman's retrievable first-person archive ends in 2014; feld.com's Pagefind index is unqueryable | never assert `no_edge_confirmed` where the corpus was not searched |
-| K-6 | **None of the ten are in Texas.** The brief's "same city" is false as written | harmless for scoring; noted so it is not mistaken for a modelling assumption |
-| K-8 | `board-games` is a G-017 placeholder with **no audit backing**, so `db/roster.sql` assigns it to nobody | source it or delete it and re-baseline G-017 |
-| K-9 | **Prominence mixes platforms.** Perkins reaches tier 4 on a LinkedIn figure (370,639) while the other nine are ranked on X; her X is 56,591, which alone is tier 3 | tiers are computed once at ingest and frozen into the file, so this is sound at runtime — but a LinkedIn follower is not the same unit as an X follower, and the ranking is only as even as the platforms actually measured |
-| K-11 | A non-member partner reached by `family_or_partner` traversal **never opted in and cannot opt out** — R-032's Do Not Brief covers members only. Their writing is public either way; the reason we read it is the relationship | accepted by decision (DEC-12); facts are labelled `via_edge_type` so the class stays countable and reversible |
+| K-5 | AUD-EDGES incomplete — Kopelman's retrievable first-person archive ends in 2014; feld.com's Pagefind index is unqueryable | **now a constraint, not a caution:** `v_assertable_absence` requires every `no_edge_confirmed` row to carry an `evidence_fact_id` naming the corpus actually searched. An absence with no named corpus is not readable by the engine |
+| K-9 *(accepted)* | **Prominence mixes platforms.** Perkins reaches tier 4 on a LinkedIn figure (370,639) while the other nine are ranked on X; her X is 56,591, which alone is tier 3 | **Decided: accept, and record the platform alongside every figure.** Tiers are computed once at ingest and frozen into the file, so this is sound at runtime. The residual — that a LinkedIn follower is not the same unit as an X follower — is stated rather than engineered away |
+| K-11 | A non-member partner reached by `family_or_partner` traversal **never opted in and cannot opt out** — R-032's Do Not Brief covers members only | **partially mechanised:** `member_flags.do_not_traverse` now exists and applies to any `person` row, member or not, and `v_traversable_person` excludes them. Residual: nobody can *request* the flag, so it is operator-set. Accepted (DEC-12) |
 | K-10 | **Huffman has no measurable prominence on any GREEN source.** `x.com/spez` is a stranger, `@stevehuffman` has 38 followers, `@shuffman` has 4; Reddit is closed to logged-out reads | tier is NULL, so S8 is silent in both directions for him — correct, not a gap to paper over. Obtainable from SESSION LinkedIn `/in/shuffman`, the same source that produced Perkins' figure |
 
 ## 11. Implementation contract
@@ -361,8 +373,15 @@ per `(person, source, run)` — `ok` / `unavailable` / `skipped`, with `http_cod
 It is the only thing that distinguishes `quiet` from `unknown` (R-040). A 200 with zero items is not
 silence: `feeds.feedburner.com/redeyevc` is a live feed with no items since 2019.
 
+**R-059** `[decided]` **Staff-only is asserted, not enforced, and the spec says so.** The brief
+forbids auth and accounts, so the mitigations are discovery-side only: an unguessable path,
+`X-Robots-Tag: noindex`, a `robots.txt` disallow, and **no member name in any URL or page title**, so
+a name cannot leak through a referrer header or a browser-history entry. This is not access control
+and must not be described as such — the README states the residual in plain words: the card is a
+staff instrument on a public URL carrying ten real people. *(closes P0-5 by decision, not mechanism)*
+
 ## 12. Index
 
 Thesis R-001–004 · Sourcing R-005–011 · Identity R-012–015 · Scoring R-016–023 ·
 Disclosure R-024–032 (incl. R-027a) · Card R-033–042 · Surfaces R-043–047 · Architecture R-048–051 ·
-Demo R-052–054 · **Implementation R-055–058 (§11)**. Risks are K-1–K-11, not R-numbered.
+Demo R-052–054 · **Implementation R-055–059 (§11)**. Risks are K-1–K-11, not R-numbered.

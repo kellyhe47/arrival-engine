@@ -109,16 +109,20 @@ case is Qureshi. Emit `ambiguous`, show the chooser, brief nobody.
 |---|---|---|
 | GREEN | blog RSS/APIs, HN Algolia + Firebase, SEC EDGAR, Wikipedia, Wayback, YouTube transcripts, podcast RSS, Open Library, Bluesky, Farcaster, fxtwitter counters | anywhere, including the deployed URL |
 | METERED | X API proper | anywhere, costs money |
-| SESSION | LinkedIn, X, Instagram (all three measured working, AUD-07) | **operator's machine only, never deployed** |
+| SESSION | LinkedIn, X, Instagram (measured working, AUD-07); Facebook, TikTok (attempt and record — still UNVERIFIED) | **operator's machine only, never deployed** |
 
 SESSION adapters are **absent from the deployed runtime registry** (R-053). B-010 is consolidated
 in G-027: its `deployed_runtime_adapter_ids` contains no SESSION adapter while the operator-side
 case exercises an expired session. The deployed app opens the SQLite file read-only; the
 ingest/serve split is a file copy.
 
-**No captcha or bot-detection evasion at any tier** (R-008). TikTok's public page ships 25 captcha
-references; it is not built, at any login state. Dating apps are out permanently — no API, ToS
-prohibition, and GDPR Art. 9 special-category data.
+**No captcha or bot-detection evasion at any tier** (R-008). This is the one rule the Facebook and
+TikTok decision does **not** relax: attempt them through the operator's logged-in session like any
+other SESSION source, but TikTok's 25 captcha references remain a hard stop — if it walls, that is
+`unavailable` plus a blocker, never something to work around. Neither has been measured logged in,
+so both stay UNVERIFIED until a session actually returns something; do not claim coverage you have
+not seen. Dating apps are out permanently — no API, ToS prohibition, and GDPR Art. 9
+special-category data.
 
 ---
 
@@ -338,8 +342,8 @@ ban, and do not silently substitute another source for it.
    **only** sanctioned use of an X mirror: counts and profile fields, never content. Four tiers
    moved (Kopelman 4→3, Shear 4→3, Walk 2→3, Huffman 4→NULL) and six fixtures were re-baselined
    against the table. Remaining caveats are K-9 (mixed platforms) and K-10 (Huffman unmeasured).
-2. **`board-games` has no holder.** `db/vocabulary.sql` marks it a G-017 placeholder with no audit
-   backing, so `db/roster.sql` assigns it to nobody. Source it or delete it and re-baseline G-017.
+2. ~~`board-games` has no holder.~~ **Resolved 2026-09-03 (K-8): removed from the vocabulary.**
+   G-017 was re-grounded on real edges and no longer needs it.
 3. **Facebook and TikTok are UNVERIFIED at every login state** (K-2). Measure before claiming.
 4. **feld.com's Pagefind WASM index could not be queried headlessly** (K-5), so in-body mentions
    there cannot be fully excluded. Never write `no_edge_confirmed` against a corpus you did not

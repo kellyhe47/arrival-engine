@@ -2,7 +2,7 @@
   "schema_version": 1,
   "id": "G-022",
   "name": "full-digest-happy-path",
-  "why": "The whole product in one case: a name arrives, the room is scored, one match is surfaced with a reason built only from fired signals, a sourced deep cut is chosen, suppressions are disclosed without leaking their text, and the card closes on a line the host can say. The runner executes this deterministic case twice and requires identical output.",
+  "why": "The whole product in one case: a name arrives, the room is scored, one match is surfaced with a reason built only from fired signals, a sourced deep cut is chosen, suppressions are disclosed without leaking their text, and the card closes on a line the host can say. The runner executes this deterministic case twice and requires identical output. P0-7: the blocks carry real text and the runner derives word_count from it; the count is no longer handed in as an input. CORRECTED 2026-09-03 (application build session, defect P0-10): this fixture asserted score 11 including S8 for Feld -> Wilson, and cited S8 in the Room block. S8 cannot fire between them — db/roster.sql measures BOTH at prominence tier 4 (640,845 and 388,685 followers) and S8 requires B's tier strictly above A's. G-001 was re-baselined for exactly this reason on the same day and records it in its own `why`; G-022 was the stale twin. It survived because it passed present_members as bare ids, so eval/verify_fixtures.py could not re-derive its arithmetic. Both halves are fixed together: the member attribute records are now supplied inline (taken verbatim from G-001 and G-005, which are the audited baselines), so the checker re-derives this case like every other, and the expectation is 10 on S1/S2/S5/S7. Nothing was changed to make an implementation pass — the correction follows from db/roster.sql, which is frozen and authoritative.",
   "covers": [
     "B-006",
     "B-012",
@@ -31,21 +31,88 @@
         "identifying_detail": "Foundry Group, Boulder",
         "roster_id": "r_friday_1900"
       },
+      "arriving_member": {
+        "id": "m_feld",
+        "seniority_tier": "principal",
+        "career_start_decade": "1980s",
+        "prominence_tier": 4,
+        "industries": [
+          "venture-capital"
+        ],
+        "topics_professional": [
+          "startup-communities"
+        ],
+        "topics_personal": [
+          "ultrarunning"
+        ],
+        "contexts": [
+          {
+            "type": "place",
+            "value": "boulder-co"
+          }
+        ],
+        "declared_links": [
+          {
+            "to": "m_wilson",
+            "kind": "cited_in_own_writing",
+            "evidence_fact_id": "f_feld_cites_wilson"
+          }
+        ]
+      },
       "present_members": [
-        "m_wilson",
-        "m_perkins"
+        {
+          "id": "m_wilson",
+          "seniority_tier": "principal",
+          "career_start_decade": "1980s",
+          "prominence_tier": 4,
+          "industries": [
+            "venture-capital"
+          ],
+          "topics_professional": [
+            "startup-communities"
+          ],
+          "topics_personal": [
+            "music-collecting"
+          ],
+          "contexts": [
+            {
+              "type": "place",
+              "value": "new-york-ny"
+            }
+          ],
+          "declared_links": []
+        },
+        {
+          "id": "m_perkins",
+          "seniority_tier": "chief-executive",
+          "career_start_decade": "2000s",
+          "prominence_tier": 4,
+          "industries": [
+            "design-software"
+          ],
+          "topics_professional": [
+            "product-led-growth"
+          ],
+          "topics_personal": [
+            "rugby"
+          ],
+          "contexts": [],
+          "declared_links": []
+        }
       ],
       "narration": {
         "blocks": [
           {
             "order": 1,
             "label": "Who",
-            "kind": "identity"
+            "kind": "identity",
+            "text": "Brad Feld, Foundry. He describes his own practice in one line: \"Give first.\" The door said Foundry Group, Techstars, Boulder; Foundry is right and he is a General Partner there, but the Techstars half is older than it reads."
           },
           {
             "order": 2,
             "label": "Now",
-            "kind": "recency"
+            "kind": "recency",
+            "text": "He is writing again after a gap he did not hide. His blog ran near-daily from 2005 to 2020, collapsed to a single post in all of 2024, and has come back deliberately: sixty-five posts in 2025 and thirty already this year, newest on the ninth of August. He is also serialising a novel, forty-seven chapters live, and co-writing a second blog with a collaborator his wife has nicknamed Clod."
           },
           {
             "order": 3,
@@ -55,23 +122,24 @@
               "S1",
               "S2",
               "S5",
-              "S7",
-              "S8"
-            ]
+              "S7"
+            ],
+            "text": "Fred Wilson is here, and these two cite each other more than any other pair in the room by a wide margin. They have been reading each other in public for two decades, so there is no need to explain who either one is. Melanie Perkins is also present, and there is nothing measured between them at all."
           },
           {
             "order": 4,
             "label": "Notice",
             "kind": "deep_cut",
-            "fact_id": "f_random_day"
+            "fact_id": "f_random_day",
+            "text": "Since about 2004 he has offered a standing twenty minutes to total strangers who ask for it. He calls it Random Day. He once spent an entire day of them dressed in a Cookie Monster costume, which he wrote up himself afterwards, and he has never stopped taking the meetings."
           },
           {
             "order": 5,
             "label": "Say",
-            "kind": "sayable"
+            "kind": "sayable",
+            "text": "Ask him whether anyone has ever booked a Random Day and wasted it. He has taken those meetings for twenty years and he will have an answer ready, and it will not be the polite one."
           }
-        ],
-        "word_count": 298
+        ]
       },
       "facts": [
         {
@@ -156,14 +224,14 @@
               "label": "Say"
             }
           ],
-          "word_count": 298,
+          "word_count": 253,
           "closing_block_kind": "sayable"
         },
         "ranked_matches": [
           {
             "member_id": "m_wilson",
             "rank": 1,
-            "score": 11,
+            "score": 10,
             "surfaced": true,
             "fired_signals": [
               {
@@ -181,10 +249,6 @@
               {
                 "signal_id": "S7",
                 "weight": 3
-              },
-              {
-                "signal_id": "S8",
-                "weight": 1
               }
             ]
           },

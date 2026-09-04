@@ -33,6 +33,8 @@ INSERT INTO industry (slug, label) VALUES
 -- Holder counts below are from docs/audit/06-edges.md §5 "Computable topic overlaps",
 -- measured across the ten stand-ins (base_size = 10).
 
+-- `board-games` was removed 2026-09-03 (K-8): a placeholder with no audit backing and no holder in
+-- db/roster.sql. G-017 was re-grounded on real edges and no longer needs it.
 INSERT INTO topic (slug, kind, label, discriminating, holder_count, base_size, basis) VALUES
   ('venture-capital-craft', 'professional', 'The craft of venture investing',
       0, 5, 10, 'AUD-EDGES 06 §5: Wilson, Feld, Kopelman, Tavel, Walk — "the least discriminating tag in the set"'),
@@ -65,9 +67,7 @@ INSERT INTO topic (slug, kind, label, discriminating, holder_count, base_size, b
   ('live-music',            'personal',     'Live music and concerts',
       1, 1, 10, 'Walk — own YouTube channel opened 2006-01-03, 15 crowd-shot concert clips'),
   ('rugby',                 'personal',     'Rugby',
-      1, 1, 10, 'Tavel — Adventurista: "I can''t believe I played for four years"'),
-  ('board-games',           'personal',     'Board and strategy games',
-      1, 1, 10, 'placeholder used by G-017; NOT audit-backed — must be sourced or removed');
+      1, 1, 10, 'Tavel — Adventurista: "I can''t believe I played for four years"');
 
 -- Slug collisions found mechanically across the fixture set. P0-6.
 INSERT INTO topic_alias (alias, canonical) VALUES

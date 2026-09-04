@@ -3,6 +3,12 @@
 First Round Capital, Philadelphia — label current. Prominence 3 (X 150,180, `@joshk`).
 Seniority principal. Read `00-COMMON.md` first.
 
+**Ten of these are running in parallel right now.** Write to **`db/arena.m_kopelman.db`**, never to `db/arena.db`, and keep your writes as replayable SQL in `ingest/sql/m_kopelman-NN-*.sql` — the operator merges the ten files at the end. Namespace your ids (`run_ingest_kopelman_<date>`, `f_kopelman_NNN`), `INSERT OR IGNORE` any one-hop non-member, and **append** to `ingest/BLOCKERS.md` rather than overwriting it. See the parallel-run section of `00-COMMON.md`.
+
+**LinkedIn — CONFIRMED `linkedin.com/in/jkopelman`.** Canonical slug, `linked_from_own_canonical` from his own First Round bio (STRONG). Measured 2026-09-03: First Round Capital partner, Philadelphia, the Wharton School, ~29,000 followers. `/in/joshkopelman` is NOT canonical — do not substitute it. His LinkedIn is one of the few live surfaces he has, given the blog died in 2014; it is worth reading in full rather than skimming the top card.
+
+**Walk the WHOLE following list, not the first page.** Record how many of the claimed total you actually reached. Real wheel events only (programmatic scrolling does not page the list), reload to clear a stalled virtualizer, and scope selectors to the primary column so the "Who to follow" rail never leaks into the graph. **Kopelman is the reverse half of the Wilson asymmetry:** Wilson->Kopelman `follows` is now CONFIRMED (measured 2026-09-04, position 20 of Wilson's list). Whether Kopelman follows Wilson back is YOURS to measure — walk his whole list, and if you do not reach the end, say so rather than writing `no_edge_confirmed`.
+
 **Thinnest footprint of the ten.** His blog died in 2014 and his firm's huge content operation
 carries none of his byline. A thin profile that says it is thin is correct output. Fabricate nothing.
 

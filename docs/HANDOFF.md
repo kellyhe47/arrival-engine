@@ -1,5 +1,9 @@
 # Handoff — THE ARRIVAL ENGINE
 
+> **Building the app?** Start at **`docs/IMPLEMENTATION-PROMPT.md`** — it is the ordered brief.
+> **Collecting member data?** Start at **`docs/ingest-prompts/00-COMMON.md`** plus one person file.
+> This file is the reference the two share.
+
 You are implementing a staff-facing arrival brief for a private members club. A webhook fires with a
 name; within ninety seconds a host reads a card telling them who arrived, who present they should
 meet and why, and one thing they can say out loud. You do not need the original brief — the PRD has
@@ -30,14 +34,10 @@ P0-2 (S8 excluded from the surfacing threshold), P0-3 (DEC-9), P0-4 (SESSION ada
 runtime registry), P0-6 (controlled vocabulary exists), **P0-8 (canonical cast exists —
 `db/roster.sql`)**, and the identity half of P1-11 (`corroboration_kind`).
 
-**Still open, and do these first.**
+**Nothing is open.** P0-5, P0-7 and P0-9 closed on 2026-09-03; K-6 and K-8 retired; K-5 and K-11
+converted from cautions into store-level constraints (`v_assertable_absence`, `v_traversable_person`);
+K-2 and K-9 accepted by decision. PRD §10 keeps the struck-through history.
 
-| id | defect | fix |
-|---|---|---|
-| P0-5 | "never member-visible" has no enforcement: no auth + public URL + ten real named people | unguessable URL + `noindex`; accepted risk, stated |
-| P0-7 | `word_count` is handed to fixtures, not derived (circular) | fixtures supply block text; the runner counts |
-| P0-9 | G-017 carries `m_shear` as `founder`; the table says `chief-executive` (measured). Correcting it destroys the tie the fixture tests | re-ground after the first ingest run against AUD-06's real edges; no equal-score tie exists in the real attribute space until `context` and `edge` are seeded |
-| — | `board-games` is a G-017 placeholder with no audit backing and no holder in the roster | source it or delete it and re-baseline G-017 |
 
 ## 3. Two commands, never conflated
 ```

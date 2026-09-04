@@ -3,6 +3,12 @@
 **Door says "Twitch". He runs Softmax — the label is STALE.** Prominence 3 (X 123,007).
 Seniority chief-executive. Read `00-COMMON.md` first.
 
+**Ten of these are running in parallel right now.** Write to **`db/arena.m_shear.db`**, never to `db/arena.db`, and keep your writes as replayable SQL in `ingest/sql/m_shear-NN-*.sql` — the operator merges the ten files at the end. Namespace your ids (`run_ingest_shear_<date>`, `f_shear_NNN`), `INSERT OR IGNORE` any one-hop non-member, and **append** to `ingest/BLOCKERS.md` rather than overwriting it. See the parallel-run section of `00-COMMON.md`.
+
+**LinkedIn — CONFIRMED `linkedin.com/in/emmettshear`.** A slug IS attested: **`softmax.com/about` links it under `aria-label="Emmett Shear … LinkedIn"`** — his own company's team page, `linked_from_own_canonical` (STRONG). The "999 on both slugs" note below is obsolete: logged out it is 999, but the Wayback capture of **2026-05-21** is readable (the only 200 in a CDX list otherwise full of 999s) and the operator's Chrome reads it live. ⚠️ **A THIRD label lives here.** His LinkedIn headline is **"Researching organic alignment"** — not "CEO of Softmax" (X) and not "Twitch" (the door). Three surfaces, three answers; carry the disagreement rather than picking one silently. The archived profile also holds exactly one recommendation, **written by Justin Kan** — the strongest attestation of that edge anywhere.
+
+**Walk the WHOLE following list, not the first page.** Record how many of the claimed total you actually reached. Real wheel events only (programmatic scrolling does not page the list), reload to clear a stalled virtualizer, and scope selectors to the primary column so the "Who to follow" rail never leaks into the graph.
+
 `x.com/eshear` `og:description`, current and readable logged out: **"CEO of Softmax: Massively
 Multiplayer Learning Environments"**. Write `member_label` with `stale = 1` and carry the correction —
 a host who opens with *"so, Twitch…"* has already damaged the relationship.
@@ -21,6 +27,7 @@ Twitch's YC page says Winter 2007, which is Justin.tv's batch.
 | `https://api.github.com/users/eshear` | 9 repos, joined 2009 |
 | `https://en.wikipedia.org/w/index.php?title=Emmett_Shear&action=raw` | career start |
 | `https://threadreaderapp.com/user/eshear` | **18 unrolled threads to 2025-11-24** — a real workaround for the JS-walled timeline |
+| `https://www.linkedin.com/in/emmettshear/` | SESSION; Wayback `20260521164402` is the GREEN fallback. Headline is a **THIRD label**: "Researching organic alignment". Carries Justin Kan's recommendation |
 | `https://api.fxtwitter.com/eshear` · `https://x.com/eshear` | counts; the og:description above |
 
 ## Never fetch — he has the worst trap in the set
@@ -35,7 +42,7 @@ Twitch's YC page says Winter 2007, which is Justin.tv's batch.
   are not sources.**
 - `eshear.substack.com` — one item, "Coming soon", never used · TikTok `@eshear` "Couldn't find this
   account" · Instagram `/eshear/` and `/emmettshear/` are identical shells, **indeterminate — don't
-  conclude either way** · LinkedIn 999 on both slugs · **no authored book**
+  conclude either way** · **no authored book**
 
 ## Inner circle (one hop)
 Justin Kan (Kiko, Justin.tv). **Michael Seibel** — Justin.tv co-founder, on **Reddit's board**.

@@ -3,6 +3,12 @@
 Canva — Co-founder and CEO, Sydney. Prominence 4 (LinkedIn 370,639). Seniority chief-executive.
 Read `00-COMMON.md` first.
 
+**Ten of these are running in parallel right now.** Write to **`db/arena.m_perkins.db`**, never to `db/arena.db`, and keep your writes as replayable SQL in `ingest/sql/m_perkins-NN-*.sql` — the operator merges the ten files at the end. Namespace your ids (`run_ingest_perkins_<date>`, `f_perkins_NNN`), `INSERT OR IGNORE` any one-hop non-member, and **append** to `ingest/BLOCKERS.md` rather than overwriting it. See the parallel-run section of `00-COMMON.md`.
+
+**LinkedIn — CONFIRMED `linkedin.com/in/melanieperkins`, and it remains her single best source.** `subject_self_identifies` on the live headline **"Co-founder & CEO at Canva"**. Measured 2026-09-03: **370,636 followers** — three below the 370,639 the roster baselined on, so state the `measured_at`, and remember she is the one member ranked on LinkedIn rather than X. Experience gives **"Founder and Director, Fusion Books, Jan 2007"** and **"CEO & Co-founder, Canva, May 2012"**, which settles `career_start_decade` = 2000s. Her newest post was **one day old** at read time — the retracted "no fetchable 2026 first-person publication" claim stays retracted.
+
+**Walk the WHOLE following list, not the first page.** Record how many of the claimed total you actually reached. Real wheel events only (programmatic scrolling does not page the list), reload to clear a stalled virtualizer, and scope selectors to the primary column so the "Who to follow" rail never leaks into the graph.
+
 **Every `canva.com` path is 403 to every automated client** — plain curl, Chrome-UA curl, WebFetch.
 Blanket bot denial at the edge. Consequence: guessed RSS paths also 403, which is
 **indistinguishable from "absent"** — so you may neither confirm nor deny a feed exists.

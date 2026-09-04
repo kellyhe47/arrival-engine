@@ -257,6 +257,15 @@ INSERT INTO person_identity_negative (person_id, value, kind, belongs_to, basis,
   (NULL,'https://www.instagram.com/fredwilson/tagged/','url','third parties — anyone on the platform',
    'AUD-07-7. Not a wrong-person URL: an INJECTION SURFACE. Its first item names Fred Wilson the conceptual artist inside the VC''s own profile. Contents are written by strangers. trust_class third_party_open, traversal hint only, never a fact, never in a prompt',' 2026-09-03');
 
+-- ── Added 2026-09-04 after an independent re-verification of all ten LinkedIn slugs ───────────
+-- Both rows are collisions that the ORIGINAL prompts actively pointed an agent at. Additive only:
+-- person_identity_negative's PK is (value, kind), and neither value existed before.
+INSERT INTO person_identity_negative (person_id, value, kind, belongs_to, basis, measured_at) VALUES
+  ('m_huffman','https://www.linkedin.com/in/shuffman','url','Sarah Huffman — a different person',
+   'The slug docs/ingest-prompts/06-m_huffman.md attested as his, and roster.sql itself asserted ("His LinkedIn slug is shuffman"). Wayback holds three captures: 2008 renders "LinkedIn: Sarah Huffman", 2021 and 2024 are HTTP 999 walls. NO capture has ever shown Steve Huffman. His real profile is /in/shuffman56, corroborated by a 2016 capture listing "Co-founder, Reddit, June 2005 - October 2009" and Y Combinator 2005-2006. This row is the second measured instance of the R-004 error inside this project''s own seed data',' 2026-09-04'),
+  ('m_qureshi','https://en.wikipedia.org/wiki/Nabeel_Qureshi_(writer)','wikipedia_title','Nabeel Qureshi the Christian apologist and author, 1983-2017 — the SAME deceased person already denied at the bare title',
+   'Wikipedia moved the apologist to this disambiguated title after the audit, so the existing denial keyed on /wiki/Nabeel_Qureshi no longer catches him. Confirmed from wikitext: occupation "Christian evangelist", death_date 2017-09-16, categories "1983 births" / "2017 deaths". DANGEROUS BECAUSE the disambiguator is "(writer)" while member_label.current_label for m_qureshi is "writer and researcher" — the wrong person''s URL contains the right person''s job title, and it has already misled a human reviewer. Our subject is alive (GitHub push 2026-09-03) and has NO English Wikipedia article',' 2026-09-04');
+
 -- ── Industries (S2 / S3) ──────────────────────────────────────────────────────
 -- Assigned from the CURRENT measured role in member_label, against db/vocabulary.sql.
 INSERT INTO person_industry (person_id, industry_slug) VALUES
@@ -272,8 +281,8 @@ INSERT INTO person_industry (person_id, industry_slug) VALUES
 -- Every assignment is transcribed from the `basis` column of db/vocabulary.sql, which is itself
 -- transcribed from docs/audit/06-edges.md §5. The holder_counts in vocabulary.sql are the
 -- denominators of these exact rows — if you add one, recompute `discriminating`.
--- `board-games` is deliberately ABSENT: vocabulary.sql marks it a G-017 placeholder with no audit
--- backing. It must be sourced or removed, not assigned.
+-- `board-games` was REMOVED from the vocabulary on 2026-09-03 (K-8): a placeholder with no audit
+-- backing and no holder here. G-017 was re-grounded on real edges and no longer needs it.
 INSERT INTO person_topic (person_id, topic_slug, evidence_fact_id) VALUES
   ('m_wilson','venture-capital-craft',NULL),   ('m_feld','venture-capital-craft',NULL),
   ('m_kopelman','venture-capital-craft',NULL), ('m_tavel','venture-capital-craft',NULL),

@@ -1,0 +1,40 @@
+name: ci
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      # Half the acceptance contract used to live outside the repo, in a skill directory.
+      # It is vendored into scripts/ so both commands are reproducible from a clean clone.
+      - name: validate-spec (fixtures are well-formed and self-consistent)
+        run: |
+          python scripts/validate_golden.py eval/golden
+          python eval/verify_fixtures.py
+
+      - name: test-golden (drive the real implementation)
+        run: python eval/golden_runner.py
+
+      - name: red-first (every fixture is load-bearing)
+        run: python eval/red_first.py
+
+      - name: unit tests
+        run: python -m pytest tests -q
+
+      - name: db/ is untouched
+        run: |
+          git diff --exit-code -- db/ || {
+            echo "::error::db/ is frozen; this build must not modify it"; exit 1; }

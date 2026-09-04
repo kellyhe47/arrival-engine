@@ -41,6 +41,10 @@ CREATE TABLE person (
 CREATE TABLE member_flags (
   person_id    TEXT PRIMARY KEY REFERENCES person(id) ON DELETE CASCADE,
   do_not_brief INTEGER NOT NULL DEFAULT 0 CHECK (do_not_brief IN (0,1)),
+  -- K-11: applies to ANY person row, member or not. A non-member partner reached by traversal has
+  -- no way to ask for this, so it is operator-set — but the mechanism exists rather than the rule
+  -- living only in prose. Honoured at INGEST time by v_traversable_person.
+  do_not_traverse INTEGER NOT NULL DEFAULT 0 CHECK (do_not_traverse IN (0,1)),
   set_at       TEXT NOT NULL,
   set_by       TEXT
 );
@@ -145,6 +149,19 @@ CREATE TABLE edge (
   PRIMARY KEY (from_id, to_id, type)
 );
 CREATE INDEX edge_out ON edge(from_id, type);
+
+-- K-5: an absence is only assertable if the corpus was actually searched. Recording
+-- `no_edge_confirmed` with no evidence naming the corpus is the exact error the audit caught, so the
+-- engine reads absences through this view and never off the base table.
+CREATE VIEW v_assertable_absence AS
+  SELECT * FROM edge
+   WHERE type = 'no_edge_confirmed' AND evidence_fact_id IS NOT NULL;
+
+-- K-11: who the ingest walk may step through.
+CREATE VIEW v_traversable_person AS
+  SELECT p.* FROM person p
+    LEFT JOIN member_flags f ON f.person_id = p.id
+   WHERE COALESCE(f.do_not_traverse, 0) = 0;
 
 -- ── Source attempts ───────────────────────────────────────────────────────────
 -- P-4. This table is what makes "quiet" distinguishable from "unknown". You cannot answer
